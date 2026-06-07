@@ -286,6 +286,16 @@
     .bill-input.soft { font-weight: 500; }
     .bill-input:focus { background: #fff7d6; box-shadow: inset 0 -3px 0 rgba(200,154,60,.55); }
     input[type="date"], input[type="time"] { color-scheme: light; }
+    .thai-display-input {
+      letter-spacing: .01em;
+      cursor: text;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
     .side-card {
       border: 1px solid rgba(123,63,0,.14);
@@ -755,105 +765,100 @@
     .bill-input, .bill-date, .bill-time { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
     .daily-print-btn { white-space: nowrap; }
 
-  
 
-    /* ===== Compact modern no-gradient redesign v3 ===== */
+    /* ===== Final compact professional refresh: no gradients ===== */
     :root {
-      --bg:#f6f7f5; --paper:#ffffff; --paper-2:#fbfdfb; --ink:#171421; --muted:#667085;
-      --line:#171717; --brand:#4b1d78; --brand-2:#35145f; --green:#16854f;
-      --green-soft:#eaf7ef; --purple-soft:#f0e8f8; --danger:#b42318; --ok:#16854f;
-      --shadow:0 10px 28px rgba(33,24,54,.09); --radius:18px;
+      --bg:#f6f4fa; --paper:#ffffff; --paper-2:#f9fbfa; --ink:#182018; --muted:#667085;
+      --brand:#4b1d78; --brand-2:#5f2b90; --green:#16804a; --gold:#16804a; --gold-soft:#e8f7ef;
+      --shadow:0 12px 32px rgba(39, 25, 70, .10); --radius:18px;
     }
-    html { font-size:14px; }
-    body { background:#f6f7f5 !important; color:var(--ink); font-size:13px; }
-    .app-shell { width:min(1140px, calc(100% - 24px)); padding:14px 0 38px; }
-    .hero { background:#fff !important; border:1px solid #e4dced; border-radius:22px; padding:17px 18px; box-shadow:var(--shadow); }
-    .hero::before { display:none; }
-    .brand-mark { width:46px; height:46px; border-radius:14px; background:#4b1d78 !important; color:#fff; font-size:22px; box-shadow:none; }
-    .kicker { color:#16854f; font-size:11px; margin-bottom:2px; }
-    .hero h1 { font-size:clamp(19px, 2.8vw, 28px); color:#35145f; line-height:1.2; }
+    body { background:#f6f4fa !important; font-size:13px; }
+    .app-shell { width:min(1160px, calc(100% - 24px)); padding:12px 0 38px; }
+    .hero { background:#ffffff !important; border-radius:22px; padding:16px 18px; box-shadow:var(--shadow); }
+    .hero::before { display:none !important; }
+    .brand-mark { width:46px; height:46px; border-radius:14px; background:#4b1d78 !important; box-shadow:none; font-size:22px; }
+    .kicker { font-size:10.5px; margin-bottom:2px; color:#16804a; }
+    .hero h1 { font-size:clamp(18px, 2.8vw, 28px); line-height:1.18; color:#35145f; }
     .hero p { font-size:12px; margin-top:4px; }
-    .admin-key { top:12px; right:12px; width:36px; height:36px; border-radius:12px; background:#fff; border:1px solid #e4dced; color:rgba(75,29,120,.46); font-size:17px; }
-    .admin-pill { top:54px; right:12px; font-size:11px; padding:5px 9px; background:#eaf7ef; color:#0f6b3f; border-color:#cdeedd; }
-    .nav-actions { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:12px 0; }
-    .nav-btn { min-height:50px; border-radius:16px; font-size:13px; font-weight:700; background:#fff; border:1px solid #e5e0ec; box-shadow:none; color:#35145f; }
-    .nav-btn .icon { font-size:18px; }
-    .nav-btn.active, .nav-btn:hover { background:#4b1d78 !important; color:#fff; box-shadow:none; transform:none; }
-    #btnAdminPanel { display:none; }
-    #btnAdminPanel.visible { display:flex; }
-    .panel { border-radius:18px; padding:14px; background:#fff !important; border:1px solid #e4dced; box-shadow:var(--shadow); backdrop-filter:none; }
-    .section-title { margin-bottom:10px; align-items:center; }
-    .section-title h2 { font-size:clamp(16px,2.2vw,21px); }
-    .section-title p { font-size:12px; margin-top:2px; }
-    .bill-editor-wrap { grid-template-columns:minmax(0,1fr) 245px; gap:12px; }
-    .bill-sheet { box-shadow:none; border-color:#111; }
-    .cashbill-table th, .cashbill-table td { padding:5px 5px; min-height:27px; font-size:clamp(13px,1.45vw,17px); line-height:1.08; }
-    .cashbill-table .bill-title-cell { font-size:clamp(18px,2.45vw,25px); padding:7px; }
-    .cashbill-table .grade { font-size:clamp(17px,2.1vw,23px); }
-    .cashbill-table .total-label { font-size:clamp(17px,2.1vw,23px); }
-    .cashbill-table .total-amount { font-size:clamp(17px,2.1vw,23px); }
-    .bill-input, .bill-date, .bill-time { font-size:inherit; line-height:1.05; }
-    .side-card, .calendar-shell, .year-shell, .table-shell, .kpi-card { background:#fff !important; border:1px solid #e4dced; box-shadow:none; border-radius:16px; }
+    .admin-key { width:34px; height:34px; border-radius:12px; top:12px; right:12px; font-size:16px; background:#f7f4fb !important; backdrop-filter:none; }
+    .admin-pill { top:52px; right:12px; font-size:11px; padding:5px 8px; background:#e8f7ef; }
+    .nav-actions { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; margin:10px 0 12px; }
+    .nav-btn { min-height:48px; border-radius:14px; font-size:13px; font-weight:700; gap:7px; background:#fff !important; box-shadow:0 8px 20px rgba(39,25,70,.07); }
+    .nav-btn .icon { font-size:17px; }
+    .nav-btn.active, .nav-btn:hover { background:#4b1d78 !important; color:#fff; transform:none; box-shadow:0 10px 24px rgba(75,29,120,.18); }
+    .admin-nav { display:none; }
+    .admin-nav.show { display:flex; }
+    .panel { border-radius:18px; padding:14px; background:#fff !important; box-shadow:var(--shadow); backdrop-filter:none; }
+    .section-title { margin-bottom:10px; }
+    .section-title h2 { font-size:clamp(16px, 2.4vw, 21px); }
+    .section-title p { font-size:11.5px; }
+    .bill-editor-wrap { grid-template-columns:minmax(0, 1fr) 260px; gap:12px; }
+    .cashbill-table th, .cashbill-table td { padding:5px 5px; font-size:clamp(13px, 1.45vw, 17px); line-height:1.12; border-width:1.2px; }
+    .cashbill-table .bill-title-cell { font-size:clamp(18px, 2.6vw, 27px); padding:7px; }
+    .cashbill-table .grade { font-size:clamp(17px, 2.2vw, 24px); }
+    .cashbill-table .total-label { font-size:clamp(17px, 2.2vw, 24px); }
+    .cashbill-table .total-amount { font-size:clamp(17px, 2.2vw, 23px); }
+    .side-card, .calendar-shell, .year-shell, .table-shell, .kpi-card, .admin-box { background:#fff !important; border-color:rgba(75,29,120,.10); border-radius:16px; box-shadow:0 8px 22px rgba(39,25,70,.06); }
     .side-card { padding:12px; top:12px; }
-    .side-card h3 { font-size:15px; margin-bottom:6px; }
-    .mini-stat { grid-template-columns:32px 1fr; gap:8px; padding:8px 0; }
-    .mini-icon { width:32px; height:32px; border-radius:10px; background:#eaf7ef; color:#16854f; font-size:16px; }
+    .side-card h3, .block-head h3 { font-size:15px; }
+    .mini-stat { grid-template-columns:32px 1fr; padding:8px 0; }
+    .mini-icon { width:32px; height:32px; border-radius:10px; font-size:16px; background:#e8f7ef !important; }
     .mini-stat b { font-size:16px; }
-    .mini-stat span { font-size:11px; }
+    .mini-stat span, .field-box label, .block-head span, .kpi-card span, .month-card span { font-size:11px; }
     .primary-btn, .secondary-btn, .danger-btn, .ghost-btn { border-radius:12px; padding:10px 12px; font-size:12px; font-weight:700; }
     .primary-btn { background:#4b1d78 !important; color:#fff; box-shadow:none; }
-    .secondary-btn { background:#eaf7ef; color:#0f6b3f; }
-    .ghost-btn { background:#fff; color:#35145f; border:1px solid #e4dced; }
-    .danger-btn { background:#b42318; color:#fff; }
-    .summary-tools { gap:9px; margin-bottom:10px; }
-    .field-box label { font-size:11px; margin-bottom:4px; }
-    .field-box input, .field-box select { padding:9px 10px; border-radius:12px; font-size:12px; border-color:#ded6e8; background:#fff; }
-    .kpi-grid { gap:9px; margin-bottom:10px; }
-    .kpi-card { min-height:88px; padding:11px; }
+    .secondary-btn { background:#e8f7ef !important; color:#0f6b3f; }
+    .danger-btn { background:#b42318 !important; color:#fff; }
+    .ghost-btn { background:#f7f4fb !important; color:#35145f; }
+    .summary-tools { gap:8px; margin-bottom:10px; }
+    .field-box input, .field-box select { border-radius:12px; padding:9px 10px; font-size:12px; }
+    .kpi-grid { gap:8px; margin-bottom:10px; }
+    .kpi-card { min-height:86px; padding:12px; }
     .kpi-card::after { display:none; }
-    .kpi-card span { font-size:11px; }
-    .kpi-card b { font-size:clamp(18px,2.3vw,25px); margin-top:6px; }
+    .kpi-card b { font-size:clamp(18px, 2.4vw, 25px); margin-top:5px; }
     .kpi-card small { font-size:11px; margin-top:4px; }
-    .calendar-shell, .year-shell, .table-shell { padding:11px; margin-top:10px; }
-    .block-head h3 { font-size:15px; }
-    .block-head span { font-size:11px; }
+    .calendar-shell, .year-shell, .table-shell { padding:12px; margin-top:10px; }
     .calendar-grid { gap:6px; }
-    .weekday { font-size:11px; padding:5px 2px; }
-    .day-card { min-height:78px; border-radius:12px; padding:7px; cursor:pointer; transition:.15s ease; background:#fff !important; }
-    .day-card:not(.empty):hover { border-color:#4b1d78; transform:translateY(-1px); }
-    .day-card.has-data { background:#f3fbf6 !important; border-color:#bfe8d0; }
-    .day-card.selected { outline:2px solid #4b1d78; outline-offset:1px; }
+    .weekday { font-size:10.5px; padding:6px 2px; }
+    .day-card { min-height:86px; border-radius:12px; padding:7px; background:#fff !important; cursor:default; transition:.16s ease; }
+    .day-card.has-data { background:#f2fbf6 !important; cursor:pointer; border-color:rgba(22,128,74,.22); }
+    .day-card.has-data:hover { transform:translateY(-1px); box-shadow:0 8px 18px rgba(22,128,74,.12); }
     .day-num { font-size:12px; }
-    .day-data { font-size:10.5px; }
-    .day-money { font-size:11px; color:#16854f; }
-    .year-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
-    .month-card { border-radius:13px; padding:9px; }
-    .month-card b { font-size:13px; margin-bottom:4px; }
-    .month-card span { font-size:11px; }
-    .data-table { min-width:900px; }
-    .data-table th, .data-table td { padding:8px 9px; font-size:12px; }
-    .data-table th { background:#4b1d78; }
-    .data-table .small-btn { padding:6px 8px; border-radius:8px; font-size:11px; }
-    .bill-link { border:0; background:transparent; padding:0; color:#4b1d78; font-weight:800; text-decoration:underline; cursor:pointer; font-size:inherit; }
-    .admin-grid { display:grid; grid-template-columns:280px 1fr; gap:12px; align-items:start; }
-    .admin-card { border:1px solid #e4dced; border-radius:16px; padding:12px; background:#fff; }
-    .admin-card h3 { margin:0 0 8px; font-size:15px; color:#35145f; }
-    .admin-form { display:grid; gap:8px; }
-    .detail-list { display:grid; gap:6px; font-size:12px; }
-    .detail-list div { display:flex; justify-content:space-between; gap:12px; border-bottom:1px dashed #e4dced; padding-bottom:5px; }
-    .modal-card.wide { width:min(720px,100%); }
-    .modal-card h3 { font-size:16px; }
-    @media (max-width: 920px) { .bill-editor-wrap, .admin-grid { grid-template-columns:1fr; } .side-card { position:static; } .year-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-    @media (max-width: 680px) { html{font-size:13px;} .app-shell{width:min(100% - 16px,1140px);padding-top:8px;} .hero{padding:14px;} .brand-mark{width:40px;height:40px;font-size:18px;} .nav-actions{grid-template-columns:1fr;} .nav-btn{min-height:44px;} .panel{padding:10px;border-radius:14px;} .summary-tools,.kpi-grid{grid-template-columns:1fr 1fr;} .calendar-grid{gap:4px;} .day-card{min-height:68px;padding:5px;} .cashbill-table th,.cashbill-table td{font-size:12px;padding:4px 3px;} .cashbill-table .bill-title-cell{font-size:18px;} .cashbill-table .grade,.cashbill-table .total-label,.cashbill-table .total-amount{font-size:16px;} }
-    @media (max-width: 460px) { .summary-tools,.kpi-grid{grid-template-columns:1fr;} .year-grid{grid-template-columns:1fr;} }
-
-    .nav-actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .nav-actions.admin-open { grid-template-columns:repeat(3,minmax(0,1fr)); }
-    .loading-overlay { background:rgba(14,20,18,.52) !important; }
-    .loading-card { background:#fff !important; }
+    .day-data { font-size:10px; }
+    .day-money { font-size:11px; }
+    .year-grid { grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; }
+    .month-card { padding:10px; border-radius:14px; }
+    .month-card b { font-size:13px; }
+    .data-table th, .data-table td { padding:8px 9px; font-size:11.5px; }
+    .data-table th { background:#4b1d78 !important; }
+    .data-table .small-btn { padding:6px 8px; font-size:11px; }
+    .modal-card { border-radius:18px; padding:16px; background:#fff !important; }
+    .modal-card h3 { font-size:18px; }
+    .modal-card p { font-size:12px; }
+    .wide-modal { width:min(860px, 100%); max-height:86vh; overflow:hidden; }
+    .detail-scroll { max-height:56vh; overflow:auto; border:1px solid rgba(75,29,120,.10); border-radius:14px; background:#fbfbfd; padding:10px; }
+    .detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+    .detail-item { border:1px solid rgba(75,29,120,.10); border-radius:12px; background:#fff; padding:9px; }
+    .detail-item span { display:block; color:#667085; font-size:11px; }
+    .detail-item b { display:block; color:#182018; font-size:14px; margin-top:3px; }
+    .admin-actions-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .admin-dashboard { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+    .admin-box { padding:12px; }
+    .admin-box span { display:block; color:#667085; font-size:11px; font-weight:700; }
+    .admin-box b { display:inline-block; color:#35145f; font-size:22px; margin-top:4px; }
+    .admin-box small { margin-left:5px; color:#667085; }
+    .mt-10 { margin-top:10px; }
+    .click-bill { color:#4b1d78; text-decoration:underline; text-underline-offset:3px; cursor:pointer; background:transparent; border:0; padding:0; font:inherit; font-weight:800; }
+    .admin-only { display:none; }
+    .admin-only.show { display:inline-flex; }
+    .loading-overlay { background:rgba(24,32,24,.55) !important; }
+    .loading-card { background:#fff !important; border-radius:22px; padding:22px 20px; }
     .printer-body { background:#4b1d78 !important; }
-    .progress-line::after { background:#16854f !important; }
-</style>
+    .progress-line::after { background:#16804a !important; }
+    @media (max-width:960px){ .bill-editor-wrap{grid-template-columns:1fr;} .nav-actions{grid-template-columns:repeat(2,minmax(0,1fr));} .admin-nav.show{display:flex;} .year-grid{grid-template-columns:repeat(3,minmax(0,1fr));} .admin-dashboard{grid-template-columns:1fr;} }
+    @media (max-width:640px){ body{font-size:12px;} .app-shell{width:min(100% - 14px,1160px);padding-top:7px;} .hero{padding:14px 12px;border-radius:18px;} .brand-mark{width:38px;height:38px;border-radius:12px;font-size:18px;} .hero h1{font-size:18px;} .nav-actions{grid-template-columns:1fr;gap:7px;} .nav-btn{min-height:42px;font-size:12.5px;} .panel{padding:10px;border-radius:16px;} .cashbill-table{min-width:760px;} .summary-tools,.kpi-grid,.detail-grid{grid-template-columns:1fr;} .calendar-grid{gap:4px;} .day-card{min-height:74px;padding:5px;border-radius:10px;} .year-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+
+  </style>
 </head>
 <body>
   <div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
@@ -889,15 +894,27 @@
 
 
 
+  <div class="modal-backdrop" id="dayDetailModal" aria-hidden="true">
+    <div class="modal-card wide-modal">
+      <h3 id="dayDetailTitle">รายละเอียดรายวัน</h3>
+      <p id="dayDetailSummary">-</p>
+      <div id="dayDetailBody" class="detail-scroll"></div>
+      <div class="modal-actions">
+        <button class="ghost-btn" type="button" onclick="closeDayDetailModal()">ปิด</button>
+        <button class="secondary-btn" type="button" onclick="printSelectedDayFromModal()">🖨️ พิมพ์วันนี้</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="billDetailModal" aria-hidden="true">
-    <div class="modal-card wide">
+    <div class="modal-card wide-modal">
       <h3 id="billDetailTitle">รายละเอียดบิล</h3>
-      <div id="billDetailBody" class="detail-list"></div>
+      <p id="billDetailSummary">-</p>
+      <div id="billDetailBody" class="detail-scroll"></div>
       <div class="modal-actions">
         <button class="ghost-btn" type="button" onclick="closeBillDetailModal()">ปิด</button>
-        <button class="secondary-btn" type="button" id="detailPrintBtn">พิมพ์บิล</button>
-        <button class="primary-btn" type="button" id="detailEditBtn">แก้ไข</button>
-        <button class="danger-btn" type="button" id="detailDeleteBtn">ลบ</button>
+        <button class="secondary-btn" type="button" onclick="printCurrentDetailBill()">🖨️ พิมพ์บิล</button>
+        <button class="primary-btn admin-only" type="button" onclick="editCurrentDetailBill()">แก้ไข</button>
       </div>
     </div>
   </div>
@@ -905,18 +922,26 @@
   <div class="modal-backdrop" id="changePasswordModal" aria-hidden="true">
     <div class="modal-card">
       <h3>เปลี่ยนรหัสผ่านผู้ดูแล</h3>
-      <p>ตั้งรหัสผ่านใหม่สำหรับการจัดการข้อมูล</p>
-      <div class="admin-form">
-        <div class="field-box"><label for="oldAdminPassword">รหัสผ่านเดิม</label><input id="oldAdminPassword" type="password" autocomplete="current-password"></div>
-        <div class="field-box"><label for="newAdminPassword">รหัสผ่านใหม่</label><input id="newAdminPassword" type="password" autocomplete="new-password"></div>
-        <div class="field-box"><label for="confirmAdminPassword">ยืนยันรหัสผ่านใหม่</label><input id="confirmAdminPassword" type="password" autocomplete="new-password"></div>
+      <p>ใช้รหัสผ่านปัจจุบันเพื่อยืนยัน แล้วกำหนดรหัสผ่านใหม่</p>
+      <div class="field-box">
+        <label for="currentAdminPassword">รหัสผ่านปัจจุบัน</label>
+        <input id="currentAdminPassword" type="password" autocomplete="current-password" placeholder="รหัสผ่านเดิม" />
+      </div>
+      <div class="field-box mt-10">
+        <label for="newAdminPassword">รหัสผ่านใหม่</label>
+        <input id="newAdminPassword" type="password" autocomplete="new-password" placeholder="อย่างน้อย 4 ตัวอักษร" />
+      </div>
+      <div class="field-box mt-10">
+        <label for="confirmAdminPassword">ยืนยันรหัสผ่านใหม่</label>
+        <input id="confirmAdminPassword" type="password" autocomplete="new-password" placeholder="กรอกซ้ำอีกครั้ง" />
       </div>
       <div class="modal-actions">
         <button class="ghost-btn" type="button" onclick="closeChangePasswordModal()">ยกเลิก</button>
-        <button class="primary-btn" type="button" onclick="changeAdminPassword()">บันทึกรหัสผ่าน</button>
+        <button class="primary-btn" type="button" onclick="changeAdminPassword()">บันทึกรหัสผ่านใหม่</button>
       </div>
     </div>
   </div>
+
 
   <div class="toast-stack" id="toastStack"></div>
 
@@ -943,9 +968,9 @@
     </section>
 
     <nav class="nav-actions" aria-label="เมนูหลัก">
-      <button class="nav-btn active" id="btnBill" type="button" onclick="switchPanel('bill')"><span class="icon">🧾</span> หน้ากรอกบิลเงินสด</button>
-      <button class="nav-btn" id="btnSummary" type="button" onclick="switchPanel('summary')"><span class="icon">📊</span> หน้าสรุป</button>
-      <button class="nav-btn" id="btnAdminPanel" type="button" onclick="switchPanel('admin')"><span class="icon">🛠️</span> จัดการบิล</button>
+      <button class="nav-btn active" id="btnBill" type="button" onclick="switchPanel('bill')"><span class="icon">🧾</span> กรอกบิล</button>
+      <button class="nav-btn" id="btnSummary" type="button" onclick="switchPanel('summary')"><span class="icon">📊</span> สรุปข้อมูล</button>
+      <button class="nav-btn admin-nav" id="btnAdmin" type="button" onclick="switchPanel('admin')"><span class="icon">🛠️</span> จัดการ Admin</button>
     </nav>
 
     <section class="panel active" id="panelBill">
@@ -965,13 +990,13 @@
                 <tr><td colspan="9" class="bill-title-cell">บิลเงินสด TK พัฒนาพืชผล</td></tr>
                 <tr>
                   <td class="bold center">ชื่อลูกค้า</td>
-                  <td colspan="2"><input class="bill-input" id="customerName" value="พ่อศรี" required></td>
+                  <td colspan="2"><input class="bill-input" id="customerName" value="" required></td>
                   <td class="bold center">เวลา</td>
-                  <td colspan="2"><input class="bill-time" id="billTime" type="time" required></td>
-                  <td colspan="3"><input class="bill-date" id="billDate" type="date" required></td>
+                  <td colspan="2"><input class="bill-time thai-display-input" id="billTime" type="text" inputmode="numeric" placeholder="16:12 น." required></td>
+                  <td colspan="3"><input class="bill-date thai-display-input" id="billDate" type="text" placeholder="7 มิ.ย. 2569" required></td>
                 </tr>
                 <tr>
-                  <td colspan="9" class="center bold">โทร <input class="bill-input soft" id="sellerPhone" value="080.825.6553" style="display:inline-block;width:170px;"> (น้ำหนัก <input class="bill-input soft" id="basketKg" type="number" inputmode="decimal" min="1" step="0.01" value="27" style="display:inline-block;width:70px;"> Kg. = 1 ตระกร้า)</td>
+                  <td colspan="9" class="center bold">โทร <input class="bill-input soft" id="sellerPhone" value="080.825.6553" style="display:inline-block;width:170px;"> (น้ำหนัก <input class="bill-input soft" id="basketKg" type="text" inputmode="decimal" value="27" style="display:inline-block;width:70px;"> Kg. = 1 ตระกร้า)</td>
                 </tr>
                 <tr>
                   <th class="head-cell">เกรด</th>
@@ -983,46 +1008,46 @@
                 </tr>
                 <tr data-grade="AA">
                   <td class="grade">AA</td>
-                  <td><input class="bill-input right row-basket" type="number" inputmode="decimal" min="0" step="0.01" value="0"></td>
+                  <td><input class="bill-input right row-basket" type="text" inputmode="decimal" value="0"></td>
                   <td class="center bold">เศษ</td>
-                  <td><input class="bill-input right row-scrap" type="number" inputmode="decimal" min="0" step="0.01" value="0"></td>
+                  <td><input class="bill-input right row-scrap" type="text" inputmode="decimal" value="0"></td>
                   <td class="center">=</td>
                   <td class="row-weight center bold">-</td>
                   <td class="center bold">Kg.</td>
-                  <td><input class="bill-input right row-price" type="number" inputmode="decimal" min="0" step="0.01" value="17"></td>
+                  <td><input class="bill-input right row-price" type="text" inputmode="decimal" value="17"></td>
                   <td class="row-amount amount">0.00</td>
                 </tr>
                 <tr data-grade="A">
                   <td class="grade">A</td>
-                  <td><input class="bill-input right row-basket" type="number" inputmode="decimal" min="0" step="0.01" value="0"></td>
+                  <td><input class="bill-input right row-basket" type="text" inputmode="decimal" value="0"></td>
                   <td class="center bold">เศษ</td>
-                  <td><input class="bill-input right row-scrap" type="number" inputmode="decimal" min="0" step="0.01" value="0"></td>
+                  <td><input class="bill-input right row-scrap" type="text" inputmode="decimal" value="0"></td>
                   <td class="center">=</td>
                   <td class="row-weight center bold">-</td>
                   <td class="center bold">Kg.</td>
-                  <td><input class="bill-input right row-price" type="number" inputmode="decimal" min="0" step="0.01" value="9"></td>
+                  <td><input class="bill-input right row-price" type="text" inputmode="decimal" value="9"></td>
                   <td class="row-amount amount">0.00</td>
                 </tr>
                 <tr data-grade="B">
                   <td class="grade">B</td>
-                  <td><input class="bill-input right row-basket" type="number" inputmode="decimal" min="0" step="0.01" value="0"></td>
+                  <td><input class="bill-input right row-basket" type="text" inputmode="decimal" value="0"></td>
                   <td class="center bold">เศษ</td>
-                  <td><input class="bill-input right row-scrap" type="number" inputmode="decimal" min="0" step="0.01" value="0"></td>
+                  <td><input class="bill-input right row-scrap" type="text" inputmode="decimal" value="0"></td>
                   <td class="center">=</td>
                   <td class="row-weight center bold">-</td>
                   <td class="center bold">Kg.</td>
-                  <td><input class="bill-input right row-price" type="number" inputmode="decimal" min="0" step="0.01" value="4"></td>
+                  <td><input class="bill-input right row-price" type="text" inputmode="decimal" value="4"></td>
                   <td class="row-amount amount">0.00</td>
                 </tr>
                 <tr data-grade="C">
                   <td class="grade">C</td>
-                  <td><input class="bill-input right row-basket" type="number" inputmode="decimal" min="0" step="0.01" value="0"></td>
+                  <td><input class="bill-input right row-basket" type="text" inputmode="decimal" value="0"></td>
                   <td class="center bold">เศษ</td>
-                  <td><input class="bill-input right row-scrap" type="number" inputmode="decimal" min="0" step="0.01" value="0"></td>
+                  <td><input class="bill-input right row-scrap" type="text" inputmode="decimal" value="0"></td>
                   <td class="center">=</td>
                   <td class="row-weight center bold">-</td>
                   <td class="center bold">Kg.</td>
-                  <td><input class="bill-input right row-price" type="number" inputmode="decimal" min="0" step="0.01" value="1"></td>
+                  <td><input class="bill-input right row-price" type="text" inputmode="decimal" value="1"></td>
                   <td class="row-amount amount">0.00</td>
                 </tr>
                 <tr>
@@ -1129,31 +1154,28 @@
       </div>
     </section>
 
-
     <section class="panel" id="panelAdmin">
       <div class="section-title">
         <div>
-          <h2>หน้าจัดการผู้ดูแล</h2>
-          <p>จัดการบิล แก้ไข ลบ ดูรายละเอียด และเปลี่ยนรหัสผ่าน</p>
+          <h2>หน้าจัดการสำหรับ Admin</h2>
+          <p>จัดการบิล ดูรายละเอียด แก้ไข ลบ และเปลี่ยนรหัสผ่านผู้ดูแล</p>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-          <button class="secondary-btn" type="button" onclick="openChangePasswordModal()">🔑 เปลี่ยนพาสเวิด</button>
-          <button class="secondary-btn" type="button" onclick="loadSummary()">🔄 โหลดข้อมูล</button>
+        <div class="admin-actions-row">
+          <button class="secondary-btn" type="button" onclick="openChangePasswordModal()">🔑 เปลี่ยนรหัสผ่าน</button>
+          <button class="ghost-btn" type="button" onclick="adminLogout()">ออกจากระบบ</button>
         </div>
       </div>
-      <div class="admin-grid">
-        <aside class="admin-card">
-          <h3>ตัวกรองข้อมูล</h3>
-          <div class="admin-form">
-            <div class="field-box"><label for="adminSearch">ค้นหาเลขที่บิล / ลูกค้า</label><input id="adminSearch" type="search" placeholder="ค้นหา" oninput="renderAdminTable()"></div>
-            <div class="field-box"><label for="adminDate">เลือกวันที่</label><input id="adminDate" type="date" onchange="renderAdminTable()"></div>
-            <button class="ghost-btn" type="button" onclick="document.getElementById('adminSearch').value='';document.getElementById('adminDate').value='';renderAdminTable();">ล้างตัวกรอง</button>
-          </div>
-        </aside>
-        <div class="admin-card">
-          <div class="block-head"><h3>จัดการบิล</h3><span id="adminTableSummary">-</span></div>
-          <div class="table-responsive" id="adminTableContainer"></div>
+      <div class="admin-dashboard">
+        <div class="admin-box"><span>จำนวนบิลทั้งหมด</span><b id="adminTotalBills">0</b></div>
+        <div class="admin-box"><span>น้ำหนักรวม</span><b id="adminTotalWeight">0.00</b><small>Kg.</small></div>
+        <div class="admin-box"><span>ยอดเงินรวม</span><b id="adminTotalAmount">0.00</b><small>บาท</small></div>
+      </div>
+      <div class="table-shell admin-table-shell">
+        <div class="block-head">
+          <h3>จัดการบิลทั้งหมด</h3>
+          <span>คลิกเลขที่บิลเพื่อดูรายละเอียด</span>
         </div>
+        <div class="table-responsive" id="adminTableContainer"></div>
       </div>
     </section>
 
@@ -1164,7 +1186,7 @@
      * ตั้งค่า URL ของ Google Apps Script Web App ที่ Deploy แล้วเท่านั้น
      * ห้ามใช้ localStorage เพื่อป้องกัน URL ค้างในบางเครื่อง
      **********************************************************************/
-    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxtC2wHUUOriU9F_Xsz1K4lUxkX1EgoD_VZPhosP99_iIp-TR_SOgomYGS3YJ0JXP2I/exec';
+    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyi-uPM8sKHA0WRamojW6aFIIw-hesmqTVSrK2dUQApQHt53P-21HLBNovYyCXTI9M5/exec';
 
     const DEFAULT_GRADES = ['AA', 'A', 'B', 'C'];
     const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -1196,9 +1218,40 @@
 
     function setDefaultDateTime() {
       const now = new Date();
-      document.getElementById('billDate').value = toInputDate(now);
+      setBillDateValue(toInputDate(now));
       document.getElementById('summaryDate').value = toInputDate(now);
-      document.getElementById('billTime').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      setBillTimeValue(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`);
+    }
+
+
+    function setBillDateValue(isoDate) {
+      const input = document.getElementById('billDate');
+      const normalized = normalizeDate(isoDate) || toInputDate(new Date());
+      input.dataset.iso = normalized;
+      input.value = formatThaiDate(normalized);
+    }
+
+    function setBillTimeValue(timeValue) {
+      const input = document.getElementById('billTime');
+      const normalized = normalizeTime(timeValue) || `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
+      input.dataset.time = normalized;
+      input.value = `${normalized} น.`;
+    }
+
+    function getBillDateValue() {
+      const input = document.getElementById('billDate');
+      const parsed = normalizeDate(input.value) || input.dataset.iso || toInputDate(new Date());
+      input.dataset.iso = parsed;
+      if (input.value !== formatThaiDate(parsed)) input.value = formatThaiDate(parsed);
+      return parsed;
+    }
+
+    function getBillTimeValue() {
+      const input = document.getElementById('billTime');
+      const parsed = normalizeTime(input.value) || input.dataset.time || `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
+      input.dataset.time = parsed;
+      if (input.value !== `${parsed} น.`) input.value = `${parsed} น.`;
+      return parsed;
     }
 
     function fillMonthYearSelectors() {
@@ -1219,18 +1272,18 @@
         input.addEventListener('input', calculateBill);
         input.addEventListener('change', calculateBill);
       });
+      const dateInput = document.getElementById('billDate');
+      const timeInput = document.getElementById('billTime');
+      dateInput.addEventListener('blur', getBillDateValue);
+      timeInput.addEventListener('blur', getBillTimeValue);
     }
 
     function switchPanel(panel) {
       document.getElementById('panelBill').classList.toggle('active', panel === 'bill');
       document.getElementById('panelSummary').classList.toggle('active', panel === 'summary');
-      const adminPanel = document.getElementById('panelAdmin');
-      if (adminPanel) adminPanel.classList.toggle('active', panel === 'admin');
       document.getElementById('btnBill').classList.toggle('active', panel === 'bill');
       document.getElementById('btnSummary').classList.toggle('active', panel === 'summary');
-      const adminBtn = document.getElementById('btnAdminPanel');
-      if (adminBtn) adminBtn.classList.toggle('active', panel === 'admin');
-      if (panel === 'summary' || panel === 'admin') loadSummary();
+      if (panel === 'summary') loadSummary();
     }
 
     function calculateBill() {
@@ -1282,8 +1335,8 @@
         customerName: document.getElementById('customerName').value.trim(),
         sellerPhone: document.getElementById('sellerPhone').value.trim(),
         customerPhone: '',
-        date: document.getElementById('billDate').value,
-        time: document.getElementById('billTime').value,
+        date: getBillDateValue(),
+        time: getBillTimeValue(),
         basketKg: totals.basketKg,
         rows,
         totals
@@ -1356,7 +1409,7 @@
         row.querySelector('.row-basket').value = '0';
         row.querySelector('.row-scrap').value = '0';
       });
-      document.getElementById('customerName').value = 'พ่อศรี';
+      document.getElementById('customerName').value = '';
       editingBillId = '';
       editingCreatedAt = '';
       if (resetDate) setDefaultDateTime();
@@ -1395,7 +1448,6 @@
       renderCalendar(month, year);
       renderYear(year);
       renderTable();
-      renderAdminTable();
     }
 
     function renderCalendar(month, year) {
@@ -1420,12 +1472,10 @@
         const classes = ['day-card'];
         if (dateStr === today) classes.push('today');
         if (recs.length) classes.push('has-data');
-        const selected = document.getElementById('summaryDate').value === dateStr;
-        if (selected) classes.push('selected');
-        html += `<button type="button" class="${classes.join(' ')}" onclick="openDayDetails('${dateStr}')" title="ดูรายละเอียดวันที่ ${formatThaiDate(dateStr)}">
+        html += `<div class="${classes.join(' ')}">
           <div class="day-num">${day}</div>
           ${recs.length ? `<div class="day-data">${formatNumber(totals.totalWeightKg, 1)} Kg.<br>${formatNumber(totals.totalBaskets, 1)} ตะกร้า<br>${recs.length} บิล</div><div class="day-money">${formatNumber(totals.totalAmount, 0)} ฿</div>` : '<div class="day-data">-</div>'}
-        </button>`;
+        </div>`;
       }
       grid.innerHTML = html;
     }
@@ -1464,7 +1514,7 @@
         <tbody>${records.map(b => {
           const rows = Object.fromEntries((b.rows || []).map(r => [r.grade, r]));
           return `<tr>
-            <td><button class="bill-link" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">${escapeHtml(b.billId || '-')}</button></td>
+            <td><b>${escapeHtml(b.billId || '-')}</b></td>
             <td>${formatThaiDate(b.date)}</td>
             <td>${formatThaiTime(b.time)}</td>
             <td>${escapeHtml(b.customerName || '-')}</td>
@@ -1483,126 +1533,6 @@
         }).join('')}</tbody></table>`;
     }
 
-    function renderAdminTable() {
-      const container = document.getElementById('adminTableContainer');
-      if (!container) return;
-      if (!adminState.loggedIn) {
-        container.innerHTML = '<div class="empty-state">กรุณาเข้าสู่ระบบผู้ดูแลก่อนจัดการข้อมูล</div>';
-        setText('adminTableSummary', '-');
-        return;
-      }
-      const q = (document.getElementById('adminSearch')?.value || '').trim().toLowerCase();
-      const date = document.getElementById('adminDate')?.value || '';
-      const records = allBills.filter(b => {
-        const textOk = !q || String(b.billId || '').toLowerCase().includes(q) || String(b.customerName || '').toLowerCase().includes(q);
-        const dateOk = !date || normalizeDate(b.date) === date;
-        return textOk && dateOk;
-      });
-      setText('adminTableSummary', `${records.length} รายการ`);
-      if (!records.length) {
-        container.innerHTML = '<div class="empty-state">ไม่พบข้อมูลบิลตามเงื่อนไข</div>';
-        return;
-      }
-      container.innerHTML = `<table class="data-table">
-        <thead><tr><th>เลขที่บิล</th><th>วันที่</th><th>เวลา</th><th>ลูกค้า</th><th>ตระกร้า</th><th>น้ำหนัก</th><th>ยอดเงิน</th><th>จัดการ</th></tr></thead>
-        <tbody>${records.map(b => `<tr>
-          <td><button class="bill-link" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">${escapeHtml(b.billId || '-')}</button></td>
-          <td>${formatThaiDate(b.date)}</td>
-          <td>${formatThaiTime(b.time)}</td>
-          <td>${escapeHtml(b.customerName || '-')}</td>
-          <td class="num">${formatNumber(getTotal(b, 'totalBaskets'), 2)}</td>
-          <td class="num">${formatNumber(getTotal(b, 'totalWeightKg'), 2)} Kg.</td>
-          <td class="num">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td>
-          <td><button class="small-btn" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">ดู</button> <button class="small-btn edit-btn" type="button" onclick="editBill('${escapeAttr(b.billId || '')}')">แก้ไข</button> <button class="small-btn delete-btn" type="button" onclick="deleteBill('${escapeAttr(b.billId || '')}')">ลบ</button></td>
-        </tr>`).join('')}</tbody></table>`;
-    }
-
-    function openDayDetails(dateStr) {
-      document.getElementById('summaryDate').value = dateStr;
-      renderSummary();
-      const records = allBills.filter(b => normalizeDate(b.date) === dateStr);
-      const totals = sumRecords(records);
-      const body = document.getElementById('billDetailBody');
-      document.getElementById('billDetailTitle').textContent = `รายละเอียดวันที่ ${formatThaiDate(dateStr)}`;
-      if (!records.length) {
-        body.innerHTML = '<div><span>สถานะ</span><b>ไม่มีข้อมูลการซื้อในวันนี้</b></div>';
-      } else {
-        body.innerHTML = `
-          <div><span>จำนวนบิล</span><b>${records.length} รายการ</b></div>
-          <div><span>น้ำหนักรวม</span><b>${formatNumber(totals.totalWeightKg, 2)} Kg.</b></div>
-          <div><span>จำนวนตระกร้า</span><b>${formatNumber(totals.totalBaskets, 2)}</b></div>
-          <div><span>ยอดเงินรวม</span><b>${formatNumber(totals.totalAmount, 2)} บาท</b></div>
-          <div style="display:block;border-bottom:0;padding-top:6px"><div class="table-responsive"><table class="data-table" style="min-width:620px"><thead><tr><th>เลขที่บิล</th><th>เวลา</th><th>ลูกค้า</th><th>น้ำหนัก</th><th>ยอดเงิน</th></tr></thead><tbody>${records.map(b => `<tr><td><button class="bill-link" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">${escapeHtml(b.billId || '-')}</button></td><td>${formatThaiTime(b.time)}</td><td>${escapeHtml(b.customerName || '-')}</td><td class="num">${formatNumber(getTotal(b, 'totalWeightKg'), 2)}</td><td class="num">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td></tr>`).join('')}</tbody></table></div></div>`;
-      }
-      document.getElementById('detailPrintBtn').onclick = () => printDailySummary();
-      document.getElementById('detailEditBtn').style.display = 'none';
-      document.getElementById('detailDeleteBtn').style.display = 'none';
-      document.getElementById('billDetailModal').classList.add('active');
-    }
-
-    function openBillDetail(billId) {
-      const record = allBills.find(b => String(b.billId) === String(billId));
-      if (!record) return showToast('ไม่พบข้อมูลบิล', 'error');
-      const rows = Object.fromEntries((record.rows || []).map(r => [r.grade, r]));
-      document.getElementById('billDetailTitle').textContent = `รายละเอียดบิล ${record.billId || ''}`;
-      document.getElementById('billDetailBody').innerHTML = `
-        <div><span>เลขที่บิล</span><b>${escapeHtml(record.billId || '-')}</b></div>
-        <div><span>วันที่</span><b>${formatThaiDate(record.date)}</b></div>
-        <div><span>เวลา</span><b>${formatThaiTime(record.time)}</b></div>
-        <div><span>ลูกค้า</span><b>${escapeHtml(record.customerName || '-')}</b></div>
-        <div><span>เบอร์ร้าน</span><b>${escapeHtml(record.sellerPhone || '-')}</b></div>
-        <div><span>AA</span><b>${escapeHtml(gradeText(rows.AA))}</b></div>
-        <div><span>A</span><b>${escapeHtml(gradeText(rows.A))}</b></div>
-        <div><span>B</span><b>${escapeHtml(gradeText(rows.B))}</b></div>
-        <div><span>C</span><b>${escapeHtml(gradeText(rows.C))}</b></div>
-        <div><span>ตระกร้ารวม</span><b>${formatNumber(getTotal(record, 'totalBaskets'), 2)}</b></div>
-        <div><span>น้ำหนักรวม</span><b>${formatNumber(getTotal(record, 'totalWeightKg'), 2)} Kg.</b></div>
-        <div><span>ยอดเงินรวม</span><b>${formatNumber(getTotal(record, 'totalAmount'), 2)} บาท</b></div>`;
-      document.getElementById('detailPrintBtn').onclick = () => printExisting(record);
-      document.getElementById('detailEditBtn').style.display = adminState.loggedIn ? 'inline-flex' : 'none';
-      document.getElementById('detailDeleteBtn').style.display = adminState.loggedIn ? 'inline-flex' : 'none';
-      document.getElementById('detailEditBtn').onclick = () => { closeBillDetailModal(); editBill(record.billId); };
-      document.getElementById('detailDeleteBtn').onclick = () => { closeBillDetailModal(); deleteBill(record.billId); };
-      document.getElementById('billDetailModal').classList.add('active');
-    }
-
-    function closeBillDetailModal() {
-      document.getElementById('billDetailModal').classList.remove('active');
-    }
-
-    function openChangePasswordModal() {
-      if (!adminState.loggedIn) return showToast('กรุณาเข้าสู่ระบบผู้ดูแลก่อนเปลี่ยนรหัสผ่าน', 'error');
-      document.getElementById('oldAdminPassword').value = adminState.password || '';
-      document.getElementById('newAdminPassword').value = '';
-      document.getElementById('confirmAdminPassword').value = '';
-      document.getElementById('changePasswordModal').classList.add('active');
-      document.getElementById('newAdminPassword').focus();
-    }
-
-    function closeChangePasswordModal() {
-      document.getElementById('changePasswordModal').classList.remove('active');
-    }
-
-    async function changeAdminPassword() {
-      const oldPassword = document.getElementById('oldAdminPassword').value;
-      const newPassword = document.getElementById('newAdminPassword').value;
-      const confirmPassword = document.getElementById('confirmAdminPassword').value;
-      if (!newPassword || newPassword.length < 4) return showToast('รหัสผ่านใหม่ควรมีอย่างน้อย 4 ตัวอักษร', 'error');
-      if (newPassword !== confirmPassword) return showToast('ยืนยันรหัสผ่านใหม่ไม่ตรงกัน', 'error');
-      try {
-        showLoading('admin');
-        await gasPost('change_admin_password', { password: oldPassword, newPassword });
-        adminState.password = newPassword;
-        closeChangePasswordModal();
-        showToast('เปลี่ยนพาสเวิดผู้ดูแลสำเร็จ', 'success');
-      } catch (err) {
-        showToast(err.message || 'เปลี่ยนรหัสผ่านไม่สำเร็จ', 'error');
-      } finally {
-        hideLoading();
-      }
-    }
-
-
     function gradeText(row) {
       if (!row) return '-';
       const weight = n(row.weightKg);
@@ -1619,8 +1549,8 @@
       editingCreatedAt = record.createdAt || '';
       document.getElementById('customerName').value = record.customerName || '';
       document.getElementById('sellerPhone').value = record.sellerPhone || '080.825.6553';
-      document.getElementById('billDate').value = normalizeDate(record.date) || toInputDate(new Date());
-      document.getElementById('billTime').value = normalizeTime(record.time) || `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
+      setBillDateValue(normalizeDate(record.date) || toInputDate(new Date()));
+      setBillTimeValue(normalizeTime(record.time) || `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`);
       document.getElementById('basketKg').value = n(record.basketKg) || 27;
       const byGrade = Object.fromEntries((record.rows || []).map(r => [r.grade, r]));
       document.querySelectorAll('tr[data-grade]').forEach(row => {
@@ -1661,11 +1591,8 @@
         adminState.loggedIn = true;
         adminState.password = password;
         document.getElementById('adminPill').classList.add('active');
-        document.getElementById('btnAdminPanel').classList.add('visible');
-        document.querySelector('.nav-actions').classList.add('admin-open');
         closeAdminModal();
         renderTable();
-        renderAdminTable();
         showToast('เข้าสู่ระบบผู้ดูแลสำเร็จ', 'success');
       } catch (err) {
         showToast(err.message || 'เข้าสู่ระบบผู้ดูแลไม่สำเร็จ', 'error');
@@ -1843,27 +1770,189 @@
       const copyTwo = buildReceiptBlock(record);
       return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>บิลเงินสด ${escapeHtml(record.billId || '')}</title>
       <style>
-        @page { size: A4 portrait; margin: 6mm; }
+        @page { size: A4 portrait; margin: 8mm; }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: 'TH Sarabun New', 'Sarabun', Arial, sans-serif; color:#111; background:#fff; }
-        .page { width: 198mm; height: 285mm; margin: 0 auto; display:flex; flex-direction:column; gap:4mm; overflow:hidden; }
-        .receipt-copy { width:100%; height: calc((285mm - 4mm) / 2); page-break-inside: avoid; border: 1.2px solid #111; overflow:hidden; }
-        .meta-line { display:flex; justify-content:space-between; font: 700 8.5pt Arial, sans-serif; padding: 1mm 1mm .4mm; color:#555; height:4.5mm; }
-        table { width:100%; height:calc(100% - 4.5mm); border-collapse: collapse; table-layout: fixed; }
+        .page { width: 194mm; margin: 0 auto; }
+        .receipt-copy { width:100%; margin: 0 0 10mm; page-break-inside: avoid; border: 1.5px solid #111; }
+        .meta-line { display:flex; justify-content:space-between; font: 700 11pt Arial, sans-serif; padding: 2mm 1mm 0; color:#555; }
+        table { width:100%; border-collapse: collapse; table-layout: fixed; }
         col:nth-child(1) { width:9%; } col:nth-child(2) { width:14%; } col:nth-child(3) { width:11%; } col:nth-child(4) { width:11%; } col:nth-child(5) { width:8%; } col:nth-child(6) { width:13%; } col:nth-child(7) { width:7%; } col:nth-child(8) { width:12%; } col:nth-child(9) { width:15%; }
-        th, td { border: 1px solid #111; padding: .9mm 1mm; font-size: 13.8pt; line-height: .95; vertical-align: middle; overflow:hidden; overflow-wrap:anywhere; word-break:break-word; }
-        .title { background:#d8d8d8; font-size: 22pt; font-weight: 800; text-align:center; padding: 1.2mm; }
-        .head { background:#d8d8d8; font-weight:800; text-align:center; white-space:normal; font-size:12.5pt; }
+        th, td { border: 1.3px solid #111; padding: 1.8mm 1.6mm; font-size: 18.5pt; line-height: 1.03; vertical-align: middle; overflow:hidden; overflow-wrap:anywhere; word-break:break-word; }
+        .title { background:#d8d8d8; font-size: 27pt; font-weight: 800; text-align:center; padding: 2.3mm; }
+        .head { background:#d8d8d8; font-weight:800; text-align:center; white-space:nowrap; }
         .center { text-align:center; } .right { text-align:right; } .bold { font-weight:800; }
-        .grade { text-align:center; font-weight:800; font-size:17pt; }
-        .sub-label { text-align:right; font-weight:800; white-space:normal; font-size:12.8pt; }
-        .total-label { background:#d8d8d8; font-size:18pt; font-weight:800; text-align:center; }
-        .total-amount { color:#b41710; font-weight:800; text-align:right; font-size:18pt; }
-        .no-print { padding:7px 0;text-align:center;font-family:Arial,sans-serif; }
-        .no-print button { padding:8px 14px;border:0;border-radius:8px;background:#4b1d78;color:#fff;font-weight:700; }
-        @media print { .no-print { display:none; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page{height:285mm;} }
-      </style></head><body>
-        <div class="no-print"><button onclick="window.print()">พิมพ์บิล</button></div>
+        .grade { text-align:center; font-weight:800; font-size:22pt; }
+        .sub-label { text-align:right; font-weight:800; white-space:nowrap; }
+        .total-label { background:#d8d8d8; font-size:24pt; font-weight:800; text-align:center; }
+        .total-amount { color:#b41710; font-weight:800; text-align:right; font-size:22pt; }
+        .small { font-size:16pt; }
+        @media print { .no-print { display:none; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    
+
+    /* ===== Professional purple-green-white refresh ===== */
+    :root {
+      --bg: #f7f5fb;
+      --paper: #ffffff;
+      --paper-2: #fbfffd;
+      --ink: #182018;
+      --muted: #667085;
+      --line: #151515;
+      --brand: #4b1d78;
+      --brand-2: #6d35a2;
+      --gold: #21a366;
+      --gold-soft: #e8f7ef;
+      --green: #14804a;
+      --danger: #b42318;
+      --ok: #14804a;
+      --shadow: 0 22px 70px rgba(38, 20, 70, .14);
+    }
+    body {
+      background:
+        radial-gradient(circle at 8% 0%, rgba(105, 56, 171, .18), transparent 28vw),
+        radial-gradient(circle at 92% 12%, rgba(33, 163, 102, .16), transparent 30vw),
+        linear-gradient(180deg, #faf7ff 0%, #f3fbf7 100%);
+    }
+    .hero {
+      background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(248,245,255,.92));
+      border-color: rgba(75, 29, 120, .14);
+      padding: 24px 22px;
+    }
+    .hero::before { background: radial-gradient(circle, rgba(33, 163, 102, .18), transparent 62%); }
+    .brand-mark { background: linear-gradient(145deg, #4b1d78, #14804a); box-shadow: 0 14px 34px rgba(75, 29, 120, .24); }
+    .kicker { color: var(--green); letter-spacing: .03em; text-transform: none; }
+    .hero h1 { color: #35145f; }
+    .hero p { max-width: 720px; }
+    .hero-badges { display: none; }
+    .admin-key { border-color: rgba(75, 29, 120, .12); color: rgba(75, 29, 120, .42); background: rgba(255,255,255,.48); }
+    .admin-key:hover { color: #35145f; }
+    .admin-pill { border-color: rgba(20, 128, 74, .22); color: #0f6b3f; background: rgba(232,247,239,.86); }
+    .nav-btn { border-color: rgba(75,29,120,.12); color: #35145f; background: rgba(255,255,255,.86); box-shadow: 0 14px 34px rgba(38,20,70,.08); }
+    .nav-btn.active, .nav-btn:hover { background: linear-gradient(135deg, #4b1d78, #14804a); color: #fff; box-shadow: 0 18px 42px rgba(75,29,120,.24); }
+    .panel { background: rgba(255,255,255,.86); border-color: rgba(75,29,120,.10); }
+    .side-card, .calendar-shell, .year-shell, .table-shell, .kpi-card { background: rgba(255,255,255,.88); border-color: rgba(75,29,120,.10); box-shadow: 0 14px 34px rgba(38,20,70,.07); }
+    .mini-icon { background: #e8f7ef; color: #14804a; }
+    .primary-btn { color: #fff; background: linear-gradient(135deg, #4b1d78, #14804a); box-shadow: 0 16px 30px rgba(75,29,120,.22); }
+    .secondary-btn { color: #35145f; background: #eee7f8; }
+    .ghost-btn { color: #35145f; background: rgba(255,255,255,.84); border: 1px solid rgba(75,29,120,.14); }
+    .field-box input, .field-box select { border-color: rgba(75,29,120,.14); color: #24103d; background: rgba(255,255,255,.9); }
+    .field-box input:focus, .field-box select:focus { border-color: rgba(20,128,74,.50); box-shadow: 0 0 0 4px rgba(33,163,102,.13); }
+    .data-table th { background: #4b1d78; color:#fff; }
+    .data-table .small-btn { background: #eee7f8; color: #35145f; }
+    .data-table .edit-btn { background: #e8f7ef; color: #0f6b3f; }
+    .data-table .delete-btn { background: #fee4e2; color: #b42318; }
+    .day-card { background: #ffffff; border-color: rgba(75,29,120,.10); }
+    .day-card.has-data { background: linear-gradient(180deg, #ffffff, #eaf8f0); }
+    .day-card.today { border-color: rgba(75,29,120,.36); box-shadow: inset 0 0 0 2px rgba(75,29,120,.10); }
+    .day-num { color: #35145f; }
+    .day-money { color: #14804a; }
+    .month-card { background: #ffffff; border-color: rgba(75,29,120,.10); }
+    .loading-overlay { background: radial-gradient(circle at top, rgba(75,29,120,.22), transparent 38%), rgba(12,20,16,.50); }
+    .loading-card { background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(244,255,249,.96)); }
+    .printer-body { background: linear-gradient(145deg, #4b1d78, #14804a); }
+    .progress-line { background: rgba(75,29,120,.12); }
+    .progress-line::after { background: linear-gradient(90deg, transparent, #14804a, transparent); }
+    .cashbill-table th, .cashbill-table td { overflow: hidden; overflow-wrap: anywhere; word-break: break-word; }
+    .cashbill-table .head-cell { white-space: normal; }
+    .cashbill-table .sub-label { white-space: normal; }
+    .bill-input, .bill-date, .bill-time { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .daily-print-btn { white-space: nowrap; }
+
+
+    /* ===== Final compact professional refresh: no gradients ===== */
+    :root {
+      --bg:#f6f4fa; --paper:#ffffff; --paper-2:#f9fbfa; --ink:#182018; --muted:#667085;
+      --brand:#4b1d78; --brand-2:#5f2b90; --green:#16804a; --gold:#16804a; --gold-soft:#e8f7ef;
+      --shadow:0 12px 32px rgba(39, 25, 70, .10); --radius:18px;
+    }
+    body { background:#f6f4fa !important; font-size:13px; }
+    .app-shell { width:min(1160px, calc(100% - 24px)); padding:12px 0 38px; }
+    .hero { background:#ffffff !important; border-radius:22px; padding:16px 18px; box-shadow:var(--shadow); }
+    .hero::before { display:none !important; }
+    .brand-mark { width:46px; height:46px; border-radius:14px; background:#4b1d78 !important; box-shadow:none; font-size:22px; }
+    .kicker { font-size:10.5px; margin-bottom:2px; color:#16804a; }
+    .hero h1 { font-size:clamp(18px, 2.8vw, 28px); line-height:1.18; color:#35145f; }
+    .hero p { font-size:12px; margin-top:4px; }
+    .admin-key { width:34px; height:34px; border-radius:12px; top:12px; right:12px; font-size:16px; background:#f7f4fb !important; backdrop-filter:none; }
+    .admin-pill { top:52px; right:12px; font-size:11px; padding:5px 8px; background:#e8f7ef; }
+    .nav-actions { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; margin:10px 0 12px; }
+    .nav-btn { min-height:48px; border-radius:14px; font-size:13px; font-weight:700; gap:7px; background:#fff !important; box-shadow:0 8px 20px rgba(39,25,70,.07); }
+    .nav-btn .icon { font-size:17px; }
+    .nav-btn.active, .nav-btn:hover { background:#4b1d78 !important; color:#fff; transform:none; box-shadow:0 10px 24px rgba(75,29,120,.18); }
+    .admin-nav { display:none; }
+    .admin-nav.show { display:flex; }
+    .panel { border-radius:18px; padding:14px; background:#fff !important; box-shadow:var(--shadow); backdrop-filter:none; }
+    .section-title { margin-bottom:10px; }
+    .section-title h2 { font-size:clamp(16px, 2.4vw, 21px); }
+    .section-title p { font-size:11.5px; }
+    .bill-editor-wrap { grid-template-columns:minmax(0, 1fr) 260px; gap:12px; }
+    .cashbill-table th, .cashbill-table td { padding:5px 5px; font-size:clamp(13px, 1.45vw, 17px); line-height:1.12; border-width:1.2px; }
+    .cashbill-table .bill-title-cell { font-size:clamp(18px, 2.6vw, 27px); padding:7px; }
+    .cashbill-table .grade { font-size:clamp(17px, 2.2vw, 24px); }
+    .cashbill-table .total-label { font-size:clamp(17px, 2.2vw, 24px); }
+    .cashbill-table .total-amount { font-size:clamp(17px, 2.2vw, 23px); }
+    .side-card, .calendar-shell, .year-shell, .table-shell, .kpi-card, .admin-box { background:#fff !important; border-color:rgba(75,29,120,.10); border-radius:16px; box-shadow:0 8px 22px rgba(39,25,70,.06); }
+    .side-card { padding:12px; top:12px; }
+    .side-card h3, .block-head h3 { font-size:15px; }
+    .mini-stat { grid-template-columns:32px 1fr; padding:8px 0; }
+    .mini-icon { width:32px; height:32px; border-radius:10px; font-size:16px; background:#e8f7ef !important; }
+    .mini-stat b { font-size:16px; }
+    .mini-stat span, .field-box label, .block-head span, .kpi-card span, .month-card span { font-size:11px; }
+    .primary-btn, .secondary-btn, .danger-btn, .ghost-btn { border-radius:12px; padding:10px 12px; font-size:12px; font-weight:700; }
+    .primary-btn { background:#4b1d78 !important; color:#fff; box-shadow:none; }
+    .secondary-btn { background:#e8f7ef !important; color:#0f6b3f; }
+    .danger-btn { background:#b42318 !important; color:#fff; }
+    .ghost-btn { background:#f7f4fb !important; color:#35145f; }
+    .summary-tools { gap:8px; margin-bottom:10px; }
+    .field-box input, .field-box select { border-radius:12px; padding:9px 10px; font-size:12px; }
+    .kpi-grid { gap:8px; margin-bottom:10px; }
+    .kpi-card { min-height:86px; padding:12px; }
+    .kpi-card::after { display:none; }
+    .kpi-card b { font-size:clamp(18px, 2.4vw, 25px); margin-top:5px; }
+    .kpi-card small { font-size:11px; margin-top:4px; }
+    .calendar-shell, .year-shell, .table-shell { padding:12px; margin-top:10px; }
+    .calendar-grid { gap:6px; }
+    .weekday { font-size:10.5px; padding:6px 2px; }
+    .day-card { min-height:86px; border-radius:12px; padding:7px; background:#fff !important; cursor:default; transition:.16s ease; }
+    .day-card.has-data { background:#f2fbf6 !important; cursor:pointer; border-color:rgba(22,128,74,.22); }
+    .day-card.has-data:hover { transform:translateY(-1px); box-shadow:0 8px 18px rgba(22,128,74,.12); }
+    .day-num { font-size:12px; }
+    .day-data { font-size:10px; }
+    .day-money { font-size:11px; }
+    .year-grid { grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; }
+    .month-card { padding:10px; border-radius:14px; }
+    .month-card b { font-size:13px; }
+    .data-table th, .data-table td { padding:8px 9px; font-size:11.5px; }
+    .data-table th { background:#4b1d78 !important; }
+    .data-table .small-btn { padding:6px 8px; font-size:11px; }
+    .modal-card { border-radius:18px; padding:16px; background:#fff !important; }
+    .modal-card h3 { font-size:18px; }
+    .modal-card p { font-size:12px; }
+    .wide-modal { width:min(860px, 100%); max-height:86vh; overflow:hidden; }
+    .detail-scroll { max-height:56vh; overflow:auto; border:1px solid rgba(75,29,120,.10); border-radius:14px; background:#fbfbfd; padding:10px; }
+    .detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+    .detail-item { border:1px solid rgba(75,29,120,.10); border-radius:12px; background:#fff; padding:9px; }
+    .detail-item span { display:block; color:#667085; font-size:11px; }
+    .detail-item b { display:block; color:#182018; font-size:14px; margin-top:3px; }
+    .admin-actions-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .admin-dashboard { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+    .admin-box { padding:12px; }
+    .admin-box span { display:block; color:#667085; font-size:11px; font-weight:700; }
+    .admin-box b { display:inline-block; color:#35145f; font-size:22px; margin-top:4px; }
+    .admin-box small { margin-left:5px; color:#667085; }
+    .mt-10 { margin-top:10px; }
+    .click-bill { color:#4b1d78; text-decoration:underline; text-underline-offset:3px; cursor:pointer; background:transparent; border:0; padding:0; font:inherit; font-weight:800; }
+    .admin-only { display:none; }
+    .admin-only.show { display:inline-flex; }
+    .loading-overlay { background:rgba(24,32,24,.55) !important; }
+    .loading-card { background:#fff !important; border-radius:22px; padding:22px 20px; }
+    .printer-body { background:#4b1d78 !important; }
+    .progress-line::after { background:#16804a !important; }
+    @media (max-width:960px){ .bill-editor-wrap{grid-template-columns:1fr;} .nav-actions{grid-template-columns:repeat(2,minmax(0,1fr));} .admin-nav.show{display:flex;} .year-grid{grid-template-columns:repeat(3,minmax(0,1fr));} .admin-dashboard{grid-template-columns:1fr;} }
+    @media (max-width:640px){ body{font-size:12px;} .app-shell{width:min(100% - 14px,1160px);padding-top:7px;} .hero{padding:14px 12px;border-radius:18px;} .brand-mark{width:38px;height:38px;border-radius:12px;font-size:18px;} .hero h1{font-size:18px;} .nav-actions{grid-template-columns:1fr;gap:7px;} .nav-btn{min-height:42px;font-size:12.5px;} .panel{padding:10px;border-radius:16px;} .cashbill-table{min-width:760px;} .summary-tools,.kpi-grid,.detail-grid{grid-template-columns:1fr;} .calendar-grid{gap:4px;} .day-card{min-height:74px;padding:5px;border-radius:10px;} .year-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+
+  </style></head><body>
+        <div class="no-print" style="padding:10px 0;text-align:center;font-family:Arial,sans-serif;"><button onclick="window.print()" style="padding:10px 18px;border:0;border-radius:10px;background:#4b1d78;color:#fff;font-weight:700;">พิมพ์บิล</button></div>
         <div class="page">${copyOne}${copyTwo}</div>
       </body></html>`;
     }
@@ -1935,12 +2024,27 @@
     function formatDash(v, digits = 2) { return n(v) > 0 ? formatNumber(v, digits) : '-'; }
     function toInputDate(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
     function parseLocalDate(value) { if (!value) return null; const [y,m,d] = String(value).slice(0,10).split('-').map(Number); return y ? new Date(y, (m || 1) - 1, d || 1) : null; }
-    function normalizeDate(value) { if (!value) return ''; if (/^\d{4}-\d{2}-\d{2}/.test(String(value))) return String(value).slice(0,10); const d = new Date(value); return Number.isNaN(d.getTime()) ? '' : toInputDate(d); }
+    function normalizeDate(value) {
+      if (!value) return '';
+      const raw = String(value).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0,10);
+      const th = raw.match(/^(\d{1,2})\s*([ก-ฮ.]+)\s*(\d{4})$/);
+      if (th) {
+        const monthMap = { 'ม.ค.':0, 'มกราคม':0, 'ก.พ.':1, 'กุมภาพันธ์':1, 'มี.ค.':2, 'มีนาคม':2, 'เม.ย.':3, 'เมษายน':3, 'พ.ค.':4, 'พฤษภาคม':4, 'มิ.ย.':5, 'มิถุนายน':5, 'ก.ค.':6, 'กรกฎาคม':6, 'ส.ค.':7, 'สิงหาคม':7, 'ก.ย.':8, 'กันยายน':8, 'ต.ค.':9, 'ตุลาคม':9, 'พ.ย.':10, 'พฤศจิกายน':10, 'ธ.ค.':11, 'ธันวาคม':11 };
+        const d = Number(th[1]);
+        const m = monthMap[th[2]];
+        let y = Number(th[3]);
+        if (y > 2400) y -= 543;
+        if (Number.isInteger(m) && y > 1900 && d >= 1 && d <= 31) return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      }
+      const d = new Date(raw);
+      return Number.isNaN(d.getTime()) ? '' : toInputDate(d);
+    }
     function formatThaiDate(value) { const d = parseLocalDate(normalizeDate(value)); return d ? `${d.getDate()} ${MONTHS_TH_SHORT[d.getMonth()]} ${d.getFullYear()+543}` : '-'; }
     function formatPrintDate(value) { const d = parseLocalDate(normalizeDate(value)); return d ? `${d.getDate()} ${MONTHS_TH[d.getMonth()]} ${d.getFullYear()+543}` : '-'; }
     function formatThaiDateTime(value) { if (!value) return ''; const d = new Date(value); if (Number.isNaN(d.getTime())) return ''; return `${formatThaiDate(toInputDate(d))} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} น.`; }
     function formatThaiTime(value) { const t = normalizeTime(value); return t ? `${t} น.` : '-'; }
-    function normalizeTime(value) { const m = String(value || '').match(/(\d{1,2}):(\d{2})/); return m ? `${String(m[1]).padStart(2,'0')}:${m[2]}` : ''; }
+    function normalizeTime(value) { const m = String(value || '').replace('น.','').trim().match(/(\d{1,2}):(\d{2})/); return m ? `${String(m[1]).padStart(2,'0')}:${m[2]}` : ''; }
     function escapeHtml(value) { return String(value ?? '').replace(/[&<>"]/g, s => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[s])); }
     function escapeAttr(value) { return String(value ?? '').replace(/[&<>'"]/g, s => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[s])); }
     function showToast(message, type = '', timeout = 4200) {
@@ -1951,6 +2055,270 @@
       stack.appendChild(el);
       setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(8px)'; setTimeout(() => el.remove(), 220); }, timeout);
     }
+
+    /* ===== Final functional patch: admin page, clickable calendar, bill detail, password change, compact print ===== */
+    let currentDetailBillId = '';
+    let currentDetailDate = '';
+
+    function switchPanel(panel) {
+      if (panel === 'admin' && !adminState.loggedIn) {
+        openAdminModal();
+        return;
+      }
+      ['bill','summary','admin'].forEach(name => {
+        const panelEl = document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1));
+        const btnEl = document.getElementById('btn' + name.charAt(0).toUpperCase() + name.slice(1));
+        if (panelEl) panelEl.classList.toggle('active', panel === name);
+        if (btnEl) btnEl.classList.toggle('active', panel === name);
+      });
+      if (panel === 'summary') loadSummary();
+      if (panel === 'admin') { loadSummary(true).then(renderAdminPanel); }
+    }
+
+    async function adminLogin() {
+      const password = document.getElementById('adminPassword').value;
+      if (!password) return showToast('กรุณากรอกรหัสผ่านผู้ดูแล', 'error');
+      try {
+        playPremiumSound('start');
+        showLoading('admin');
+        await gasPost('admin_login', { password });
+        adminState.loggedIn = true;
+        adminState.password = password;
+        document.getElementById('adminPill').classList.add('active');
+        document.getElementById('btnAdmin').classList.add('show');
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('show'));
+        closeAdminModal();
+        renderTable();
+        renderAdminPanel();
+        showToast('เข้าสู่ระบบผู้ดูแลสำเร็จ', 'success');
+        switchPanel('admin');
+      } catch (err) {
+        showToast(err.message || 'เข้าสู่ระบบผู้ดูแลไม่สำเร็จ', 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function adminLogout() {
+      adminState.loggedIn = false;
+      adminState.password = '';
+      document.getElementById('adminPill').classList.remove('active');
+      document.getElementById('btnAdmin').classList.remove('show');
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('show'));
+      renderTable();
+      switchPanel('summary');
+      showToast('ออกจากระบบผู้ดูแลแล้ว', 'success');
+    }
+
+    function renderCalendar(month, year) {
+      const grid = document.getElementById('calendarGrid');
+      const first = new Date(year, month, 1);
+      const last = new Date(year, month + 1, 0);
+      const today = toInputDate(new Date());
+      const monthlyRecords = allBills.filter(b => {
+        const d = parseLocalDate(normalizeDate(b.date));
+        return d && d.getFullYear() === year && d.getMonth() === month;
+      });
+      const monthTotals = sumRecords(monthlyRecords);
+      setText('monthSummaryText', `${MONTHS_TH[month]} ${year + 543}: ${formatNumber(monthTotals.totalWeightKg, 2)} Kg. | ${formatNumber(monthTotals.totalBaskets, 2)} ตระกร้า | ${formatNumber(monthTotals.totalAmount, 2)} บาท`);
+      const byDate = groupBy(monthlyRecords, b => normalizeDate(b.date));
+      let html = WEEKDAYS_TH.map(d => `<div class="weekday">${d}</div>`).join('');
+      for (let i = 0; i < first.getDay(); i++) html += '<div class="day-card empty"></div>';
+      for (let day = 1; day <= last.getDate(); day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const recs = byDate[dateStr] || [];
+        const totals = sumRecords(recs);
+        const classes = ['day-card'];
+        if (dateStr === today) classes.push('today');
+        if (recs.length) classes.push('has-data');
+        const action = recs.length ? ` role="button" tabindex="0" onclick="openDayDetail('${dateStr}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDayDetail('${dateStr}')}" title="คลิกดูรายละเอียดวันที่ ${day}"` : '';
+        html += `<div class="${classes.join(' ')}"${action}>
+          <div class="day-num">${day}</div>
+          ${recs.length ? `<div class="day-data">${formatNumber(totals.totalWeightKg, 1)} Kg.<br>${formatNumber(totals.totalBaskets, 1)} ตะกร้า<br>${recs.length} บิล</div><div class="day-money">${formatNumber(totals.totalAmount, 0)} ฿</div>` : '<div class="day-data">-</div>'}
+        </div>`;
+      }
+      grid.innerHTML = html;
+    }
+
+    function openDayDetail(dateStr) {
+      currentDetailDate = dateStr;
+      const records = allBills.filter(b => normalizeDate(b.date) === dateStr);
+      const totals = sumRecords(records);
+      document.getElementById('dayDetailTitle').textContent = `รายละเอียดวันที่ ${formatThaiDate(dateStr)}`;
+      document.getElementById('dayDetailSummary').textContent = `${records.length} บิล | ${formatNumber(totals.totalWeightKg,2)} Kg. | ${formatNumber(totals.totalBaskets,2)} ตระกร้า | ${formatNumber(totals.totalAmount,2)} บาท`;
+      document.getElementById('dayDetailBody').innerHTML = buildRecordsDetailTable(records, true);
+      document.getElementById('dayDetailModal').classList.add('active');
+      document.getElementById('dayDetailModal').setAttribute('aria-hidden','false');
+    }
+    function closeDayDetailModal() {
+      document.getElementById('dayDetailModal').classList.remove('active');
+      document.getElementById('dayDetailModal').setAttribute('aria-hidden','true');
+    }
+    function printSelectedDayFromModal() {
+      if (!currentDetailDate) return;
+      document.getElementById('summaryDate').value = currentDetailDate;
+      printDailySummary();
+    }
+
+    function renderTable() {
+      const container = document.getElementById('tableContainer');
+      const query = (document.getElementById('summarySearch').value || '').trim().toLowerCase();
+      const records = allBills
+        .filter(b => !query || String(b.customerName || '').toLowerCase().includes(query) || String(b.billId || '').toLowerCase().includes(query))
+        .slice(0, 300);
+      setText('tableSummaryText', `${records.length} รายการจากทั้งหมด ${allBills.length} รายการ`);
+      container.innerHTML = buildRecordsTable(records, false);
+      if (adminState.loggedIn) renderAdminPanel();
+    }
+
+    function renderAdminPanel() {
+      const totals = sumRecords(allBills);
+      setText('adminTotalBills', String(allBills.length));
+      setText('adminTotalWeight', formatNumber(totals.totalWeightKg, 2));
+      setText('adminTotalAmount', formatNumber(totals.totalAmount, 2));
+      const container = document.getElementById('adminTableContainer');
+      if (container) container.innerHTML = buildRecordsTable(allBills.slice(0, 500), true);
+    }
+
+    function buildRecordsTable(records, forceAdmin) {
+      if (!records.length) return '<div class="empty-state">ยังไม่มีข้อมูลบิลเงินสด หรือไม่พบข้อมูลตามคำค้นหา</div>';
+      return `<table class="data-table">
+        <thead><tr><th>เลขที่บิล</th><th>วันที่</th><th>เวลา</th><th>ลูกค้า</th><th>AA</th><th>A</th><th>B</th><th>C</th><th>ตระกร้า</th><th>น้ำหนัก Kg.</th><th>รวมเงิน</th><th>จัดการ</th></tr></thead>
+        <tbody>${records.map(b => recordTableRow(b, forceAdmin)).join('')}</tbody></table>`;
+    }
+
+    function recordTableRow(b, forceAdmin) {
+      const rows = Object.fromEntries((b.rows || []).map(r => [r.grade, r]));
+      const adminTools = (forceAdmin || adminState.loggedIn) ? `<button class="small-btn edit-btn" type="button" onclick="editBill('${escapeAttr(b.billId || '')}')">แก้ไข</button> <button class="small-btn delete-btn" type="button" onclick="deleteBill('${escapeAttr(b.billId || '')}')">ลบ</button>` : '';
+      return `<tr>
+        <td><button class="click-bill" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">${escapeHtml(b.billId || '-')}</button></td>
+        <td>${formatThaiDate(b.date)}</td><td>${formatThaiTime(b.time)}</td><td>${escapeHtml(b.customerName || '-')}</td>
+        <td class="num">${gradeText(rows.AA)}</td><td class="num">${gradeText(rows.A)}</td><td class="num">${gradeText(rows.B)}</td><td class="num">${gradeText(rows.C)}</td>
+        <td class="num">${formatNumber(getTotal(b, 'totalBaskets'), 2)}</td><td class="num">${formatNumber(getTotal(b, 'totalWeightKg'), 2)}</td><td class="num">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td>
+        <td><button class="small-btn" type="button" onclick="printExistingById('${escapeAttr(b.billId || '')}')">พิมพ์</button> ${adminTools}</td>
+      </tr>`;
+    }
+
+    function buildRecordsDetailTable(records, showDate) {
+      if (!records.length) return '<div class="empty-state">ไม่พบข้อมูลในวันที่เลือก</div>';
+      return `<table class="data-table"><thead><tr><th>เลขที่บิล</th>${showDate ? '<th>วันที่</th>' : ''}<th>เวลา</th><th>ลูกค้า</th><th>ตระกร้า</th><th>น้ำหนัก Kg.</th><th>รวมเงิน</th><th>ดูข้อมูล</th></tr></thead><tbody>${records.map(b => `<tr>
+        <td><button class="click-bill" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">${escapeHtml(b.billId || '-')}</button></td>
+        ${showDate ? `<td>${formatThaiDate(b.date)}</td>` : ''}<td>${formatThaiTime(b.time)}</td><td>${escapeHtml(b.customerName || '-')}</td>
+        <td class="num">${formatNumber(getTotal(b, 'totalBaskets'), 2)}</td><td class="num">${formatNumber(getTotal(b, 'totalWeightKg'), 2)}</td><td class="num">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td>
+        <td><button class="small-btn" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">รายละเอียด</button></td>
+      </tr>`).join('')}</tbody></table>`;
+    }
+
+    function openBillDetail(billId) {
+      const record = allBills.find(b => String(b.billId) === String(billId));
+      if (!record) return showToast('ไม่พบข้อมูลบิลที่เลือก', 'error');
+      currentDetailBillId = record.billId || '';
+      const totals = record.totals || sumGradeRows(record.rows || [], n(record.basketKg) || 27);
+      document.getElementById('billDetailTitle').textContent = `รายละเอียดบิล ${record.billId || '-'}`;
+      document.getElementById('billDetailSummary').textContent = `${formatThaiDate(record.date)} ${formatThaiTime(record.time)} | ลูกค้า ${record.customerName || '-'} | รวม ${formatNumber(totals.totalAmount, 2)} บาท`;
+      document.getElementById('billDetailBody').innerHTML = buildBillDetailHTML(record);
+      document.querySelectorAll('#billDetailModal .admin-only').forEach(el => el.classList.toggle('show', adminState.loggedIn));
+      document.getElementById('billDetailModal').classList.add('active');
+      document.getElementById('billDetailModal').setAttribute('aria-hidden','false');
+    }
+    function closeBillDetailModal() {
+      document.getElementById('billDetailModal').classList.remove('active');
+      document.getElementById('billDetailModal').setAttribute('aria-hidden','true');
+    }
+    function buildBillDetailHTML(record) {
+      const totals = record.totals || sumGradeRows(record.rows || [], n(record.basketKg) || 27);
+      const rowHtml = (record.rows || []).map(r => `<tr><td>${escapeHtml(r.grade)}</td><td class="num">${formatNumber(r.baskets,2)}</td><td class="num">${formatNumber(r.scrapKg,2)}</td><td class="num">${formatNumber(r.weightKg,2)}</td><td class="num">${formatNumber(r.unitPrice,2)}</td><td class="num">${formatNumber(r.amount,2)}</td></tr>`).join('');
+      return `<div class="detail-grid">
+        <div class="detail-item"><span>เลขที่บิล</span><b>${escapeHtml(record.billId || '-')}</b></div>
+        <div class="detail-item"><span>วันที่/เวลา</span><b>${formatThaiDate(record.date)} ${formatThaiTime(record.time)}</b></div>
+        <div class="detail-item"><span>ลูกค้า</span><b>${escapeHtml(record.customerName || '-')}</b></div>
+        <div class="detail-item"><span>จำนวนตระกร้า</span><b>${formatNumber(totals.totalBaskets,2)}</b></div>
+        <div class="detail-item"><span>น้ำหนักรวม</span><b>${formatNumber(totals.totalWeightKg,2)} Kg.</b></div>
+        <div class="detail-item"><span>รวมเงิน</span><b>${formatNumber(totals.totalAmount,2)} บาท</b></div>
+      </div>
+      <table class="data-table"><thead><tr><th>เกรด</th><th>ตระกร้า</th><th>เศษ Kg.</th><th>น้ำหนัก Kg.</th><th>หน่วยละ</th><th>จำนวนเงิน</th></tr></thead><tbody>${rowHtml}</tbody></table>`;
+    }
+    function printCurrentDetailBill() { if (currentDetailBillId) printExistingById(currentDetailBillId); }
+    function editCurrentDetailBill() { if (currentDetailBillId) { closeBillDetailModal(); editBill(currentDetailBillId); } }
+    function printExistingById(billId) {
+      const record = allBills.find(b => String(b.billId) === String(billId));
+      if (!record) return showToast('ไม่พบข้อมูลบิลที่ต้องการพิมพ์', 'error');
+      printExisting(record);
+    }
+
+    function openChangePasswordModal() {
+      if (!adminState.loggedIn) return openAdminModal();
+      document.getElementById('currentAdminPassword').value = adminState.password || '';
+      document.getElementById('newAdminPassword').value = '';
+      document.getElementById('confirmAdminPassword').value = '';
+      document.getElementById('changePasswordModal').classList.add('active');
+      document.getElementById('changePasswordModal').setAttribute('aria-hidden','false');
+      document.getElementById('newAdminPassword').focus();
+    }
+    function closeChangePasswordModal() {
+      document.getElementById('changePasswordModal').classList.remove('active');
+      document.getElementById('changePasswordModal').setAttribute('aria-hidden','true');
+    }
+    async function changeAdminPassword() {
+      const oldPassword = document.getElementById('currentAdminPassword').value;
+      const newPassword = document.getElementById('newAdminPassword').value;
+      const confirmPassword = document.getElementById('confirmAdminPassword').value;
+      if (!oldPassword || !newPassword) return showToast('กรุณากรอกรหัสผ่านเดิมและรหัสผ่านใหม่', 'error');
+      if (newPassword.length < 4) return showToast('รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร', 'error');
+      if (newPassword !== confirmPassword) return showToast('ยืนยันรหัสผ่านใหม่ไม่ตรงกัน', 'error');
+      try {
+        showLoading('update');
+        await gasPost('change_admin_password', { oldPassword, newPassword });
+        adminState.password = newPassword;
+        closeChangePasswordModal();
+        showToast('เปลี่ยนรหัสผ่านผู้ดูแลสำเร็จ', 'success');
+      } catch (err) {
+        showToast(err.message || 'เปลี่ยนรหัสผ่านไม่สำเร็จ', 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function buildPrintHTML(record) {
+      const copyOne = buildReceiptBlock(record, 'ต้นฉบับ');
+      const copyTwo = buildReceiptBlock(record, 'สำเนา');
+      return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>บิลเงินสด ${escapeHtml(record.billId || '')}</title>
+      <style>
+        @page { size:A4 portrait; margin:6mm; }
+        *{box-sizing:border-box;} body{margin:0;background:#fff;color:#111;font-family:'TH Sarabun New','Sarabun',Arial,sans-serif;}
+        .no-print{text-align:center;padding:6px;font-family:Arial,sans-serif;} .no-print button{padding:8px 14px;border:0;border-radius:8px;background:#4b1d78;color:#fff;font-weight:700;}
+        .page{width:198mm;margin:0 auto;} .receipt-copy{height:139mm;width:100%;border:1.2px solid #111;margin:0 0 4mm;page-break-inside:avoid;overflow:hidden;}
+        .meta-line{display:flex;justify-content:space-between;align-items:center;font:700 9pt Arial,sans-serif;padding:1mm 1.4mm .5mm;color:#444;}
+        table{width:100%;border-collapse:collapse;table-layout:fixed;} col:nth-child(1){width:9%;} col:nth-child(2){width:14%;} col:nth-child(3){width:11%;} col:nth-child(4){width:11%;} col:nth-child(5){width:8%;} col:nth-child(6){width:13%;} col:nth-child(7){width:7%;} col:nth-child(8){width:12%;} col:nth-child(9){width:15%;}
+        th,td{border:1px solid #111;padding:1.15mm 1.15mm;font-size:15.5pt;line-height:.98;vertical-align:middle;overflow:hidden;overflow-wrap:anywhere;word-break:break-word;}
+        .title{background:#d9d9d9;font-size:22pt;font-weight:800;text-align:center;padding:1.5mm;} .head{background:#d9d9d9;font-weight:800;text-align:center;white-space:normal;}
+        .center{text-align:center}.right{text-align:right}.bold{font-weight:800}.grade{text-align:center;font-weight:800;font-size:18pt}.sub-label{text-align:right;font-weight:800;white-space:normal}.total-label{background:#d9d9d9;font-size:20pt;font-weight:800;text-align:center}.total-amount{color:#b41710;font-weight:800;text-align:right;font-size:19pt}
+        @media print{.no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.receipt-copy{margin-bottom:3mm;}}
+      </style></head><body><div class="no-print"><button onclick="window.print()">พิมพ์บิล</button></div><div class="page">${copyOne}${copyTwo}</div></body></html>`;
+    }
+
+    function buildReceiptBlock(record, copyLabel) {
+      const rows = Object.fromEntries(DEFAULT_GRADES.map(g => [g, (record.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, unitPrice:0, weightKg:0, amount:0 }]));
+      const basketKg = n(record.basketKg) || 27;
+      const totals = record.totals || sumGradeRows(record.rows || [], basketKg);
+      return `<div class="receipt-copy"><div class="meta-line"><span>${escapeHtml(record.billId || '')} | ${copyLabel}</span><span>${formatThaiDateTime(record.createdAt)}</span></div><table><colgroup><col><col><col><col><col><col><col><col><col></colgroup><tbody>
+        <tr><td colspan="9" class="title">บิลเงินสด TK พัฒนาพืชผล</td></tr>
+        <tr><td class="bold center">ชื่อลูกค้า</td><td colspan="2" class="center bold">${escapeHtml(record.customerName || '-')}</td><td class="bold center">เวลา</td><td colspan="2" class="center">${escapeHtml(formatThaiTime(record.time))}</td><td colspan="3" class="center">${escapeHtml(formatThaiDate(record.date))}</td></tr>
+        <tr><td colspan="9" class="center bold">โทร ${escapeHtml(record.sellerPhone || '080.825.6553')} (น้ำหนัก ${formatNumber(basketKg, 0)} Kg. = 1 ตระกร้า)</td></tr>
+        <tr><th class="head">เกรด</th><th class="head">จน.ตระกร้า</th><th colspan="2" class="head">น้ำหนักเศษ</th><th colspan="3" class="head">น้ำหนักรวม</th><th class="head">หน่วยละ</th><th class="head">จำนวนเงิน</th></tr>
+        ${DEFAULT_GRADES.map(g => receiptGradeRow(rows[g])).join('')}
+        <tr><td></td><td class="sub-label">จน.ตระกร้า</td><td class="center bold">${formatNumber(totals.totalBaskets,2)}</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label">น.น.ตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg,2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label">น.น.เศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg,2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label">น้ำหนักทั้งหมด</td><td class="center bold">${formatNumber(totals.totalWeightKg,2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td colspan="8" class="total-label">รวมเงิน</td><td class="total-amount">${formatNumber(totals.totalAmount,2)}</td></tr>
+      </tbody></table></div>`;
+    }
+
+    function receiptGradeRow(r) {
+      return `<tr><td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets,2)}</td><td class="center bold">เศษ</td><td class="center">${formatNumber(r.scrapKg,2)}</td><td class="center">=</td><td class="center bold">${formatDash(r.weightKg,2)}</td><td class="center bold">Kg.</td><td class="right">${formatNumber(r.unitPrice,2)}</td><td class="right bold">${n(r.amount)>0?formatNumber(r.amount,2):'-'}</td></tr>`;
+    }
+
   </script>
 </body>
 </html>
