@@ -1622,7 +1622,7 @@
 
     function calculateBill() {
       const basketKg = n(document.getElementById('basketKg').value) || 27;
-      let totalBaskets = 0;
+      let enteredBaskets = 0;
       let scrapWeightKg = 0;
       let totalWeightKg = 0;
       let totalAmount = 0;
@@ -1633,7 +1633,7 @@
         const price = n(row.querySelector('.row-price').value);
         const weight = (baskets * basketKg) + scrap;
         const amount = weight * price;
-        totalBaskets += baskets;
+        enteredBaskets += baskets;
         scrapWeightKg += scrap;
         totalWeightKg += weight;
         totalAmount += amount;
@@ -1641,7 +1641,8 @@
         row.querySelector('.row-amount').textContent = amount > 0 ? formatNumber(amount, 2) : '0.00';
       });
 
-      const basketWeight = totalBaskets * basketKg;
+      const basketWeight = enteredBaskets * basketKg;
+      const totalBaskets = basketKg > 0 ? totalWeightKg / basketKg : 0;
       setText('totalBasketCell', formatNumber(totalBaskets, 2));
       setText('basketWeightCell', basketWeight > 0 ? formatNumber(basketWeight, 2) : '-');
       setText('scrapWeightCell', formatNumber(scrapWeightKg, 2));
@@ -1650,7 +1651,7 @@
       setText('sideBaskets', formatNumber(totalBaskets, 2));
       setText('sideWeight', formatNumber(totalWeightKg, 2));
       setText('sideAmount', formatNumber(totalAmount, 2));
-      return { totalBaskets, basketWeightKg: basketWeight, scrapWeightKg, totalWeightKg, totalAmount, basketKg };
+      return { totalBaskets, enteredBaskets, basketWeightKg: basketWeight, scrapWeightKg, totalWeightKg, totalAmount, basketKg };
     }
 
     function getBillPayload() {
@@ -2337,15 +2338,17 @@
     }
 
     function sumGradeRows(rows, basketKg) {
+      const safeBasketKg = n(basketKg) || 27;
       const totals = rows.reduce((a, r) => {
-        const baskets = n(r.baskets), scrap = n(r.scrapKg), price = n(r.unitPrice), weight = n(r.weightKg) || (baskets * basketKg + scrap);
-        a.totalBaskets += baskets;
+        const baskets = n(r.baskets), scrap = n(r.scrapKg), price = n(r.unitPrice), weight = n(r.weightKg) || (baskets * safeBasketKg + scrap);
+        a.enteredBaskets += baskets;
         a.scrapWeightKg += scrap;
         a.totalWeightKg += weight;
         a.totalAmount += weight * price;
         return a;
-      }, { totalBaskets:0, basketWeightKg:0, scrapWeightKg:0, totalWeightKg:0, totalAmount:0 });
-      totals.basketWeightKg = totals.totalBaskets * basketKg;
+      }, { totalBaskets:0, enteredBaskets:0, basketWeightKg:0, scrapWeightKg:0, totalWeightKg:0, totalAmount:0 });
+      totals.basketWeightKg = totals.enteredBaskets * safeBasketKg;
+      totals.totalBaskets = safeBasketKg > 0 ? totals.totalWeightKg / safeBasketKg : 0;
       return totals;
     }
 
@@ -2360,7 +2363,14 @@
       }, { totalBaskets:0, basketWeightKg:0, scrapWeightKg:0, totalWeightKg:0, totalAmount:0 });
     }
 
-    function getTotal(record, key) { return n((record.totals || {})[key] ?? record[key]); }
+    function getTotal(record, key) {
+      if (key === 'totalBaskets') {
+        const basketKg = n(record.basketKg) || n((record.totals || {}).basketKg) || 27;
+        const totalWeight = n((record.totals || {}).totalWeightKg ?? record.totalWeightKg);
+        return basketKg > 0 ? totalWeight / basketKg : 0;
+      }
+      return n((record.totals || {})[key] ?? record[key]);
+    }
     function groupBy(items, fn) { return items.reduce((a, x) => { const k = fn(x); (a[k] ||= []).push(x); return a; }, {}); }
     function n(v) { const num = Number(String(v ?? '').replace(/,/g, '')); return Number.isFinite(num) ? num : 0; }
     function setText(id, text) { document.getElementById(id).textContent = text; }
@@ -2628,15 +2638,15 @@
       const copyTwo = buildReceiptBlock(record, 'สำเนา');
       return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>บิลเงินสด ${escapeHtml(record.billId || '')}</title>
       <style>
-        @page { size:A4 portrait; margin:6mm; }
+        @page { size:A4 portrait; margin:5mm; }
         *{box-sizing:border-box;} body{margin:0;background:#fff;color:#111;font-family:'TH Sarabun New','Sarabun',Arial,sans-serif;}
         .no-print{text-align:center;padding:6px;font-family:Arial,sans-serif;} .no-print button{padding:8px 14px;border:0;border-radius:8px;background:#4b1d78;color:#fff;font-weight:700;}
-        .page{width:198mm;margin:0 auto;} .receipt-copy{height:136mm;width:100%;border:1px solid #111;margin:0 0 4mm;page-break-inside:avoid;overflow:hidden;}
-        .meta-line{display:flex;justify-content:space-between;align-items:center;font:700 7.2pt Arial,sans-serif;padding:.55mm 1mm .25mm;color:#444;height:4.6mm;}
-        table{width:100%;border-collapse:collapse;table-layout:fixed;} col:nth-child(1){width:9%;} col:nth-child(2){width:14%;} col:nth-child(3){width:11%;} col:nth-child(4){width:11%;} col:nth-child(5){width:8%;} col:nth-child(6){width:13%;} col:nth-child(7){width:7%;} col:nth-child(8){width:12%;} col:nth-child(9){width:15%;}
-        th,td{border:.8px solid #111;padding:.45mm .65mm;font-size:9.6pt;line-height:1.24;vertical-align:middle;overflow:visible;overflow-wrap:anywhere;word-break:normal;}
-        .title{background:#d9d9d9;font-size:14.2pt;line-height:1.18;font-weight:800;text-align:center;padding:.7mm;} .head{background:#d9d9d9;font-weight:800;text-align:center;white-space:normal;line-height:1.18;}
-        .center{text-align:center}.right{text-align:right}.bold{font-weight:800}.grade{text-align:center;font-weight:800;font-size:12pt;line-height:1.18}.sub-label{text-align:right;font-weight:800;white-space:normal}.total-label{background:#d9d9d9;font-size:12.8pt;line-height:1.18;font-weight:800;text-align:center}.total-amount{color:#b41710;font-weight:800;text-align:right;font-size:12.8pt;line-height:1.18}.total-row td{border-top:1px solid #111;background:#eeeeee;}
+        .page{width:200mm;margin:0 auto;} .receipt-copy{height:140.5mm;width:100%;border:1px solid #111;margin:0 0 3mm;page-break-inside:avoid;overflow:hidden;}
+        .meta-line{display:flex;justify-content:space-between;align-items:center;font:700 7.2pt Arial,sans-serif;padding:.55mm 1mm .25mm;color:#444;height:4.8mm;}
+        table{width:100%;height:calc(100% - 4.8mm);border-collapse:collapse;table-layout:fixed;} col:nth-child(1){width:9%;} col:nth-child(2){width:14%;} col:nth-child(3){width:11%;} col:nth-child(4){width:11%;} col:nth-child(5){width:8%;} col:nth-child(6){width:13%;} col:nth-child(7){width:7%;} col:nth-child(8){width:12%;} col:nth-child(9){width:15%;}
+        th,td{border:.8px solid #111;padding:.8mm .75mm;font-size:9.4pt;line-height:1.34;vertical-align:middle;overflow:visible;overflow-wrap:anywhere;word-break:normal;}
+        .title{background:#d9d9d9;font-size:14pt;line-height:1.28;font-weight:800;text-align:center;padding:.95mm;} .head{background:#d9d9d9;font-weight:800;text-align:center;white-space:normal;line-height:1.28;}
+        .center{text-align:center}.right{text-align:right}.bold{font-weight:800}.grade{text-align:center;font-weight:800;font-size:11.8pt;line-height:1.28}.sub-label{text-align:right;font-weight:800;white-space:normal}.total-label{background:#d9d9d9;font-size:12.4pt;line-height:1.28;font-weight:800;text-align:center}.total-amount{color:#b41710;font-weight:800;text-align:right;font-size:12.4pt;line-height:1.28}.total-row td{border-top:1px solid #111;background:#eeeeee;}
         @media print{.no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.receipt-copy{margin-bottom:3mm;}}
       </style></head><body><div class="no-print"><button onclick="window.print()">พิมพ์บิล</button></div><div class="page">${copyOne}${copyTwo}</div></body></html>`;
     }
@@ -2644,7 +2654,8 @@
     function buildReceiptBlock(record, copyLabel) {
       const rows = Object.fromEntries(DEFAULT_GRADES.map(g => [g, (record.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, unitPrice:0, weightKg:0, amount:0 }]));
       const basketKg = n(record.basketKg) || 27;
-      const totals = record.totals || sumGradeRows(record.rows || [], basketKg);
+      const baseTotals = record.totals || sumGradeRows(record.rows || [], basketKg);
+      const totals = { ...baseTotals, totalBaskets: basketKg > 0 ? n(baseTotals.totalWeightKg) / basketKg : 0 };
       return `<div class="receipt-copy"><div class="meta-line"><span>${escapeHtml(record.billId || '')} | ${copyLabel}</span><span>${formatThaiDateTime(record.createdAt)}</span></div><table><colgroup><col><col><col><col><col><col><col><col><col></colgroup><tbody>
         <tr><td colspan="9" class="title">บิลเงินสด TK พัฒนาพืชผล</td></tr>
         <tr><td class="bold center">ชื่อลูกค้า</td><td colspan="2" class="center bold">${escapeHtml(record.customerName || '-')}</td><td class="bold center">เวลา</td><td colspan="2" class="center">${escapeHtml(formatThaiTime(record.time))}</td><td colspan="3" class="center">${escapeHtml(formatThaiDate(record.date))}</td></tr>
