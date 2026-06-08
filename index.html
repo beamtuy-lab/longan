@@ -1106,6 +1106,67 @@
       .iphone-frame { width: 118px; height: 208px; }
     }
 
+    /* ===== Mobile usability patch: prevent clipping on small screens ===== */
+    html, body { max-width: 100%; overflow-x: hidden; }
+    .app-shell, .panel, .bill-editor-wrap, .table-responsive, .calendar-shell, .year-shell, .table-shell { min-width: 0; }
+    .bill-sheet.editor {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
+    }
+    .bill-sheet.editor::after {
+      content: 'เลื่อนซ้าย–ขวาเพื่อดูช่องกรอกทั้งหมด';
+      display: none;
+      position: sticky;
+      left: 0;
+      bottom: 0;
+      padding: 7px 10px;
+      background: #f7f4fb;
+      color: #4b1d78;
+      font-size: 11px;
+      font-weight: 700;
+      border-top: 1px solid rgba(75,29,120,.10);
+    }
+    @media (max-width: 760px) {
+      .app-shell { width: calc(100% - 10px) !important; padding-left: 0 !important; padding-right: 0 !important; }
+      .hero-top { min-width: 0; }
+      .brand-block { min-width: 0; gap: 9px; }
+      .hero h1, .hero p, .kicker { overflow-wrap: anywhere; }
+      .bill-editor-wrap { display: block !important; width: 100%; }
+      .bill-sheet.editor { border-radius: 12px; }
+      .bill-sheet.editor::after { display: block; }
+      .cashbill-table { min-width: 660px !important; width: 660px; }
+      .cashbill-table th, .cashbill-table td { padding: 4px 4px !important; font-size: 12px !important; line-height: 1.25 !important; }
+      .cashbill-table .bill-title-cell { font-size: 17px !important; padding: 6px !important; }
+      .cashbill-table .grade { font-size: 16px !important; }
+      .cashbill-table .total-label, .cashbill-table .total-amount { font-size: 16px !important; }
+      .side-card { width: 100%; margin-top: 10px; position: static !important; }
+      .form-actions { grid-template-columns: 1fr; }
+      .summary-tools, .kpi-grid, .year-grid, .admin-dashboard, .detail-grid { grid-template-columns: 1fr !important; }
+      .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px !important; }
+      .weekday { font-size: 9.5px !important; }
+      .day-card { min-height: 66px !important; padding: 4px !important; }
+      .day-data { font-size: 9px !important; line-height: 1.25 !important; }
+      .day-money { font-size: 9.5px !important; }
+      .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .data-table { min-width: 920px; }
+      .modal-backdrop { padding: 8px; }
+      .wide-modal { width: 100% !important; max-height: 92vh !important; }
+      .detail-scroll { max-height: 62vh !important; overflow: auto; }
+      .primary-btn, .secondary-btn, .danger-btn, .ghost-btn { width: 100%; }
+      .modal-actions { flex-direction: column-reverse; }
+    }
+    @media (max-width: 390px) {
+      .cashbill-table { min-width: 620px !important; width: 620px; }
+      .cashbill-table th, .cashbill-table td { font-size: 11.5px !important; }
+      .cashbill-table .bill-title-cell { font-size: 16px !important; }
+      .nav-btn { min-height: 40px !important; }
+    }
+
+
   </style>
 </head>
 <body>
@@ -2570,12 +2631,12 @@
         @page { size:A4 portrait; margin:6mm; }
         *{box-sizing:border-box;} body{margin:0;background:#fff;color:#111;font-family:'TH Sarabun New','Sarabun',Arial,sans-serif;}
         .no-print{text-align:center;padding:6px;font-family:Arial,sans-serif;} .no-print button{padding:8px 14px;border:0;border-radius:8px;background:#4b1d78;color:#fff;font-weight:700;}
-        .page{width:198mm;margin:0 auto;} .receipt-copy{height:139mm;width:100%;border:1.1px solid #111;margin:0 0 4mm;page-break-inside:avoid;overflow:hidden;}
-        .meta-line{display:flex;justify-content:space-between;align-items:center;font:700 8.2pt Arial,sans-serif;padding:.8mm 1.2mm .4mm;color:#444;}
+        .page{width:198mm;margin:0 auto;} .receipt-copy{height:136mm;width:100%;border:1px solid #111;margin:0 0 4mm;page-break-inside:avoid;overflow:hidden;}
+        .meta-line{display:flex;justify-content:space-between;align-items:center;font:700 7.2pt Arial,sans-serif;padding:.55mm 1mm .25mm;color:#444;height:4.6mm;}
         table{width:100%;border-collapse:collapse;table-layout:fixed;} col:nth-child(1){width:9%;} col:nth-child(2){width:14%;} col:nth-child(3){width:11%;} col:nth-child(4){width:11%;} col:nth-child(5){width:8%;} col:nth-child(6){width:13%;} col:nth-child(7){width:7%;} col:nth-child(8){width:12%;} col:nth-child(9){width:15%;}
-        th,td{border:1px solid #111;padding:.82mm .95mm;font-size:13.2pt;line-height:.94;vertical-align:middle;overflow:hidden;overflow-wrap:anywhere;word-break:break-word;}
-        .title{background:#d9d9d9;font-size:18.8pt;font-weight:800;text-align:center;padding:1.05mm;} .head{background:#d9d9d9;font-weight:800;text-align:center;white-space:normal;}
-        .center{text-align:center}.right{text-align:right}.bold{font-weight:800}.grade{text-align:center;font-weight:800;font-size:15.6pt}.sub-label{text-align:right;font-weight:800;white-space:normal}.total-label{background:#d9d9d9;font-size:16.8pt;font-weight:800;text-align:center}.total-amount{color:#b41710;font-weight:800;text-align:right;font-size:16.8pt}.total-row td{border-top:1.4px solid #111;background:#eeeeee;}
+        th,td{border:.8px solid #111;padding:.45mm .65mm;font-size:9.6pt;line-height:1.24;vertical-align:middle;overflow:visible;overflow-wrap:anywhere;word-break:normal;}
+        .title{background:#d9d9d9;font-size:14.2pt;line-height:1.18;font-weight:800;text-align:center;padding:.7mm;} .head{background:#d9d9d9;font-weight:800;text-align:center;white-space:normal;line-height:1.18;}
+        .center{text-align:center}.right{text-align:right}.bold{font-weight:800}.grade{text-align:center;font-weight:800;font-size:12pt;line-height:1.18}.sub-label{text-align:right;font-weight:800;white-space:normal}.total-label{background:#d9d9d9;font-size:12.8pt;line-height:1.18;font-weight:800;text-align:center}.total-amount{color:#b41710;font-weight:800;text-align:right;font-size:12.8pt;line-height:1.18}.total-row td{border-top:1px solid #111;background:#eeeeee;}
         @media print{.no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.receipt-copy{margin-bottom:3mm;}}
       </style></head><body><div class="no-print"><button onclick="window.print()">พิมพ์บิล</button></div><div class="page">${copyOne}${copyTwo}</div></body></html>`;
     }
