@@ -1522,6 +1522,8 @@
 
     let allBills = [];
     let loadingTimer = null;
+    let loadingFailSafeTimer = null;
+    const FETCH_TIMEOUT_MS = 12000;
     let audioContext = null;
     const adminState = { loggedIn: false, password: '' };
     let editingBillId = '';
@@ -1535,6 +1537,11 @@
         bindBillInputs();
         calculateBill();
         await loadSummary(true);
+      } catch (err) {
+        console.warn('Initial data load failed:', err);
+        allBills = [];
+        try { renderSummary(); } catch (renderErr) { console.warn('Initial render failed:', renderErr); }
+        showToast('เปิดระบบได้แล้ว แต่โหลดข้อมูลสรุปไม่สำเร็จ กรุณากดโหลดข้อมูลใหม่ หรือตรวจสอบการเชื่อมต่อ GAS', 'error', 7000);
       } finally {
         hideLoading();
       }
@@ -1952,9 +1959,30 @@
       }
     }
 
+    async function fetchWithTimeout(resource, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+      if (window.AbortController) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          return await fetch(resource, { ...options, signal: controller.signal });
+        } catch (err) {
+          if (err && err.name === 'AbortError') {
+            throw new Error(`เชื่อมต่อ GAS ใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`);
+          }
+          throw err;
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+      return await Promise.race([
+        fetch(resource, options),
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`เชื่อมต่อ GAS ใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`)), timeoutMs))
+      ]);
+    }
+
     async function gasPost(action, payload = {}) {
       ensureConfiguredUrl();
-      const response = await fetch(CONFIG_WEB_APP_URL, {
+      const response = await fetchWithTimeout(CONFIG_WEB_APP_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action, payload, ts: Date.now() })
@@ -1973,7 +2001,7 @@
       } catch (postErr) {
         const joiner = CONFIG_WEB_APP_URL.includes('?') ? '&' : '?';
         const url = `${CONFIG_WEB_APP_URL}${joiner}action=read_all&ts=${Date.now()}`;
-        const response = await fetch(url, { method: 'GET', cache: 'no-store' });
+        const response = await fetchWithTimeout(url, { method: 'GET', cache: 'no-store' }, FETCH_TIMEOUT_MS);
         if (!response.ok) throw postErr;
         const text = await response.text();
         const json = safeJson(text);
@@ -2000,6 +2028,7 @@
 
     function showLoading(mode = 'init') {
       const overlay = document.getElementById('loadingOverlay');
+      if (!overlay) return;
       const title = document.getElementById('loadingTitle');
       const status = document.getElementById('loadingStatus');
       const loadingTitles = {
@@ -2013,20 +2042,31 @@
       const texts = loadingTexts[mode] || loadingTexts.init;
       let i = 0;
       if (title) title.textContent = loadingTitles[mode] || loadingTitles.init;
-      status.textContent = texts[0];
+      if (status) status.textContent = texts[0];
       overlay.classList.add('active');
       overlay.setAttribute('aria-hidden', 'false');
       clearInterval(loadingTimer);
+      clearTimeout(loadingFailSafeTimer);
       loadingTimer = setInterval(() => {
         i = (i + 1) % texts.length;
-        status.textContent = texts[i];
+        if (status) status.textContent = texts[i];
         playPremiumSound('tick');
       }, 1250);
+      const maxMs = mode === 'save' || mode === 'update' ? 45000 : 16000;
+      loadingFailSafeTimer = setTimeout(() => {
+        hideLoading();
+        if (mode === 'init' || mode === 'read') {
+          showToast('ระบบเปิดใช้งานได้แล้ว แต่การโหลดข้อมูลใช้เวลานาน กรุณากดโหลดข้อมูลใหม่อีกครั้ง', 'error', 6500);
+        }
+      }, maxMs);
     }
     function hideLoading() {
       clearInterval(loadingTimer);
+      clearTimeout(loadingFailSafeTimer);
       loadingTimer = null;
+      loadingFailSafeTimer = null;
       const overlay = document.getElementById('loadingOverlay');
+      if (!overlay) return;
       overlay.classList.remove('active');
       overlay.setAttribute('aria-hidden', 'true');
     }
@@ -2663,15 +2703,15 @@
         <tr><th class="head">เกรด</th><th class="head">จน.ตระกร้า</th><th colspan="2" class="head">น้ำหนักเศษ</th><th colspan="3" class="head">น้ำหนักรวม</th><th class="head">หน่วยละ</th><th class="head">จำนวนเงิน</th></tr>
         ${DEFAULT_GRADES.map(g => receiptGradeRow(rows[g])).join('')}
         <tr><td></td><td class="sub-label">จน.ตระกร้า</td><td class="center bold">${formatNumber(totals.totalBaskets,2)}</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td></tr>
-        <tr><td></td><td class="sub-label">น.น.ตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg,2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
-        <tr><td></td><td class="sub-label">น.น.เศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg,2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
-        <tr><td></td><td class="sub-label">น้ำหนักทั้งหมด</td><td class="center bold">${formatNumber(totals.totalWeightKg,2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label">น.น.ตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label">น.น.เศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label">น้ำหนักทั้งหมด</td><td class="center bold">${formatNumber(totals.totalWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
         <tr class="total-row"><td colspan="8" class="total-label">รวมเงินทั้งหมด</td><td class="total-amount">${formatNumber(totals.totalAmount,2)}</td></tr>
       </tbody></table></div>`;
     }
 
     function receiptGradeRow(r) {
-      return `<tr><td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets,2)}</td><td class="center bold">เศษ</td><td class="center">${formatNumber(r.scrapKg,2)}</td><td class="center">=</td><td class="center bold">${formatDash(r.weightKg,2)}</td><td class="center bold">Kg.</td><td class="right">${formatNumber(r.unitPrice,2)}</td><td class="right bold">${n(r.amount)>0?formatNumber(r.amount,2):'-'}</td></tr>`;
+      return `<tr><td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets,0)}</td><td class="center bold">เศษ</td><td class="center">${formatNumber(r.scrapKg,0)}</td><td class="center">=</td><td class="center bold">${formatDash(r.weightKg,0)}</td><td class="center bold">Kg.</td><td class="right">${formatNumber(r.unitPrice,2)}</td><td class="right bold">${n(r.amount)>0?formatNumber(r.amount,2):'-'}</td></tr>`;
     }
 
   </script>
