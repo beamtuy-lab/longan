@@ -858,20 +858,278 @@
     @media (max-width:960px){ .bill-editor-wrap{grid-template-columns:1fr;} .nav-actions{grid-template-columns:repeat(2,minmax(0,1fr));} .admin-nav.show{display:flex;} .year-grid{grid-template-columns:repeat(3,minmax(0,1fr));} .admin-dashboard{grid-template-columns:1fr;} }
     @media (max-width:640px){ body{font-size:12px;} .app-shell{width:min(100% - 14px,1160px);padding-top:7px;} .hero{padding:14px 12px;border-radius:18px;} .brand-mark{width:38px;height:38px;border-radius:12px;font-size:18px;} .hero h1{font-size:18px;} .nav-actions{grid-template-columns:1fr;gap:7px;} .nav-btn{min-height:42px;font-size:12.5px;} .panel{padding:10px;border-radius:16px;} .cashbill-table{min-width:760px;} .summary-tools,.kpi-grid,.detail-grid{grid-template-columns:1fr;} .calendar-grid{gap:4px;} .day-card{min-height:74px;padding:5px;border-radius:10px;} .year-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
 
+
+    /* ===== Premium Cash Bill UI + iPhone loading refresh ===== */
+    :root {
+      --ui-bg: #f5f7fb;
+      --ui-surface: #ffffff;
+      --ui-surface-soft: #f8fafc;
+      --ui-purple: #4b1d78;
+      --ui-purple-deep: #35145f;
+      --ui-green: #14804a;
+      --ui-green-soft: #e9f8f0;
+      --ui-border: rgba(75, 29, 120, .10);
+      --ui-shadow: 0 22px 64px rgba(28, 20, 45, .12);
+    }
+    body {
+      background:
+        radial-gradient(circle at 8% 2%, rgba(75, 29, 120, .13), transparent 30vw),
+        radial-gradient(circle at 92% 8%, rgba(20, 128, 74, .12), transparent 30vw),
+        linear-gradient(180deg, #fbfaff 0%, #f2fbf6 100%) !important;
+    }
+    .app-shell { padding-top: 14px; }
+    .hero {
+      border: 1px solid var(--ui-border) !important;
+      background: rgba(255,255,255,.92) !important;
+      box-shadow: var(--ui-shadow) !important;
+      border-radius: 28px !important;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 0;
+      height: 4px;
+      border-radius: 999px 999px 0 0;
+      background: linear-gradient(90deg, var(--ui-purple), var(--ui-green));
+      opacity: .92;
+    }
+    .brand-mark {
+      background: #4b1d78 !important;
+      box-shadow: 0 14px 34px rgba(75,29,120,.22) !important;
+    }
+    .hero h1 { letter-spacing: -.02em; }
+    .nav-actions { gap: 10px !important; }
+    .nav-btn {
+      border-radius: 18px !important;
+      background: #fff !important;
+      border-color: rgba(75,29,120,.10) !important;
+      min-height: 58px !important;
+      box-shadow: 0 10px 26px rgba(28,20,45,.07) !important;
+    }
+    .nav-btn.active, .nav-btn:hover {
+      background: #4b1d78 !important;
+      color: #fff !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 18px 42px rgba(75,29,120,.23) !important;
+    }
+    .panel {
+      background: rgba(255,255,255,.92) !important;
+      border-color: rgba(75,29,120,.10) !important;
+      box-shadow: var(--ui-shadow) !important;
+    }
+    .section-title h2 { color: var(--ui-purple-deep); letter-spacing: -.01em; }
+    .bill-editor-wrap { gap: 18px !important; }
+    .bill-sheet.editor {
+      border: 1px solid rgba(17,24,39,.22) !important;
+      border-radius: 18px !important;
+      box-shadow: 0 18px 48px rgba(28,20,45,.12) !important;
+      background: #fff !important;
+    }
+    .cashbill-table .bill-title-cell {
+      background: #f3eefb !important;
+      color: var(--ui-purple-deep) !important;
+      letter-spacing: -.01em;
+    }
+    .cashbill-table th,
+    .cashbill-table .head-cell {
+      background: #fafafa !important;
+      color: #1f2937 !important;
+    }
+    .bill-input,
+    .bill-date,
+    .bill-time {
+      border-radius: 8px !important;
+      transition: background .18s ease, box-shadow .18s ease, outline-color .18s ease;
+    }
+    .bill-input:focus,
+    .bill-date:focus,
+    .bill-time:focus {
+      outline: 2px solid rgba(20,128,74,.34) !important;
+      outline-offset: 1px !important;
+      background: #f0fff6 !important;
+      box-shadow: inset 0 -3px 0 rgba(20,128,74,.28) !important;
+    }
+    .side-card {
+      border-radius: 22px !important;
+      background: #fff !important;
+      border: 1px solid rgba(75,29,120,.10) !important;
+      box-shadow: 0 16px 36px rgba(28,20,45,.08) !important;
+    }
+    .mini-icon { background: var(--ui-green-soft) !important; color: var(--ui-green) !important; }
+    .primary-btn {
+      border-radius: 16px !important;
+      background: #4b1d78 !important;
+      box-shadow: 0 16px 32px rgba(75,29,120,.22) !important;
+    }
+    .primary-btn:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    .secondary-btn, .ghost-btn { border-radius: 14px !important; }
+    .loading-overlay {
+      background: rgba(15, 23, 42, .56) !important;
+      backdrop-filter: blur(18px) saturate(1.05) !important;
+    }
+    .loading-card {
+      width: min(420px, 100%) !important;
+      border-radius: 34px !important;
+      padding: 26px 22px 24px !important;
+      background: rgba(255,255,255,.96) !important;
+      border: 1px solid rgba(255,255,255,.50) !important;
+      box-shadow: 0 32px 90px rgba(0,0,0,.30) !important;
+    }
+    .iphone-scene {
+      position: relative;
+      width: 214px;
+      height: 232px;
+      margin: 0 auto 14px;
+      display: grid;
+      place-items: center;
+    }
+    .iphone-frame {
+      position: relative;
+      width: 128px;
+      height: 224px;
+      border-radius: 30px;
+      padding: 10px 8px;
+      background: #111827;
+      box-shadow: 0 24px 45px rgba(15,23,42,.30), inset 0 0 0 2px rgba(255,255,255,.08);
+      animation: phoneFloat 2.6s ease-in-out infinite;
+      overflow: hidden;
+    }
+    .iphone-frame::before {
+      content: '';
+      position: absolute;
+      top: 7px;
+      left: 50%;
+      width: 42px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.22);
+      transform: translateX(-50%);
+      z-index: 3;
+    }
+    .iphone-screen {
+      height: 100%;
+      border-radius: 23px;
+      background: linear-gradient(180deg, #fbfaff 0%, #eefaf3 100%);
+      overflow: hidden;
+      position: relative;
+      padding: 18px 10px 10px;
+    }
+    .phone-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font: 800 9px/1 'Prompt', sans-serif;
+      color: #35145f;
+      margin-bottom: 8px;
+    }
+    .phone-dot { width: 8px; height: 8px; border-radius: 50%; background: #14804a; box-shadow: 0 0 12px rgba(20,128,74,.55); }
+    .phone-bill {
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid rgba(75,29,120,.10);
+      padding: 8px;
+      box-shadow: 0 8px 18px rgba(28,20,45,.08);
+      transform-origin: top center;
+      animation: billPulse 1.8s ease-in-out infinite;
+    }
+    .phone-line { height: 6px; border-radius: 999px; background: #e8e1f2; margin-bottom: 6px; overflow: hidden; }
+    .phone-line.short { width: 64%; }
+    .phone-line.mid { width: 82%; background: #e8f7ef; }
+    .phone-line::after {
+      content: '';
+      display: block;
+      width: 42%;
+      height: 100%;
+      border-radius: inherit;
+      background: rgba(75,29,120,.55);
+      animation: typingFill 1.65s ease-in-out infinite;
+    }
+    .phone-line.mid::after { background: rgba(20,128,74,.62); animation-delay: .2s; }
+    .phone-total {
+      margin-top: 8px;
+      border-radius: 10px;
+      background: #35145f;
+      color: #fff;
+      font: 800 11px/1 'Prompt', sans-serif;
+      padding: 8px 6px;
+      text-align: right;
+      animation: totalGlow 1.8s ease-in-out infinite;
+    }
+    .typing-finger {
+      position: absolute;
+      right: 24px;
+      bottom: 24px;
+      width: 42px;
+      height: 42px;
+      border-radius: 22px 22px 18px 18px;
+      background: #f0c7a5;
+      box-shadow: 0 12px 24px rgba(76,42,20,.20);
+      transform: rotate(-18deg);
+      animation: tapBill 1.25s ease-in-out infinite;
+    }
+    .typing-finger::after {
+      content: '';
+      position: absolute;
+      left: 13px;
+      bottom: -20px;
+      width: 18px;
+      height: 38px;
+      border-radius: 12px;
+      background: #e8b990;
+    }
+    .phone-spark {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 16px rgba(34,197,94,.75);
+      animation: sparkle 1.8s ease-in-out infinite;
+    }
+    .phone-spark.s1 { left: 28px; top: 44px; animation-delay: .1s; }
+    .phone-spark.s2 { right: 22px; top: 78px; animation-delay: .46s; background:#8b5cf6; box-shadow:0 0 16px rgba(139,92,246,.72); }
+    .phone-spark.s3 { left: 38px; bottom: 38px; animation-delay: .82s; }
+    .loading-title { color: #35145f !important; font-size: 21px !important; }
+    .loading-status { color: #475467 !important; }
+    .progress-line { background: rgba(75,29,120,.10) !important; }
+    .progress-line::after { background: linear-gradient(90deg, transparent, #14804a, #4b1d78, transparent) !important; }
+    @keyframes phoneFloat { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-7px) rotate(1.2deg); } }
+    @keyframes billPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+    @keyframes typingFill { 0% { transform: translateX(-110%); } 55%,100% { transform: translateX(165%); } }
+    @keyframes totalGlow { 0%,100% { box-shadow: 0 0 0 rgba(20,128,74,0); } 50% { box-shadow: 0 0 18px rgba(20,128,74,.28); } }
+    @keyframes tapBill { 0%,100% { transform: translate(0,0) rotate(-18deg) scale(1); } 45% { transform: translate(-14px,-16px) rotate(-22deg) scale(.96); } 62% { transform: translate(-12px,-14px) rotate(-22deg) scale(1.02); } }
+    @media (max-width:640px){
+      .loading-card { border-radius: 26px !important; padding: 22px 18px !important; }
+      .iphone-scene { width: 190px; height: 216px; }
+      .iphone-frame { width: 118px; height: 208px; }
+    }
+
   </style>
 </head>
 <body>
   <div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
     <div class="loading-card" role="status" aria-live="polite">
-      <div class="printer-scene" aria-hidden="true">
-        <div class="receipt-paper"></div>
-        <div class="printing-head"></div>
-        <div class="printer-body"></div>
-        <span class="sparkle s1"></span>
-        <span class="sparkle s2"></span>
-        <span class="sparkle s3"></span>
+      <div class="iphone-scene" aria-hidden="true">
+        <span class="phone-spark s1"></span>
+        <span class="phone-spark s2"></span>
+        <span class="phone-spark s3"></span>
+        <div class="iphone-frame">
+          <div class="iphone-screen">
+            <div class="phone-header"><span class="phone-dot"></span><span>บิลเงินสด TK</span></div>
+            <div class="phone-bill">
+              <div class="phone-line short"></div>
+              <div class="phone-line mid"></div>
+              <div class="phone-line"></div>
+              <div class="phone-line mid"></div>
+              <div class="phone-total">฿ 0.00</div>
+            </div>
+          </div>
+        </div>
+        <div class="typing-finger"></div>
       </div>
-      <h2 class="loading-title">กำลังพิมพ์บิลเงินสด</h2>
+      <h2 class="loading-title" id="loadingTitle">กำลังเตรียมระบบบิลเงินสด</h2>
       <div class="loading-status" id="loadingStatus">กำลังเตรียมข้อมูล...</div>
       <div class="progress-line"></div>
     </div>
@@ -1193,12 +1451,12 @@
     const MONTHS_TH_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
     const WEEKDAYS_TH = ['อา','จ','อ','พ','พฤ','ศ','ส'];
     const loadingTexts = {
-      init: ['กำลังเตรียมระบบบิลเงินสด...', 'กำลังตรวจสอบการเชื่อมต่อฐานข้อมูล...', 'กำลังจัดรูปแบบฟอร์มให้พร้อมใช้งาน...'],
-      save: ['กำลังคำนวณน้ำหนักลำไย...', 'กำลังบันทึกข้อมูลผ่าน doPost...', 'กำลังจัดรูปแบบบิล A4...', 'กำลังเตรียมหน้าต่างพิมพ์บิล...'],
+      init: ['กำลังเปิด Web Apps...', 'กำลังเตรียมหน้าจอ iPhone สำหรับกรอกบิล...', 'กำลังตรวจสอบการเชื่อมต่อฐานข้อมูล...', 'กำลังจัดรูปแบบฟอร์มให้พร้อมใช้งาน...'],
+      save: ['กำลังคำนวณน้ำหนักลำไย...', 'กำลังกรอกข้อมูลลงบิลเงินสดบน iPhone...', 'กำลังบันทึกข้อมูลผ่าน doPost...', 'กำลังจัดรูปแบบบิล A4...', 'กำลังเตรียมหน้าต่างพิมพ์บิล...'],
       read: ['กำลังโหลดข้อมูลสรุป...', 'กำลังอ่านข้อมูลจาก Google Sheets...', 'กำลังจัดทำปฏิทินรายเดือน...'],
       admin: ['กำลังตรวจสอบสิทธิ์ผู้ดูแล...', 'กำลังเปิดเครื่องมือผู้ดูแลระบบ...'],
       delete: ['กำลังตรวจสอบสิทธิ์...', 'กำลังลบรายการบิล...', 'กำลังอัปเดตหน้าสรุป...'],
-      update: ['กำลังตรวจสอบข้อมูลบิล...', 'กำลังบันทึกการแก้ไข...', 'กำลังจัดรูปแบบบิลใหม่...']
+      update: ['กำลังตรวจสอบข้อมูลบิล...', 'กำลังกรอกข้อมูลแก้ไขบน iPhone...', 'กำลังบันทึกการแก้ไข...', 'กำลังจัดรูปแบบบิลใหม่...']
     };
 
     let allBills = [];
@@ -1208,12 +1466,17 @@
     let editingBillId = '';
     let editingCreatedAt = '';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      setDefaultDateTime();
-      fillMonthYearSelectors();
-      bindBillInputs();
-      calculateBill();
-      loadSummary(true);
+    document.addEventListener('DOMContentLoaded', async () => {
+      showLoading('init');
+      try {
+        setDefaultDateTime();
+        fillMonthYearSelectors();
+        bindBillInputs();
+        calculateBill();
+        await loadSummary(true);
+      } finally {
+        hideLoading();
+      }
     });
 
     function setDefaultDateTime() {
@@ -1271,6 +1534,16 @@
       document.querySelectorAll('#billForm input').forEach(input => {
         input.addEventListener('input', calculateBill);
         input.addEventListener('change', calculateBill);
+      });
+      document.querySelectorAll('#billForm .row-basket, #billForm .row-scrap').forEach(input => {
+        const selectZero = () => {
+          const value = String(input.value || '').trim();
+          if (value === '0' || value === '0.0' || value === '0.00') {
+            requestAnimationFrame(() => input.select());
+          }
+        };
+        input.addEventListener('focus', selectZero);
+        input.addEventListener('click', selectZero);
       });
       const dateInput = document.getElementById('billDate');
       const timeInput = document.getElementById('billTime');
@@ -1665,9 +1938,19 @@
 
     function showLoading(mode = 'init') {
       const overlay = document.getElementById('loadingOverlay');
+      const title = document.getElementById('loadingTitle');
       const status = document.getElementById('loadingStatus');
+      const loadingTitles = {
+        init: 'กำลังเปิดระบบบิลเงินสด',
+        save: 'กำลังบันทึกและพิมพ์บิล A4',
+        read: 'กำลังโหลดข้อมูลสรุป',
+        admin: 'กำลังเข้าสู่ระบบผู้ดูแล',
+        delete: 'กำลังลบบิลเงินสด',
+        update: 'กำลังแก้ไขและพิมพ์บิล A4'
+      };
       const texts = loadingTexts[mode] || loadingTexts.init;
       let i = 0;
+      if (title) title.textContent = loadingTitles[mode] || loadingTitles.init;
       status.textContent = texts[0];
       overlay.classList.add('active');
       overlay.setAttribute('aria-hidden', 'false');
