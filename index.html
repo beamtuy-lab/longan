@@ -1167,6 +1167,46 @@
     }
 
 
+
+
+    /* ===== Requested patch: summary + mobile full form ===== */
+    .grade-basket-line { display:block; margin-top:2px; color:#35145f; font-weight:800; line-height:1.22; }
+    @media (max-width: 760px) {
+      html, body { overflow-x:hidden !important; }
+      .app-shell { width:100% !important; max-width:100% !important; padding-left:6px !important; padding-right:6px !important; }
+      .bill-editor-wrap { display:block !important; }
+      .bill-sheet.editor { width:100% !important; max-width:100% !important; overflow-x:hidden !important; }
+      .bill-sheet.editor::after { display:none !important; content:'' !important; }
+      .cashbill-table { min-width:0 !important; width:100% !important; table-layout:fixed !important; }
+      .cashbill-table col:nth-child(1) { width:8.5% !important; }
+      .cashbill-table col:nth-child(2) { width:12% !important; }
+      .cashbill-table col:nth-child(3) { width:8.5% !important; }
+      .cashbill-table col:nth-child(4) { width:10.5% !important; }
+      .cashbill-table col:nth-child(5) { width:5.5% !important; }
+      .cashbill-table col:nth-child(6) { width:12% !important; }
+      .cashbill-table col:nth-child(7) { width:6.5% !important; }
+      .cashbill-table col:nth-child(8) { width:13% !important; }
+      .cashbill-table col:nth-child(9) { width:23.5% !important; }
+      .cashbill-table th, .cashbill-table td { padding:3px 2px !important; font-size:9.5px !important; line-height:1.2 !important; border-width:1px !important; }
+      .cashbill-table .bill-title-cell { font-size:14px !important; padding:5px 3px !important; }
+      .cashbill-table .grade { font-size:13px !important; }
+      .cashbill-table .total-label, .cashbill-table .total-amount { font-size:13px !important; }
+      .bill-input, .bill-date, .bill-time { font-size:inherit !important; padding:0 !important; min-width:0 !important; }
+      #sellerPhone { width:92px !important; }
+      #basketKg { width:36px !important; }
+      .side-card { margin-top:10px !important; }
+      .calendar-grid { gap:3px !important; }
+      .day-card { min-height:82px !important; padding:4px 3px !important; }
+      .day-data { font-size:8.2px !important; line-height:1.18 !important; }
+      .grade-basket-line { font-size:7.8px !important; line-height:1.18 !important; }
+      .day-money { font-size:9px !important; }
+    }
+    @media (max-width: 390px) {
+      .cashbill-table th, .cashbill-table td { font-size:8.7px !important; padding:2.5px 1.5px !important; }
+      .cashbill-table .bill-title-cell { font-size:13px !important; }
+      .cashbill-table .grade, .cashbill-table .total-label, .cashbill-table .total-amount { font-size:12px !important; }
+      #sellerPhone { width:80px !important; }
+    }
   </style>
 </head>
 <body>
@@ -1417,7 +1457,7 @@
       <div class="section-title">
         <div>
           <h2>หน้าสรุปการซื้อลำไย</h2>
-          <p>สรุปรายวัน รายเดือน และรายปี</p>
+          <p>สรุปรายวันและปฏิทินสรุปรายเดือน</p>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="secondary-btn daily-print-btn" type="button" onclick="printDailySummary()">🖨️ พิมพ์สรุปรายวัน</button><button class="secondary-btn" type="button" onclick="loadSummary()">🔄 โหลดข้อมูลใหม่</button></div>
       </div>
@@ -1456,17 +1496,9 @@
         <div class="calendar-grid" id="calendarGrid"></div>
       </div>
 
-      <div class="year-shell">
-        <div class="block-head">
-          <h3>สรุปรายปี</h3>
-          <span id="yearSummaryText">-</span>
-        </div>
-        <div class="year-grid" id="yearGrid"></div>
-      </div>
-
       <div class="table-shell">
         <div class="block-head">
-          <h3>รายการบิลล่าสุด</h3>
+          <h3>รายการบิล</h3>
           <span id="tableSummaryText">-</span>
         </div>
         <div class="table-responsive" id="tableContainer"></div>
@@ -1596,6 +1628,19 @@
       yearSelect.innerHTML = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i)
         .map(y => `<option value="${y}">${y + 543}</option>`).join('');
       yearSelect.value = String(now.getFullYear());
+    }
+
+
+    function bindAdminEnterShortcut() {
+      const adminPassword = document.getElementById('adminPassword');
+      if (!adminPassword || adminPassword.dataset.enterBound === '1') return;
+      adminPassword.dataset.enterBound = '1';
+      adminPassword.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          adminLogin();
+        }
+      });
     }
 
     function bindBillInputs() {
@@ -1788,7 +1833,6 @@
       setText('kpiDailyBaskets', formatNumber(dailyTotals.totalBaskets, 2));
       setText('kpiDailyBills', String(dailyRecords.length));
       renderCalendar(month, year);
-      renderYear(year);
       renderTable();
     }
 
@@ -2514,7 +2558,7 @@
         return d && d.getFullYear() === year && d.getMonth() === month;
       });
       const monthTotals = sumRecords(monthlyRecords);
-      setText('monthSummaryText', `${MONTHS_TH[month]} ${year + 543}: ${formatNumber(monthTotals.totalWeightKg, 2)} Kg. | ${formatNumber(monthTotals.totalBaskets, 2)} ตระกร้า | ${formatNumber(monthTotals.totalAmount, 2)} บาท`);
+      setText('monthSummaryText', `${MONTHS_TH[month]} ${year + 543}: ${formatNumber(monthTotals.totalWeightKg, 2)} Kg. | ${formatNumber(monthTotals.totalBaskets, 2)} ตระกร้า | ${formatNumber(monthTotals.totalAmount, 2)} บาท | ${gradeBasketLine(monthlyRecords, 1)}`);
       const byDate = groupBy(monthlyRecords, b => normalizeDate(b.date));
       let html = WEEKDAYS_TH.map(d => `<div class="weekday">${d}</div>`).join('');
       for (let i = 0; i < first.getDay(); i++) html += '<div class="day-card empty"></div>';
@@ -2522,13 +2566,14 @@
         const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
         const recs = byDate[dateStr] || [];
         const totals = sumRecords(recs);
+        const gradeLine = gradeBasketLine(recs, 1);
         const classes = ['day-card'];
         if (dateStr === today) classes.push('today');
         if (recs.length) classes.push('has-data');
         const action = recs.length ? ` role="button" tabindex="0" onclick="openDayDetail('${dateStr}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDayDetail('${dateStr}')}" title="คลิกดูรายละเอียดวันที่ ${day}"` : '';
         html += `<div class="${classes.join(' ')}"${action}>
           <div class="day-num">${day}</div>
-          ${recs.length ? `<div class="day-data">${formatNumber(totals.totalWeightKg, 1)} Kg.<br>${formatNumber(totals.totalBaskets, 1)} ตะกร้า<br>${recs.length} บิล</div><div class="day-money">${formatNumber(totals.totalAmount, 0)} ฿</div>` : '<div class="day-data">-</div>'}
+          ${recs.length ? `<div class="day-data">${formatNumber(totals.totalWeightKg, 0)} Kg. | ${recs.length} บิล<br><span class="grade-basket-line">${gradeLine}</span></div><div class="day-money">${formatNumber(totals.totalAmount, 0)} ฿</div>` : '<div class="day-data">-</div>'}
         </div>`;
       }
       grid.innerHTML = html;
@@ -2539,7 +2584,7 @@
       const records = allBills.filter(b => normalizeDate(b.date) === dateStr);
       const totals = sumRecords(records);
       document.getElementById('dayDetailTitle').textContent = `รายละเอียดวันที่ ${formatThaiDate(dateStr)}`;
-      document.getElementById('dayDetailSummary').textContent = `${records.length} บิล | ${formatNumber(totals.totalWeightKg,2)} Kg. | ${formatNumber(totals.totalBaskets,2)} ตระกร้า | ${formatNumber(totals.totalAmount,2)} บาท`;
+      document.getElementById('dayDetailSummary').textContent = `${records.length} บิล | ${formatNumber(totals.totalWeightKg,2)} Kg. | ${formatNumber(totals.totalBaskets,2)} ตระกร้า | ${formatNumber(totals.totalAmount,2)} บาท | ${gradeBasketLine(records, 2)}`;
       document.getElementById('dayDetailBody').innerHTML = buildRecordsDetailTable(records, true);
       document.getElementById('dayDetailModal').classList.add('active');
       document.getElementById('dayDetailModal').setAttribute('aria-hidden','false');
@@ -2557,10 +2602,13 @@
     function renderTable() {
       const container = document.getElementById('tableContainer');
       const query = (document.getElementById('summarySearch').value || '').trim().toLowerCase();
-      const records = allBills
+      const dateValue = document.getElementById('summaryDate').value || toInputDate(new Date());
+      const baseRecords = allBills.filter(b => normalizeDate(b.date) === dateValue);
+      const records = baseRecords
         .filter(b => !query || String(b.customerName || '').toLowerCase().includes(query) || String(b.billId || '').toLowerCase().includes(query))
         .slice(0, 300);
-      setText('tableSummaryText', `${records.length} รายการจากทั้งหมด ${allBills.length} รายการ`);
+      const totals = sumRecords(records);
+      setText('tableSummaryText', `${formatThaiDate(dateValue)}: ${records.length} รายการ | ${formatNumber(totals.totalWeightKg, 2)} Kg. | ${formatNumber(totals.totalAmount, 2)} บาท`);
       container.innerHTML = buildRecordsTable(records, false);
       if (adminState.loggedIn) renderAdminPanel();
     }
@@ -2673,6 +2721,25 @@
       }
     }
 
+
+    function getGradeBasketTotals(records) {
+      const result = { AA: 0, A: 0, B: 0, C: 0 };
+      (records || []).forEach(record => {
+        const basketKg = n(record.basketKg) || 27;
+        (record.rows || []).forEach(row => {
+          if (!(row.grade in result)) return;
+          const weight = n(row.weightKg) || ((n(row.baskets) * basketKg) + n(row.scrapKg));
+          result[row.grade] += basketKg > 0 ? weight / basketKg : 0;
+        });
+      });
+      return result;
+    }
+
+    function gradeBasketLine(records, digits = 1) {
+      const g = getGradeBasketTotals(records);
+      return `AA ${formatNumber(g.AA, digits)} | A ${formatNumber(g.A, digits)} | B ${formatNumber(g.B, digits)} | C ${formatNumber(g.C, digits)}`;
+    }
+
     function buildPrintHTML(record) {
       const copyOne = buildReceiptBlock(record, 'ต้นฉบับ');
       const copyTwo = buildReceiptBlock(record, 'สำเนา');
@@ -2688,7 +2755,7 @@
         .title{background:#d9d9d9;font-size:14pt;line-height:1.28;font-weight:800;text-align:center;padding:.95mm;} .head{background:#d9d9d9;font-weight:800;text-align:center;white-space:normal;line-height:1.28;}
         .center{text-align:center}.right{text-align:right}.bold{font-weight:800}.grade{text-align:center;font-weight:800;font-size:11.8pt;line-height:1.28}.sub-label{text-align:right;font-weight:800;white-space:normal}.total-label{background:#d9d9d9;font-size:12.4pt;line-height:1.28;font-weight:800;text-align:center}.total-amount{color:#b41710;font-weight:800;text-align:right;font-size:12.4pt;line-height:1.28}.total-row td{border-top:1px solid #111;background:#eeeeee;}
         @media print{.no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.receipt-copy{margin-bottom:3mm;}}
-      </style></head><body><div class="no-print"><button onclick="window.print()">พิมพ์บิล</button></div><div class="page">${copyOne}${copyTwo}</div></body></html>`;
+      </style></head><body><script>window.onafterprint=function(){setTimeout(function(){window.close();},180)};function printAndClose(){window.print();setTimeout(function(){window.close();},900)}<\/script><div class="no-print"><button onclick="printAndClose()">พิมพ์บิล</button></div><div class="page">${copyOne}${copyTwo}</div></body></html>`;
     }
 
     function buildReceiptBlock(record, copyLabel) {
