@@ -1207,6 +1207,16 @@
       .cashbill-table .grade, .cashbill-table .total-label, .cashbill-table .total-amount { font-size:12px !important; }
       #sellerPhone { width:80px !important; }
     }
+
+    /* ===== Daily grade summary cards and print-summary refinement ===== */
+    .daily-grade-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:-2px 0 12px; }
+    .daily-grade-card { border:1px solid rgba(75,29,120,.10); border-radius:14px; background:#fbfffd; padding:10px 12px; box-shadow:0 8px 18px rgba(39,25,70,.05); }
+    .daily-grade-card span { display:block; color:#667085; font-size:11px; font-weight:700; }
+    .daily-grade-card b { display:block; color:#35145f; font-size:20px; line-height:1.05; margin-top:4px; }
+    .daily-grade-card small { display:block; color:#16804a; font-size:11px; font-weight:700; margin-top:3px; }
+    @media (max-width:760px) { .daily-grade-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .daily-grade-card { padding:9px; } .daily-grade-card b { font-size:18px; } }
+    @media (max-width:380px) { .daily-grade-grid { grid-template-columns:1fr; } }
+
   </style>
 </head>
 <body>
@@ -2780,6 +2790,150 @@
     function receiptGradeRow(r) {
       return `<tr><td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets,0)}</td><td class="center bold">เศษ</td><td class="center">${formatNumber(r.scrapKg,0)}</td><td class="center">=</td><td class="center bold">${formatDash(r.weightKg,0)}</td><td class="center bold">Kg.</td><td class="right">${formatNumber(r.unitPrice,2)}</td><td class="right bold">${n(r.amount)>0?formatNumber(r.amount,2):'-'}</td></tr>`;
     }
+
+
+    /* ===== Final patch: daily grade baskets in selected-day summary and printable daily report ===== */
+    function getGradeBasketTotals(records) {
+      const result = { AA: 0, A: 0, B: 0, C: 0 };
+      (records || []).forEach(record => {
+        const basketKg = n(record.basketKg) || 27;
+        (record.rows || []).forEach(row => {
+          if (!(row.grade in result)) return;
+          const weight = n(row.weightKg) || ((n(row.baskets) * basketKg) + n(row.scrapKg));
+          result[row.grade] += basketKg > 0 ? weight / basketKg : n(row.baskets);
+        });
+      });
+      return result;
+    }
+
+    function gradeBasketLine(records, digits = 2) {
+      const g = getGradeBasketTotals(records);
+      return `AA ${formatNumber(g.AA, digits)} | A ${formatNumber(g.A, digits)} | B ${formatNumber(g.B, digits)} | C ${formatNumber(g.C, digits)}`;
+    }
+
+    function ensureDailyGradeCards() {
+      if (document.getElementById('dailyGradeGrid')) return;
+      const kpiGrid = document.querySelector('#panelSummary .kpi-grid');
+      if (!kpiGrid) return;
+      const grid = document.createElement('div');
+      grid.className = 'daily-grade-grid';
+      grid.id = 'dailyGradeGrid';
+      grid.innerHTML = DEFAULT_GRADES.map(g => `
+        <div class="daily-grade-card">
+          <span>ตระกร้าเกรด ${g} รายวัน</span>
+          <b id="kpiGrade${g}Basket">0.00</b>
+          <small>ตระกร้า</small>
+        </div>
+      `).join('');
+      kpiGrid.insertAdjacentElement('afterend', grid);
+    }
+
+    function renderDailyGradeCards(records) {
+      ensureDailyGradeCards();
+      const totals = getGradeBasketTotals(records || []);
+      DEFAULT_GRADES.forEach(g => {
+        const el = document.getElementById(`kpiGrade${g}Basket`);
+        if (el) el.textContent = formatNumber(totals[g] || 0, 2);
+      });
+    }
+
+    function renderSummary() {
+      const dateValue = document.getElementById('summaryDate').value || toInputDate(new Date());
+      const month = Number(document.getElementById('summaryMonth').value);
+      const year = Number(document.getElementById('summaryYear').value);
+      const dailyRecords = allBills.filter(b => normalizeDate(b.date) === dateValue);
+      const dailyTotals = sumRecords(dailyRecords);
+      setText('kpiDailyAmount', formatNumber(dailyTotals.totalAmount, 2));
+      setText('kpiDailyWeight', formatNumber(dailyTotals.totalWeightKg, 2));
+      setText('kpiDailyBaskets', formatNumber(dailyTotals.totalBaskets, 2));
+      setText('kpiDailyBills', String(dailyRecords.length));
+      renderDailyGradeCards(dailyRecords);
+      renderCalendar(month, year);
+      renderTable();
+    }
+
+    function printDailySummary() {
+      const dateValue = document.getElementById('summaryDate').value || toInputDate(new Date());
+      const records = allBills.filter(b => normalizeDate(b.date) === dateValue);
+      const win = window.open('', '_blank');
+      if (!win) return showToast('เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต Pop-up', 'error');
+      win.document.write(buildDailySummaryPrintHTML(dateValue, records));
+      win.document.close();
+      win.focus();
+      setTimeout(() => {
+        try { win.print(); } catch (_) {}
+        setTimeout(() => { try { if (!win.closed) win.close(); } catch (_) {} }, 900);
+      }, 550);
+    }
+
+    function buildDailySummaryPrintHTML(dateValue, records) {
+      const totals = sumRecords(records);
+      const gradeTotals = getGradeBasketTotals(records);
+      const rows = records.map((b, i) => {
+        const g = getGradeBasketTotals([b]);
+        return `<tr>
+          <td class="center">${i + 1}</td>
+          <td>${escapeHtml(b.billId || '-')}</td>
+          <td>${formatThaiTime(b.time)}</td>
+          <td>${escapeHtml(b.customerName || '-')}</td>
+          <td class="right">${formatNumber(g.AA, 2)}</td>
+          <td class="right">${formatNumber(g.A, 2)}</td>
+          <td class="right">${formatNumber(g.B, 2)}</td>
+          <td class="right">${formatNumber(g.C, 2)}</td>
+          <td class="right">${formatNumber(getTotal(b, 'totalBaskets'), 2)}</td>
+          <td class="right">${formatNumber(getTotal(b, 'totalWeightKg'), 2)}</td>
+          <td class="right">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="11" class="center">ไม่พบข้อมูลในวันที่เลือก</td></tr>';
+      return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>สรุปซื้อรายวัน ${formatThaiDate(dateValue)}</title>
+      <style>
+        @page { size: A4 portrait; margin: 10mm; }
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:'TH Sarabun New','Sarabun',Arial,sans-serif; color:#111; background:#fff; }
+        .no-print { text-align:center; padding:8px; font-family:Arial,sans-serif; }
+        .no-print button { padding:8px 16px; border:0; border-radius:9px; background:#4b1d78; color:#fff; font-weight:700; }
+        h1 { margin:0; font-size:22pt; text-align:center; line-height:1.18; }
+        .sub { text-align:center; font-size:14pt; margin:1.5mm 0 4mm; }
+        .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:2.4mm; margin-bottom:3.2mm; }
+        .kpi { border:1px solid #111; border-radius:3mm; padding:2mm; text-align:center; }
+        .kpi b { display:block; font-size:17pt; line-height:1.12; }
+        .kpi span { font-size:11.5pt; }
+        .grade-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:2.4mm; margin-bottom:4mm; }
+        .grade-kpi { border:1px solid #111; background:#f5fbf7; border-radius:3mm; padding:1.8mm; text-align:center; }
+        .grade-kpi b { display:block; font-size:16pt; line-height:1.12; color:#35145f; }
+        .grade-kpi span { display:block; font-size:11pt; font-weight:700; color:#111; }
+        table { width:100%; border-collapse:collapse; table-layout:fixed; }
+        th,td { border:1px solid #111; padding:1.45mm 1.2mm; font-size:11.2pt; line-height:1.22; overflow:hidden; overflow-wrap:anywhere; }
+        th { background:#e7e0f1; font-weight:800; text-align:center; }
+        .center{text-align:center}.right{text-align:right}.total td{font-weight:800;background:#eef8f1;}
+        @media print { .no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
+      </style>
+      <script>
+        window.onafterprint=function(){setTimeout(function(){window.close();},180)};
+        function printAndClose(){window.print();setTimeout(function(){window.close();},900)}
+      <\/script></head><body>
+        <div class="no-print"><button onclick="printAndClose()">พิมพ์สรุปรายวัน</button></div>
+        <h1>สรุปการซื้อลำไยรายวัน</h1>
+        <div class="sub">ประจำวันที่ ${formatThaiDate(dateValue)} | พิมพ์เมื่อ ${formatThaiDateTime(new Date().toISOString())}</div>
+        <div class="kpis">
+          <div class="kpi"><b>${formatNumber(records.length,0)}</b><span>จำนวนบิล</span></div>
+          <div class="kpi"><b>${formatNumber(totals.totalBaskets,2)}</b><span>ตระกร้ารวม</span></div>
+          <div class="kpi"><b>${formatNumber(totals.totalWeightKg,2)}</b><span>กิโลกรัม</span></div>
+          <div class="kpi"><b>${formatNumber(totals.totalAmount,2)}</b><span>บาท</span></div>
+        </div>
+        <div class="grade-kpis">
+          <div class="grade-kpi"><span>AA</span><b>${formatNumber(gradeTotals.AA,2)}</b><span>ตระกร้า</span></div>
+          <div class="grade-kpi"><span>A</span><b>${formatNumber(gradeTotals.A,2)}</b><span>ตระกร้า</span></div>
+          <div class="grade-kpi"><span>B</span><b>${formatNumber(gradeTotals.B,2)}</b><span>ตระกร้า</span></div>
+          <div class="grade-kpi"><span>C</span><b>${formatNumber(gradeTotals.C,2)}</b><span>ตระกร้า</span></div>
+        </div>
+        <table><thead><tr><th style="width:7%">ลำดับ</th><th style="width:15%">เลขที่บิล</th><th style="width:9%">เวลา</th><th style="width:17%">ลูกค้า</th><th style="width:7%">AA</th><th style="width:7%">A</th><th style="width:7%">B</th><th style="width:7%">C</th><th style="width:9%">ตระกร้า</th><th style="width:10%">น้ำหนัก</th><th style="width:12%">รวมเงิน</th></tr></thead><tbody>${rows}<tr class="total"><td colspan="4" class="right">รวม</td><td class="right">${formatNumber(gradeTotals.AA,2)}</td><td class="right">${formatNumber(gradeTotals.A,2)}</td><td class="right">${formatNumber(gradeTotals.B,2)}</td><td class="right">${formatNumber(gradeTotals.C,2)}</td><td class="right">${formatNumber(totals.totalBaskets,2)}</td><td class="right">${formatNumber(totals.totalWeightKg,2)}</td><td class="right">${formatNumber(totals.totalAmount,2)}</td></tr></tbody></table>
+      </body></html>`;
+    }
+
+    // Ensure the new daily-grade cards exist even before the first data load finishes.
+    document.addEventListener('DOMContentLoaded', () => setTimeout(() => renderDailyGradeCards(allBills.filter(b => normalizeDate(b.date) === (document.getElementById('summaryDate')?.value || toInputDate(new Date())))), 0));
+
 
   </script>
 </body>
