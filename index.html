@@ -3194,6 +3194,125 @@
     });
 
 
-  </script>
+  
+
+    /* ===== Patch 2569-06-09B: Fix selectable Thai date fields ===== */
+    function __thaiDateInputById(id) {
+      return document.getElementById(id);
+    }
+
+    function __todayIso() {
+      return toInputDate(new Date());
+    }
+
+    function __setThaiDateInput(input, isoDate) {
+      if (!input) return;
+      const normalized = normalizeDate(isoDate) || input.dataset.iso || __todayIso();
+      input.dataset.iso = normalized;
+      if (input.type === 'date') {
+        input.value = normalized;
+      } else {
+        input.type = 'text';
+        input.value = formatThaiDate(normalized);
+      }
+    }
+
+    function __getThaiDateInput(input) {
+      if (!input) return __todayIso();
+      const parsed = normalizeDate(input.value) || input.dataset.iso || __todayIso();
+      input.dataset.iso = parsed;
+      if (input.type === 'date') input.value = parsed;
+      else input.value = formatThaiDate(parsed);
+      return parsed;
+    }
+
+    function __openThaiDatePicker(input, openPicker = true) {
+      if (!input) return;
+      const iso = __getThaiDateInput(input);
+      input.type = 'date';
+      input.value = iso;
+      input.removeAttribute('inputmode');
+      if (openPicker && typeof input.showPicker === 'function') {
+        try { input.showPicker(); } catch (_) {}
+      }
+    }
+
+    function __closeThaiDatePicker(input) {
+      if (!input) return;
+      const iso = normalizeDate(input.value) || input.dataset.iso || __todayIso();
+      input.dataset.iso = iso;
+      input.type = 'text';
+      input.setAttribute('inputmode', 'numeric');
+      input.value = formatThaiDate(iso);
+    }
+
+    function __bindSelectableThaiDate(inputId, onPicked) {
+      const input = __thaiDateInputById(inputId);
+      if (!input || input.dataset.datePickerBound === '1') return;
+      input.dataset.datePickerBound = '1';
+      input.autocomplete = 'off';
+      input.title = 'คลิกเพื่อเลือกวันที่';
+      input.style.cursor = 'pointer';
+
+      input.addEventListener('pointerdown', () => {
+        if (input.type !== 'date') __openThaiDatePicker(input, false);
+      });
+      input.addEventListener('focus', () => {
+        if (input.type !== 'date') __openThaiDatePicker(input, false);
+      });
+      input.addEventListener('click', () => {
+        if (input.type !== 'date') __openThaiDatePicker(input, true);
+        else if (typeof input.showPicker === 'function') {
+          try { input.showPicker(); } catch (_) {}
+        }
+      });
+      input.addEventListener('change', () => {
+        const iso = __getThaiDateInput(input);
+        if (typeof onPicked === 'function') onPicked(iso);
+      });
+      input.addEventListener('blur', () => {
+        setTimeout(() => __closeThaiDatePicker(input), 80);
+      });
+    }
+
+    setSummaryDateValue = function(isoDate) {
+      __setThaiDateInput(__thaiDateInputById('summaryDate'), isoDate);
+    };
+    getSummaryDateValue = function() {
+      return __getThaiDateInput(__thaiDateInputById('summaryDate'));
+    };
+    handleSummaryDateChange = function() {
+      const iso = getSummaryDateValue();
+      renderSummary();
+      const input = __thaiDateInputById('summaryDate');
+      if (input && input.type !== 'date') input.value = formatThaiDate(iso);
+    };
+
+    setAdminDateValue = function(isoDate) {
+      __setThaiDateInput(__thaiDateInputById('adminDate'), isoDate);
+    };
+    getAdminDateValue = function() {
+      return __getThaiDateInput(__thaiDateInputById('adminDate'));
+    };
+    handleAdminDateChange = function() {
+      const iso = getAdminDateValue();
+      renderAdminPanel();
+      const input = __thaiDateInputById('adminDate');
+      if (input && input.type !== 'date') input.value = formatThaiDate(iso);
+    };
+    setAdminDateToday = function() {
+      setAdminDateValue(__todayIso());
+      renderAdminPanel();
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        __bindSelectableThaiDate('summaryDate', () => renderSummary());
+        __bindSelectableThaiDate('adminDate', () => renderAdminPanel());
+        setSummaryDateValue(document.getElementById('summaryDate')?.dataset.iso || __todayIso());
+        setAdminDateValue(document.getElementById('adminDate')?.dataset.iso || __todayIso());
+      }, 20);
+    });
+</script>
 </body>
 </html>
