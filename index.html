@@ -1217,6 +1217,47 @@
     @media (max-width:760px) { .daily-grade-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .daily-grade-card { padding:9px; } .daily-grade-card b { font-size:18px; } }
     @media (max-width:380px) { .daily-grade-grid { grid-template-columns:1fr; } }
 
+
+
+    /* ===== Patch: Thai date fields, admin filter, improved bill detail ===== */
+    .thai-display-input { font-weight:700; }
+    .admin-filter-tools { grid-template-columns: minmax(220px, 320px) minmax(120px, 150px); align-items:end; }
+    .bill-detail-hero {
+      border:1px solid rgba(75,29,120,.12);
+      border-radius:18px;
+      padding:14px;
+      margin-bottom:12px;
+      background:#ffffff;
+      box-shadow:0 8px 22px rgba(39,25,70,.06);
+    }
+    .bill-detail-hero-top { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; }
+    .bill-detail-id { color:#35145f; font-size:20px; font-weight:800; line-height:1.1; }
+    .bill-detail-customer { color:#182018; font-size:15px; font-weight:800; margin-top:4px; }
+    .bill-detail-date { color:#667085; font-size:12px; font-weight:700; }
+    .bill-detail-total { min-width:180px; border-radius:16px; background:#f2fbf6; padding:12px; text-align:right; }
+    .bill-detail-total span { display:block; color:#667085; font-size:11px; font-weight:700; }
+    .bill-detail-total b { display:block; color:#16804a; font-size:24px; line-height:1.1; margin-top:3px; }
+    .detail-grade-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:10px 0 12px; }
+    .detail-grade-card { border:1px solid rgba(75,29,120,.10); border-radius:14px; background:#fbfffd; padding:10px; }
+    .detail-grade-card span { display:block; font-size:11px; color:#667085; font-weight:700; }
+    .detail-grade-card b { display:block; font-size:18px; color:#35145f; line-height:1.05; margin-top:4px; }
+    .detail-section-title { margin:12px 0 8px; font-weight:800; color:#35145f; }
+    @media (max-width:760px) {
+      .admin-filter-tools { grid-template-columns:1fr; }
+      .bill-detail-hero { padding:12px; border-radius:16px; }
+      .bill-detail-hero-top { display:block; }
+      .bill-detail-total { margin-top:10px; width:100%; text-align:left; }
+      .detail-grade-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .wide-modal { width:100% !important; max-height:94vh !important; }
+      .detail-scroll { max-height:62vh !important; padding:8px !important; }
+      .data-table { min-width:720px; }
+    }
+    @media (max-width:420px) {
+      .detail-grade-grid { grid-template-columns:1fr; }
+      .bill-detail-id { font-size:18px; }
+      .bill-detail-total b { font-size:21px; }
+    }
+
   </style>
 </head>
 <body>
@@ -1369,7 +1410,7 @@
                 </tr>
                 <tr>
                   <th class="head-cell">เกรด</th>
-                  <th class="head-cell">จน.ตระกร้า</th>
+                  <th class="head-cell">จำนวนตระกร้า</th>
                   <th colspan="2" class="head-cell">น้ำหนักเศษ</th>
                   <th colspan="3" class="head-cell">น้ำหนักรวม</th>
                   <th class="head-cell">หน่วยละ</th>
@@ -1420,13 +1461,13 @@
                   <td class="row-amount amount">0.00</td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">จน.ตระกร้า</td><td class="center bold" id="totalBasketCell">0.00</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td>
+                  <td></td><td class="sub-label">จำนวนตระกร้ารวม</td><td class="center bold" id="totalBasketCell">0.00</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">น.น.ตระกร้า</td><td class="center bold" id="basketWeightCell">-</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
+                  <td></td><td class="sub-label">น้ำหนักตระกร้ารวม</td><td class="center bold" id="basketWeightCell">-</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">น.น.เศษรวม</td><td class="center bold" id="scrapWeightCell">0</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
+                  <td></td><td class="sub-label">น้ำหนักเศษรวม</td><td class="center bold" id="scrapWeightCell">0</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
                 </tr>
                 <tr>
                   <td></td><td class="sub-label">น้ำหนักทั้งหมด</td><td class="center bold" id="totalWeightCell">0</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
@@ -1456,6 +1497,7 @@
           </div>
           <div class="form-actions">
             <button class="primary-btn" type="button" onclick="document.getElementById('billForm').requestSubmit()">💾 บันทึกและพิมพ์บิล A4</button>
+            <button class="secondary-btn" id="editSaveOnlyBtn" style="display:none" type="button" onclick="saveEditOnly()">✅ บันทึกการแก้ไข</button>
             <button class="secondary-btn" type="button" onclick="clearBillForm()">🧹 ล้างแบบฟอร์ม</button>
             <button class="ghost-btn" type="button" onclick="previewBillOnly()">👁️ ดูตัวอย่างก่อนพิมพ์</button>
           </div>
@@ -1475,7 +1517,7 @@
       <div class="summary-tools">
         <div class="field-box">
           <label for="summaryDate">เลือกวันที่สรุปรายวัน</label>
-          <input type="date" id="summaryDate" onchange="renderSummary()">
+          <input type="text" id="summaryDate" class="thai-display-input" inputmode="numeric" placeholder="9 มิ.ย. 2569" onchange="handleSummaryDateChange()" onblur="handleSummaryDateChange()">
         </div>
         <div class="field-box">
           <label for="summaryMonth">เดือน</label>
@@ -1526,10 +1568,20 @@
           <button class="ghost-btn" type="button" onclick="adminLogout()">ออกจากระบบ</button>
         </div>
       </div>
+      <div class="summary-tools admin-filter-tools">
+        <div class="field-box">
+          <label for="adminDate">เลือกวันที่แสดงข้อมูล</label>
+          <input type="text" id="adminDate" class="thai-display-input" inputmode="numeric" placeholder="9 มิ.ย. 2569" onchange="handleAdminDateChange()" onblur="handleAdminDateChange()">
+        </div>
+        <div class="field-box">
+          <label>&nbsp;</label>
+          <button class="secondary-btn" type="button" onclick="setAdminDateToday()">วันนี้</button>
+        </div>
+      </div>
       <div class="admin-dashboard">
-        <div class="admin-box"><span>จำนวนบิลทั้งหมด</span><b id="adminTotalBills">0</b></div>
-        <div class="admin-box"><span>น้ำหนักรวม</span><b id="adminTotalWeight">0.00</b><small>Kg.</small></div>
-        <div class="admin-box"><span>ยอดเงินรวม</span><b id="adminTotalAmount">0.00</b><small>บาท</small></div>
+        <div class="admin-box"><span>จำนวนบิลตามวันที่เลือก</span><b id="adminTotalBills">0</b></div>
+        <div class="admin-box"><span>น้ำหนักรวมตามวันที่เลือก</span><b id="adminTotalWeight">0.00</b><small>Kg.</small></div>
+        <div class="admin-box"><span>ยอดเงินรวมตามวันที่เลือก</span><b id="adminTotalAmount">0.00</b><small>บาท</small></div>
       </div>
       <div class="table-shell admin-table-shell">
         <div class="block-head">
@@ -2933,6 +2985,213 @@
 
     // Ensure the new daily-grade cards exist even before the first data load finishes.
     document.addEventListener('DOMContentLoaded', () => setTimeout(() => renderDailyGradeCards(allBills.filter(b => normalizeDate(b.date) === (document.getElementById('summaryDate')?.value || toInputDate(new Date())))), 0));
+
+
+    /* ===== Patch 2569-06-09: Thai summary date, admin date filter, edit-only save, improved detail ===== */
+    function setSummaryDateValue(isoDate) {
+      const input = document.getElementById('summaryDate');
+      if (!input) return;
+      const normalized = normalizeDate(isoDate) || toInputDate(new Date());
+      input.dataset.iso = normalized;
+      input.value = formatThaiDate(normalized);
+    }
+    function getSummaryDateValue() {
+      const input = document.getElementById('summaryDate');
+      if (!input) return toInputDate(new Date());
+      const parsed = normalizeDate(input.value) || input.dataset.iso || toInputDate(new Date());
+      input.dataset.iso = parsed;
+      input.value = formatThaiDate(parsed);
+      return parsed;
+    }
+    function handleSummaryDateChange() {
+      getSummaryDateValue();
+      renderSummary();
+    }
+    function setAdminDateValue(isoDate) {
+      const input = document.getElementById('adminDate');
+      if (!input) return;
+      const normalized = normalizeDate(isoDate) || toInputDate(new Date());
+      input.dataset.iso = normalized;
+      input.value = formatThaiDate(normalized);
+    }
+    function getAdminDateValue() {
+      const input = document.getElementById('adminDate');
+      if (!input) return toInputDate(new Date());
+      const parsed = normalizeDate(input.value) || input.dataset.iso || toInputDate(new Date());
+      input.dataset.iso = parsed;
+      input.value = formatThaiDate(parsed);
+      return parsed;
+    }
+    function handleAdminDateChange() {
+      getAdminDateValue();
+      renderAdminPanel();
+    }
+    function setAdminDateToday() {
+      setAdminDateValue(toInputDate(new Date()));
+      renderAdminPanel();
+    }
+
+    const __originalSetDefaultDateTime = setDefaultDateTime;
+    setDefaultDateTime = function() {
+      __originalSetDefaultDateTime();
+      const today = toInputDate(new Date());
+      setSummaryDateValue(today);
+      setAdminDateValue(today);
+    };
+
+    const __originalEditBill = editBill;
+    editBill = function(billId) {
+      __originalEditBill(billId);
+      const btn = document.getElementById('editSaveOnlyBtn');
+      if (btn) btn.style.display = editingBillId ? 'inline-flex' : 'none';
+    };
+
+    const __originalClearBillForm = clearBillForm;
+    clearBillForm = function(resetDate = true, silent = false) {
+      __originalClearBillForm(resetDate, silent);
+      const btn = document.getElementById('editSaveOnlyBtn');
+      if (btn) btn.style.display = 'none';
+    };
+
+    async function saveEditOnly() {
+      if (!adminState.loggedIn || !editingBillId) return showToast('กรุณาเลือกบิลที่ต้องการแก้ไขจากหน้า Admin ก่อน', 'error');
+      const payload = getBillPayload();
+      if (!payload.customerName) return showToast('กรุณากรอกชื่อลูกค้า', 'error');
+      if (payload.totals.totalWeightKg <= 0 || payload.totals.totalAmount <= 0) return showToast('กรุณากรอกจำนวนตระกร้า/น้ำหนักเศษ และราคาหน่วยละให้ครบก่อนบันทึก', 'error');
+      payload.billId = editingBillId;
+      payload.createdAt = editingCreatedAt;
+      try {
+        showLoading('update');
+        await gasPost('update_bill', { ...payload, password: adminState.password });
+        showToast(`บันทึกการแก้ไขบิล ${editingBillId} สำเร็จ`, 'success');
+        editingBillId = '';
+        editingCreatedAt = '';
+        const btn = document.getElementById('editSaveOnlyBtn');
+        if (btn) btn.style.display = 'none';
+        clearBillForm(false, true);
+        await loadSummary(true);
+        switchPanel('admin');
+      } catch (err) {
+        showToast(err.message || 'บันทึกการแก้ไขไม่สำเร็จ', 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    renderSummary = function() {
+      const dateValue = getSummaryDateValue();
+      const month = Number(document.getElementById('summaryMonth').value);
+      const year = Number(document.getElementById('summaryYear').value);
+      const dailyRecords = allBills.filter(b => normalizeDate(b.date) === dateValue);
+      const dailyTotals = sumRecords(dailyRecords);
+      setText('kpiDailyAmount', formatNumber(dailyTotals.totalAmount, 2));
+      setText('kpiDailyWeight', formatNumber(dailyTotals.totalWeightKg, 2));
+      setText('kpiDailyBaskets', formatNumber(dailyTotals.totalBaskets, 2));
+      setText('kpiDailyBills', String(dailyRecords.length));
+      renderDailyGradeCards(dailyRecords);
+      renderCalendar(month, year);
+      renderTable();
+    };
+
+    renderTable = function() {
+      const container = document.getElementById('tableContainer');
+      const query = (document.getElementById('summarySearch').value || '').trim().toLowerCase();
+      const dateValue = getSummaryDateValue();
+      const baseRecords = allBills.filter(b => normalizeDate(b.date) === dateValue);
+      const records = baseRecords
+        .filter(b => !query || String(b.customerName || '').toLowerCase().includes(query) || String(b.billId || '').toLowerCase().includes(query))
+        .slice(0, 300);
+      const totals = sumRecords(records);
+      setText('tableSummaryText', `${formatThaiDate(dateValue)}: ${records.length} รายการ | ${formatNumber(totals.totalWeightKg, 2)} Kg. | ${formatNumber(totals.totalAmount, 2)} บาท`);
+      container.innerHTML = buildRecordsTable(records, false);
+      if (adminState.loggedIn) renderAdminPanel();
+    };
+
+    renderAdminPanel = function() {
+      const dateValue = getAdminDateValue();
+      const records = allBills.filter(b => normalizeDate(b.date) === dateValue);
+      const totals = sumRecords(records);
+      setText('adminTotalBills', String(records.length));
+      setText('adminTotalWeight', formatNumber(totals.totalWeightKg, 2));
+      setText('adminTotalAmount', formatNumber(totals.totalAmount, 2));
+      const head = document.querySelector('.admin-table-shell .block-head h3');
+      const note = document.querySelector('.admin-table-shell .block-head span');
+      if (head) head.textContent = `จัดการบิลประจำวันที่ ${formatThaiDate(dateValue)}`;
+      if (note) note.textContent = `แสดง ${records.length} รายการ | คลิกเลขที่บิลเพื่อดูรายละเอียด`;
+      const container = document.getElementById('adminTableContainer');
+      if (container) container.innerHTML = buildRecordsTable(records.slice(0, 500), true);
+    };
+
+    printDailySummary = function() {
+      const dateValue = getSummaryDateValue();
+      const records = allBills.filter(b => normalizeDate(b.date) === dateValue);
+      const win = window.open('', '_blank');
+      if (!win) return showToast('เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต Pop-up', 'error');
+      win.document.write(buildDailySummaryPrintHTML(dateValue, records));
+      win.document.close();
+      win.focus();
+      setTimeout(() => {
+        try { win.print(); } catch (_) {}
+        setTimeout(() => { try { if (!win.closed) win.close(); } catch (_) {} }, 900);
+      }, 550);
+    };
+
+    openBillDetail = function(billId) {
+      const record = allBills.find(b => String(b.billId) === String(billId));
+      if (!record) return showToast('ไม่พบข้อมูลบิลที่เลือก', 'error');
+      currentDetailBillId = record.billId || '';
+      const totals = record.totals || sumGradeRows(record.rows || [], n(record.basketKg) || 27);
+      document.getElementById('billDetailTitle').textContent = `รายละเอียดบิล ${record.billId || '-'}`;
+      document.getElementById('billDetailSummary').textContent = `${formatThaiDate(record.date)} ${formatThaiTime(record.time)} | ลูกค้า ${record.customerName || '-'} | รวม ${formatNumber(totals.totalAmount, 2)} บาท`;
+      document.getElementById('billDetailBody').innerHTML = buildBillDetailHTML(record);
+      document.querySelectorAll('#billDetailModal .admin-only').forEach(el => el.classList.toggle('show', adminState.loggedIn));
+      document.getElementById('billDetailModal').classList.add('active');
+      document.getElementById('billDetailModal').setAttribute('aria-hidden','false');
+    };
+
+    buildBillDetailHTML = function(record) {
+      const basketKg = n(record.basketKg) || 27;
+      const totals = record.totals || sumGradeRows(record.rows || [], basketKg);
+      const rows = DEFAULT_GRADES.map(g => (record.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, weightKg:0, unitPrice:0, amount:0 });
+      const gradeCards = rows.map(r => `
+        <div class="detail-grade-card">
+          <span>เกรด ${escapeHtml(r.grade)}</span>
+          <b>${formatNumber(basketKg ? ((n(r.weightKg) || ((n(r.baskets) * basketKg) + n(r.scrapKg))) / basketKg) : 0, 2)}</b>
+          <span>${formatNumber(n(r.weightKg) || ((n(r.baskets) * basketKg) + n(r.scrapKg)), 2)} Kg. / ${formatNumber(n(r.amount), 2)} บาท</span>
+        </div>`).join('');
+      const rowHtml = rows.map(r => `<tr><td>${escapeHtml(r.grade)}</td><td class="num">${formatNumber(r.baskets,2)}</td><td class="num">${formatNumber(r.scrapKg,2)}</td><td class="num">${formatNumber(r.weightKg,2)}</td><td class="num">${formatNumber(r.unitPrice,2)}</td><td class="num">${formatNumber(r.amount,2)}</td></tr>`).join('');
+      return `<div class="bill-detail-hero">
+        <div class="bill-detail-hero-top">
+          <div>
+            <div class="bill-detail-id">${escapeHtml(record.billId || '-')}</div>
+            <div class="bill-detail-customer">${escapeHtml(record.customerName || '-')}</div>
+            <div class="bill-detail-date">${formatThaiDate(record.date)} ${formatThaiTime(record.time)} | โทร ${escapeHtml(record.sellerPhone || '080.825.6553')}</div>
+          </div>
+          <div class="bill-detail-total"><span>รวมเงินทั้งหมด</span><b>${formatNumber(totals.totalAmount,2)}</b><span>บาท</span></div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item"><span>จำนวนตระกร้ารวม</span><b>${formatNumber(totals.totalBaskets,2)}</b></div>
+        <div class="detail-item"><span>น้ำหนักตระกร้า</span><b>${formatNumber(totals.basketWeightKg,2)} Kg.</b></div>
+        <div class="detail-item"><span>น้ำหนักเศษรวม</span><b>${formatNumber(totals.scrapWeightKg,2)} Kg.</b></div>
+        <div class="detail-item"><span>น้ำหนักทั้งหมด</span><b>${formatNumber(totals.totalWeightKg,2)} Kg.</b></div>
+        <div class="detail-item"><span>น้ำหนักต่อ 1 ตระกร้า</span><b>${formatNumber(basketKg,0)} Kg.</b></div>
+        <div class="detail-item"><span>วันที่บันทึก</span><b>${formatThaiDateTime(record.createdAt) || '-'}</b></div>
+      </div>
+      <div class="detail-section-title">จำนวนตระกร้าแยกเกรด</div>
+      <div class="detail-grade-grid">${gradeCards}</div>
+      <div class="detail-section-title">รายการน้ำหนักและราคา</div>
+      <div class="table-responsive"><table class="data-table"><thead><tr><th>เกรด</th><th>ตระกร้า</th><th>เศษ Kg.</th><th>น้ำหนัก Kg.</th><th>หน่วยละ</th><th>จำนวนเงิน</th></tr></thead><tbody>${rowHtml}</tbody></table></div>`;
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        setSummaryDateValue(document.getElementById('summaryDate')?.dataset.iso || document.getElementById('summaryDate')?.value || toInputDate(new Date()));
+        setAdminDateValue(document.getElementById('adminDate')?.dataset.iso || document.getElementById('adminDate')?.value || toInputDate(new Date()));
+        const adminPw = document.getElementById('adminPassword');
+        if (adminPw) adminPw.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adminLogin(); } });
+      }, 0);
+    });
 
 
   </script>
