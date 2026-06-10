@@ -3313,6 +3313,226 @@
         setAdminDateValue(document.getElementById('adminDate')?.dataset.iso || __todayIso());
       }, 20);
     });
+
+
+    /* ===== Patch 2569-06-10: remember grade prices, fix detail columns, single-line daily print rows ===== */
+    const TK_GRADE_PRICE_MEMORY_KEY = 'tk_longan_grade_prices_v1';
+
+    function __readGradePriceMemory() {
+      try {
+        const raw = localStorage.getItem(TK_GRADE_PRICE_MEMORY_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function __writeGradePriceMemory(memory) {
+      try {
+        localStorage.setItem(TK_GRADE_PRICE_MEMORY_KEY, JSON.stringify(memory || {}));
+      } catch (_) {}
+    }
+
+    function __saveCurrentGradePrices() {
+      const memory = __readGradePriceMemory();
+      document.querySelectorAll('#billForm tr[data-grade]').forEach(row => {
+        const grade = row.dataset.grade;
+        const priceInput = row.querySelector('.row-price');
+        if (!grade || !priceInput) return;
+        const value = String(priceInput.value || '').trim();
+        if (value !== '' && Number.isFinite(Number(value.replace(/,/g, '')))) {
+          memory[grade] = value;
+        }
+      });
+      __writeGradePriceMemory(memory);
+    }
+
+    function __loadRememberedGradePrices() {
+      const memory = __readGradePriceMemory();
+      document.querySelectorAll('#billForm tr[data-grade]').forEach(row => {
+        const grade = row.dataset.grade;
+        const priceInput = row.querySelector('.row-price');
+        if (!grade || !priceInput) return;
+        if (memory[grade] !== undefined && memory[grade] !== null && String(memory[grade]).trim() !== '') {
+          priceInput.value = memory[grade];
+        }
+      });
+      calculateBill();
+    }
+
+    function __bindRememberGradePrices() {
+      document.querySelectorAll('#billForm tr[data-grade] .row-price').forEach(input => {
+        if (input.dataset.priceMemoryBound === '1') return;
+        input.dataset.priceMemoryBound = '1';
+        const save = () => {
+          __saveCurrentGradePrices();
+          calculateBill();
+        };
+        input.addEventListener('input', save);
+        input.addEventListener('change', save);
+        input.addEventListener('blur', save);
+      });
+    }
+
+    function __normalizeGradeRows(record) {
+      const basketKg = n(record?.basketKg) || n((record?.totals || {}).basketKg) || 27;
+      const sourceRows = Array.isArray(record?.rows) ? record.rows : [];
+      return DEFAULT_GRADES.map(grade => {
+        const raw = sourceRows.find(r => String(r.grade) === String(grade)) || { grade };
+        const baskets = n(raw.baskets);
+        const scrapKg = n(raw.scrapKg);
+        const unitPrice = n(raw.unitPrice);
+        const computedWeight = (baskets * basketKg) + scrapKg;
+        const weightKg = n(raw.weightKg) || computedWeight;
+        const amount = n(raw.amount) || (weightKg * unitPrice);
+        const basketEquivalent = basketKg > 0 ? weightKg / basketKg : baskets;
+        return { grade, baskets, scrapKg, unitPrice, weightKg, amount, basketEquivalent };
+      });
+    }
+
+    function __gradeTextForDisplay(row, basketKg) {
+      if (!row) return '-';
+      const weight = n(row.weightKg) || ((n(row.baskets) * (n(basketKg) || 27)) + n(row.scrapKg));
+      const amount = n(row.amount) || (weight * n(row.unitPrice));
+      return weight > 0 ? `${formatNumber(weight, 2)} Kg. / ${formatNumber(amount, 2)} ฿` : '-';
+    }
+
+    // Override gradeText so AA/A/B/C columns always show weight and amount from the correct grade object.
+    gradeText = function(row) {
+      return __gradeTextForDisplay(row, 27);
+    };
+
+    // Override table row builder to normalize each grade before rendering, preventing column mismatch.
+    recordTableRow = function(b, forceAdmin) {
+      const normalizedRows = __normalizeGradeRows(b);
+      const rows = Object.fromEntries(normalizedRows.map(r => [r.grade, r]));
+      const adminTools = (forceAdmin || adminState.loggedIn) ? `<button class="small-btn edit-btn" type="button" onclick="editBill('${escapeAttr(b.billId || '')}')">แก้ไข</button> <button class="small-btn delete-btn" type="button" onclick="deleteBill('${escapeAttr(b.billId || '')}')">ลบ</button>` : '';
+      return `<tr>
+        <td><button class="click-bill" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">${escapeHtml(b.billId || '-')}</button></td>
+        <td>${formatThaiDate(b.date)}</td><td>${formatThaiTime(b.time)}</td><td>${escapeHtml(b.customerName || '-')}</td>
+        <td class="num">${__gradeTextForDisplay(rows.AA, b.basketKg)}</td><td class="num">${__gradeTextForDisplay(rows.A, b.basketKg)}</td><td class="num">${__gradeTextForDisplay(rows.B, b.basketKg)}</td><td class="num">${__gradeTextForDisplay(rows.C, b.basketKg)}</td>
+        <td class="num">${formatNumber(getTotal(b, 'totalBaskets'), 2)}</td><td class="num">${formatNumber(getTotal(b, 'totalWeightKg'), 2)}</td><td class="num">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td>
+        <td><button class="small-btn" type="button" onclick="printExistingById('${escapeAttr(b.billId || '')}')">พิมพ์</button> ${adminTools}</td>
+      </tr>`;
+    };
+
+    // Override bill-detail renderer: force table order = grade, baskets, scrap, weight, price, amount.
+    buildBillDetailHTML = function(record) {
+      const basketKg = n(record.basketKg) || 27;
+      const rows = __normalizeGradeRows(record);
+      const totals = record.totals || sumGradeRows(rows, basketKg);
+      const gradeCards = rows.map(r => `
+        <div class="detail-grade-card">
+          <span>เกรด ${escapeHtml(r.grade)}</span>
+          <b>${formatNumber(r.basketEquivalent, 2)}</b>
+          <span>${formatNumber(r.weightKg, 2)} Kg. / ${formatNumber(r.amount, 2)} บาท</span>
+        </div>`).join('');
+      const rowHtml = rows.map(r => `<tr>
+        <td class="center bold">${escapeHtml(r.grade)}</td>
+        <td class="num">${formatNumber(r.baskets, 2)}</td>
+        <td class="num">${formatNumber(r.scrapKg, 2)}</td>
+        <td class="num">${formatNumber(r.weightKg, 2)}</td>
+        <td class="num">${formatNumber(r.unitPrice, 2)}</td>
+        <td class="num">${formatNumber(r.amount, 2)}</td>
+      </tr>`).join('');
+      return `<div class="bill-detail-hero">
+        <div class="bill-detail-hero-top">
+          <div>
+            <div class="bill-detail-id">${escapeHtml(record.billId || '-')}</div>
+            <div class="bill-detail-customer">${escapeHtml(record.customerName || '-')}</div>
+            <div class="bill-detail-date">${formatThaiDate(record.date)} ${formatThaiTime(record.time)} | โทร ${escapeHtml(record.sellerPhone || '080.825.6553')}</div>
+          </div>
+          <div class="bill-detail-total"><span>รวมเงินทั้งหมด</span><b>${formatNumber(totals.totalAmount,2)}</b><span>บาท</span></div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item"><span>จำนวนตระกร้ารวม</span><b>${formatNumber(totals.totalBaskets,2)}</b></div>
+        <div class="detail-item"><span>น้ำหนักตระกร้า</span><b>${formatNumber(totals.basketWeightKg,2)} Kg.</b></div>
+        <div class="detail-item"><span>น้ำหนักเศษรวม</span><b>${formatNumber(totals.scrapWeightKg,2)} Kg.</b></div>
+        <div class="detail-item"><span>น้ำหนักทั้งหมด</span><b>${formatNumber(totals.totalWeightKg,2)} Kg.</b></div>
+        <div class="detail-item"><span>น้ำหนักต่อ 1 ตระกร้า</span><b>${formatNumber(basketKg,0)} Kg.</b></div>
+        <div class="detail-item"><span>วันที่บันทึก</span><b>${formatThaiDateTime(record.createdAt) || '-'}</b></div>
+      </div>
+      <div class="detail-section-title">จำนวนตระกร้าแยกเกรด</div>
+      <div class="detail-grade-grid">${gradeCards}</div>
+      <div class="detail-section-title">รายการน้ำหนักและราคา</div>
+      <div class="table-responsive"><table class="data-table weight-price-table"><thead><tr><th>เกรด</th><th>ตระกร้า</th><th>เศษ Kg.</th><th>น้ำหนัก Kg.</th><th>หน่วยละ</th><th>จำนวนเงิน</th></tr></thead><tbody>${rowHtml}</tbody></table></div>`;
+    };
+
+    // Override daily print report: table cells are single-line; long values are clipped instead of wrapping.
+    buildDailySummaryPrintHTML = function(dateValue, records) {
+      const totals = sumRecords(records);
+      const gradeTotals = getGradeBasketTotals(records);
+      const rows = records.map((b, i) => {
+        const g = getGradeBasketTotals([b]);
+        return `<tr>
+          <td class="center">${i + 1}</td>
+          <td>${escapeHtml(b.billId || '-')}</td>
+          <td>${formatThaiTime(b.time)}</td>
+          <td>${escapeHtml(b.customerName || '-')}</td>
+          <td class="right">${formatNumber(g.AA, 2)}</td>
+          <td class="right">${formatNumber(g.A, 2)}</td>
+          <td class="right">${formatNumber(g.B, 2)}</td>
+          <td class="right">${formatNumber(g.C, 2)}</td>
+          <td class="right">${formatNumber(getTotal(b, 'totalBaskets'), 2)}</td>
+          <td class="right">${formatNumber(getTotal(b, 'totalWeightKg'), 2)}</td>
+          <td class="right">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="11" class="center">ไม่พบข้อมูลในวันที่เลือก</td></tr>';
+      return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>สรุปซื้อรายวัน ${formatThaiDate(dateValue)}</title>
+      <style>
+        @page { size: A4 portrait; margin: 8mm; }
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:'TH Sarabun New','Sarabun',Arial,sans-serif; color:#111; background:#fff; }
+        .no-print { text-align:center; padding:7px; font-family:Arial,sans-serif; }
+        .no-print button { padding:8px 16px; border:0; border-radius:9px; background:#4b1d78; color:#fff; font-weight:700; }
+        h1 { margin:0; font-size:21pt; text-align:center; line-height:1.1; }
+        .sub { text-align:center; font-size:13pt; margin:1mm 0 3mm; white-space:nowrap; }
+        .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:2mm; margin-bottom:2.5mm; }
+        .kpi { border:1px solid #111; border-radius:2.6mm; padding:1.7mm; text-align:center; overflow:hidden; }
+        .kpi b { display:block; font-size:16pt; line-height:1.05; white-space:nowrap; }
+        .kpi span { font-size:10.5pt; white-space:nowrap; }
+        .grade-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:2mm; margin-bottom:3mm; }
+        .grade-kpi { border:1px solid #111; background:#f5fbf7; border-radius:2.6mm; padding:1.5mm; text-align:center; overflow:hidden; }
+        .grade-kpi b { display:block; font-size:15pt; line-height:1.05; color:#35145f; white-space:nowrap; }
+        .grade-kpi span { display:block; font-size:10pt; font-weight:700; color:#111; white-space:nowrap; }
+        table { width:100%; border-collapse:collapse; table-layout:fixed; }
+        th,td { border:1px solid #111; padding:1.25mm .9mm; font-size:10.2pt; line-height:1.05; height:6.1mm; max-height:6.1mm; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; word-break:normal; overflow-wrap:normal; vertical-align:middle; }
+        th { background:#e7e0f1; font-weight:800; text-align:center; }
+        .center{text-align:center}.right{text-align:right}.total td{font-weight:800;background:#eef8f1;}
+        @media print { .no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
+      </style>
+      <script>
+        window.onafterprint=function(){setTimeout(function(){window.close();},180)};
+        function printAndClose(){window.print();setTimeout(function(){window.close();},900)}
+      <\/script></head><body>
+        <div class="no-print"><button onclick="printAndClose()">พิมพ์สรุปรายวัน</button></div>
+        <h1>สรุปการซื้อลำไยรายวัน</h1>
+        <div class="sub">ประจำวันที่ ${formatThaiDate(dateValue)} | พิมพ์เมื่อ ${formatThaiDateTime(new Date().toISOString())}</div>
+        <div class="kpis">
+          <div class="kpi"><b>${formatNumber(records.length,0)}</b><span>จำนวนบิล</span></div>
+          <div class="kpi"><b>${formatNumber(totals.totalBaskets,2)}</b><span>ตระกร้ารวม</span></div>
+          <div class="kpi"><b>${formatNumber(totals.totalWeightKg,2)}</b><span>กิโลกรัม</span></div>
+          <div class="kpi"><b>${formatNumber(totals.totalAmount,2)}</b><span>บาท</span></div>
+        </div>
+        <div class="grade-kpis">
+          <div class="grade-kpi"><span>AA</span><b>${formatNumber(gradeTotals.AA,2)}</b><span>ตระกร้า</span></div>
+          <div class="grade-kpi"><span>A</span><b>${formatNumber(gradeTotals.A,2)}</b><span>ตระกร้า</span></div>
+          <div class="grade-kpi"><span>B</span><b>${formatNumber(gradeTotals.B,2)}</b><span>ตระกร้า</span></div>
+          <div class="grade-kpi"><span>C</span><b>${formatNumber(gradeTotals.C,2)}</b><span>ตระกร้า</span></div>
+        </div>
+        <table><thead><tr><th style="width:6%">ลำดับ</th><th style="width:16%">เลขที่บิล</th><th style="width:8%">เวลา</th><th style="width:18%">ลูกค้า</th><th style="width:7%">AA</th><th style="width:7%">A</th><th style="width:7%">B</th><th style="width:7%">C</th><th style="width:8%">ตระกร้า</th><th style="width:9%">น้ำหนัก</th><th style="width:11%">รวมเงิน</th></tr></thead><tbody>${rows}<tr class="total"><td colspan="4" class="right">รวม</td><td class="right">${formatNumber(gradeTotals.AA,2)}</td><td class="right">${formatNumber(gradeTotals.A,2)}</td><td class="right">${formatNumber(gradeTotals.B,2)}</td><td class="right">${formatNumber(gradeTotals.C,2)}</td><td class="right">${formatNumber(totals.totalBaskets,2)}</td><td class="right">${formatNumber(totals.totalWeightKg,2)}</td><td class="right">${formatNumber(totals.totalAmount,2)}</td></tr></tbody></table>
+      </body></html>`;
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        __loadRememberedGradePrices();
+        __bindRememberGradePrices();
+      }, 60);
+    });
+
 </script>
 </body>
 </html>
