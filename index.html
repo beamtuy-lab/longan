@@ -1524,7 +1524,7 @@
                 <tr><td colspan="9" class="delivery-title-cell"><input id="deliveryTitle" class="delivery-input center strong" value="บิลส่งของ TK พืชผล"></td></tr>
                 <tr>
                   <td colspan="7" class="delivery-company"><input id="deliveryCompany" class="delivery-input left strong" value="บริษัท ไทยหวั้ง อโกรโปรดักส์ อินเตอร์เนชั่นแนล"></td>
-                  <td colspan="2"><input id="deliveryDate" class="delivery-input center" type="date" required></td>
+                  <td colspan="2"><input id="deliveryDate" class="delivery-input center thai-display-input" type="text" inputmode="numeric" placeholder="11 มิ.ย. 2569" required></td>
                 </tr>
                 <tr><td colspan="9"><input id="deliveryAddress" class="delivery-input left" value="176 หมู่ 6 ตำบลสันทรายงาม อำเภอเทิง จังหวัด เชียงราย 57160"></td></tr>
                 <tr>
@@ -3704,7 +3704,7 @@
 
     function initDeliveryForm() {
       const dateInput = document.getElementById('deliveryDate');
-      if (dateInput && !dateInput.value) dateInput.value = toInputDate(new Date());
+      if (dateInput && !dateInput.dataset.iso) setDeliveryDateValue(toInputDate(new Date()));
       bindDeliveryInputs();
       calculateDelivery();
     }
@@ -3716,6 +3716,19 @@
         input.addEventListener('input', calculateDelivery);
         input.addEventListener('change', calculateDelivery);
       });
+      const dateInput = document.getElementById('deliveryDate');
+      if (dateInput && dateInput.dataset.deliveryDateBound !== '1') {
+        dateInput.dataset.deliveryDateBound = '1';
+        dateInput.addEventListener('focus', openDeliveryDatePicker);
+        dateInput.addEventListener('click', openDeliveryDatePicker);
+        dateInput.addEventListener('change', () => {
+          if (dateInput.type === 'date') {
+            setDeliveryDateValue(dateInput.value);
+            dateInput.blur();
+          }
+        });
+        dateInput.addEventListener('blur', () => setDeliveryDateValue(getDeliveryDateValue()));
+      }
       document.querySelectorAll('#deliveryForm .delivery-basket, #deliveryForm .delivery-scrap, #deliveryForm .delivery-price').forEach(input => {
         if (input.dataset.deliverySelectBound === '1') return;
         input.dataset.deliverySelectBound = '1';
@@ -3726,6 +3739,36 @@
         input.addEventListener('focus', selectZero);
         input.addEventListener('click', selectZero);
       });
+    }
+
+    function setDeliveryDateValue(isoDate) {
+      const input = document.getElementById('deliveryDate');
+      if (!input) return;
+      const normalized = normalizeDate(isoDate) || input.dataset.iso || toInputDate(new Date());
+      input.dataset.iso = normalized;
+      input.type = 'text';
+      input.value = formatThaiDate(normalized);
+    }
+
+    function getDeliveryDateValue() {
+      const input = document.getElementById('deliveryDate');
+      if (!input) return toInputDate(new Date());
+      const parsed = normalizeDate(input.value) || input.dataset.iso || toInputDate(new Date());
+      input.dataset.iso = parsed;
+      if (input.type !== 'date') input.value = formatThaiDate(parsed);
+      return parsed;
+    }
+
+    function openDeliveryDatePicker() {
+      const input = document.getElementById('deliveryDate');
+      if (!input) return;
+      const iso = normalizeDate(input.dataset.iso || input.value) || toInputDate(new Date());
+      input.dataset.iso = iso;
+      input.type = 'date';
+      input.value = iso;
+      if (typeof input.showPicker === 'function') {
+        try { input.showPicker(); } catch (_) {}
+      }
     }
 
     function calculateDelivery() {
@@ -3787,7 +3830,7 @@
         title: valueById('deliveryTitle', DELIVERY_DEFAULTS.title),
         companyName: valueById('deliveryCompany', DELIVERY_DEFAULTS.company),
         companyAddress: valueById('deliveryAddress', DELIVERY_DEFAULTS.address),
-        date: valueById('deliveryDate', toInputDate(new Date())),
+        date: getDeliveryDateValue(),
         basketKg: totals.basketKg,
         rows,
         totals,
@@ -3859,17 +3902,13 @@
         row.querySelector('.delivery-basket').value = '0';
         row.querySelector('.delivery-scrap').value = '0';
       });
-      const dateInput = document.getElementById('deliveryDate');
-      if (dateInput) dateInput.value = toInputDate(new Date());
+      setDeliveryDateValue(toInputDate(new Date()));
       calculateDelivery();
       showToast('ล้างรายการใบส่งของแล้ว', 'success');
     }
 
     function formatEnglishDate(value) {
-      const d = parseLocalDate(normalizeDate(value));
-      if (!d) return '-';
-      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      return formatThaiDate(value);
     }
 
     function deliveryRowPrint(r) {
@@ -3937,6 +3976,49 @@
 
     document.addEventListener('DOMContentLoaded', () => setTimeout(initDeliveryForm, 80));
     if (document.readyState !== 'loading') setTimeout(initDeliveryForm, 80);
+
+
+    /* ===== Requested patch 2569-06-11: full delivery form + Thai date display ===== */
+    (function injectDeliveryFullFormPatch(){
+      const style = document.createElement('style');
+      style.textContent = `
+        #panelDelivery { overflow:hidden; }
+        .delivery-editor-wrap { width:100%; display:grid; grid-template-columns:minmax(0, 1fr) 238px !important; gap:14px !important; align-items:start; }
+        .delivery-sheet.editor { width:100%; max-width:100%; overflow:visible !important; border-radius:14px !important; }
+        .delivery-table { width:100% !important; min-width:0 !important; table-layout:fixed !important; }
+        .delivery-table col:nth-child(1){width:7.5% !important;}.delivery-table col:nth-child(2){width:12% !important;}.delivery-table col:nth-child(3){width:8.5% !important;}.delivery-table col:nth-child(4){width:9% !important;}.delivery-table col:nth-child(5){width:4.5% !important;}.delivery-table col:nth-child(6){width:13% !important;}.delivery-table col:nth-child(7){width:7% !important;}.delivery-table col:nth-child(8){width:11.5% !important;}.delivery-table col:nth-child(9){width:27% !important;}
+        .delivery-table th,.delivery-table td { padding:4px 4px !important; font-size:clamp(11px,1.18vw,15px) !important; line-height:1.22 !important; min-height:0 !important; overflow:visible !important; overflow-wrap:anywhere !important; word-break:normal !important; }
+        .delivery-title-cell { font-size:clamp(18px,2.15vw,25px) !important; padding:6px 4px !important; }
+        .delivery-company { font-size:clamp(13px,1.55vw,18px) !important; }
+        .delivery-head { font-size:clamp(12px,1.35vw,17px) !important; }
+        .delivery-grade { font-size:clamp(15px,1.7vw,21px) !important; }
+        .delivery-sub-label { white-space:normal !important; }
+        .delivery-total-label,.delivery-total-amount { font-size:clamp(15px,1.75vw,21px) !important; }
+        .delivery-input { overflow:visible !important; text-overflow:clip !important; white-space:normal !important; }
+        #deliveryDate { cursor:pointer; font-weight:800 !important; color:#35145f !important; }
+        @media (max-width:960px){
+          .delivery-editor-wrap { display:block !important; }
+          .delivery-side-card { width:100%; margin-top:12px; position:static !important; }
+        }
+        @media (max-width:760px){
+          #panelDelivery { padding-left:6px !important; padding-right:6px !important; }
+          .delivery-sheet.editor { overflow:hidden !important; }
+          .delivery-table th,.delivery-table td { padding:2.5px 1.8px !important; font-size:8.5px !important; line-height:1.18 !important; border-width:.9px !important; }
+          .delivery-title-cell { font-size:12.5px !important; padding:4px 2px !important; }
+          .delivery-company { font-size:9.7px !important; }
+          .delivery-head { font-size:9px !important; }
+          .delivery-grade { font-size:11px !important; }
+          .delivery-total-label,.delivery-total-amount { font-size:11px !important; }
+          .blank-row { height:18px !important; }
+        }
+        @media (max-width:390px){
+          .delivery-table th,.delivery-table td { font-size:7.8px !important; padding:2px 1.2px !important; }
+          .delivery-title-cell { font-size:11.5px !important; }
+          .delivery-company { font-size:8.8px !important; }
+        }
+      `;
+      document.head.appendChild(style);
+    })();
 
 </script>
 </body>
