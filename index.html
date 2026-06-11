@@ -3055,56 +3055,74 @@
           <td class="right">${formatNumber(g.C, 2)}</td>
           <td class="right">${formatNumber(getTotal(b, 'totalBaskets'), 2)}</td>
           <td class="right">${formatNumber(getTotal(b, 'totalWeightKg'), 2)}</td>
-          <td class="right">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td>
+          <td class="right money">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td>
         </tr>`;
-      }).join('') || '<tr><td colspan="11" class="center">ไม่พบข้อมูลในวันที่เลือก</td></tr>';
+      }).join('') || '<tr><td colspan="11" class="center empty-row">ไม่พบข้อมูลในวันที่เลือก</td></tr>';
       return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>สรุปซื้อรายวัน ${formatThaiDate(dateValue)}</title>
       <style>
-        @page { size: A4 portrait; margin: 10mm; }
+        @page { size: A4 landscape; margin: 7mm 8mm 8mm; }
         * { box-sizing:border-box; }
+        html, body { width:100%; min-height:100%; }
         body { margin:0; font-family:'TH Sarabun New','Sarabun',Arial,sans-serif; color:#111; background:#fff; }
-        .no-print { text-align:center; padding:8px; font-family:Arial,sans-serif; }
+        .no-print { text-align:center; padding:7px; font-family:Arial,sans-serif; }
         .no-print button { padding:8px 16px; border:0; border-radius:9px; background:#4b1d78; color:#fff; font-weight:700; }
-        h1 { margin:0; font-size:22pt; text-align:center; line-height:1.18; }
-        .sub { text-align:center; font-size:14pt; margin:1.5mm 0 4mm; }
-        .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:2.4mm; margin-bottom:3.2mm; }
-        .kpi { border:1px solid #111; border-radius:3mm; padding:2mm; text-align:center; }
-        .kpi b { display:block; font-size:17pt; line-height:1.12; }
-        .kpi span { font-size:11.5pt; }
-        .grade-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:2.4mm; margin-bottom:4mm; }
-        .grade-kpi { border:1px solid #111; background:#f5fbf7; border-radius:3mm; padding:1.8mm; text-align:center; }
-        .grade-kpi b { display:block; font-size:16pt; line-height:1.12; color:#35145f; }
-        .grade-kpi span { display:block; font-size:11pt; font-weight:700; color:#111; }
-        table { width:100%; border-collapse:collapse; table-layout:fixed; }
-        th,td { border:1px solid #111; padding:1.45mm 1.2mm; font-size:11.2pt; line-height:1.22; overflow:hidden; overflow-wrap:anywhere; }
+        .report-page { width:281mm; margin:0 auto; }
+        .report-header { border:1px solid #111; border-radius:3mm; padding:3mm 4mm 2.6mm; margin-bottom:3mm; page-break-inside:avoid; }
+        h1 { margin:0; font-size:19pt; text-align:center; line-height:1.12; font-weight:800; }
+        .sub { text-align:center; font-size:12.5pt; margin:1mm 0 2.4mm; line-height:1.18; }
+        .summary-row { display:grid; grid-template-columns:repeat(8,1fr); gap:1.8mm; }
+        .summary-card { border:0.8px solid #111; border-radius:2mm; padding:1.35mm 1mm; text-align:center; min-height:13mm; display:flex; flex-direction:column; justify-content:center; }
+        .summary-card b { display:block; font-size:13.2pt; line-height:1.08; white-space:nowrap; }
+        .summary-card span { display:block; font-size:9.5pt; font-weight:700; line-height:1.1; }
+        .grade-card { background:#f5fbf7; }
+        .bill-card { background:#f4effb; }
+        table { width:100%; border-collapse:collapse; table-layout:fixed; border:1px solid #111; }
+        thead { display:table-header-group; }
+        tfoot { display:table-row-group; }
+        tr { page-break-inside:avoid; break-inside:avoid; }
+        th,td { border:0.8px solid #111; padding:1.15mm 1mm; font-size:10.5pt; line-height:1.12; vertical-align:middle; overflow:visible; overflow-wrap:anywhere; word-break:normal; }
         th { background:#e7e0f1; font-weight:800; text-align:center; }
-        .center{text-align:center}.right{text-align:right}.total td{font-weight:800;background:#eef8f1;}
-        @media print { .no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
+        tbody tr:nth-child(even) td { background:#fcfcfc; }
+        .center{text-align:center}.right{text-align:right}.money{font-weight:800;white-space:nowrap;}.total td{font-weight:800;background:#eef8f1!important;}.empty-row{height:18mm;font-weight:700;color:#666;}
+        .footer-note { margin-top:2mm; display:flex; justify-content:space-between; font-size:9.5pt; color:#444; }
+        @media print { .no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;} .report-page{width:auto;margin:0;} }
       </style>
       <script>
         window.onafterprint=function(){setTimeout(function(){window.close();},180)};
         function printAndClose(){window.print();setTimeout(function(){window.close();},900)}
       <\/script></head><body>
         <div class="no-print"><button onclick="printAndClose()">พิมพ์สรุปรายวัน</button></div>
-        <h1>สรุปการซื้อลำไยรายวัน</h1>
-        <div class="sub">ประจำวันที่ ${formatThaiDate(dateValue)} | พิมพ์เมื่อ ${formatThaiDateTime(new Date().toISOString())}</div>
-        <div class="kpis">
-          <div class="kpi"><b>${formatNumber(records.length,0)}</b><span>จำนวนบิล</span></div>
-          <div class="kpi"><b>${formatNumber(totals.totalBaskets,2)}</b><span>ตระกร้ารวม</span></div>
-          <div class="kpi"><b>${formatNumber(totals.totalWeightKg,2)}</b><span>กิโลกรัม</span></div>
-          <div class="kpi"><b>${formatNumber(totals.totalAmount,2)}</b><span>บาท</span></div>
-        </div>
-        <div class="grade-kpis">
-          <div class="grade-kpi"><span>AA</span><b>${formatNumber(gradeTotals.AA,2)}</b><span>ตระกร้า</span></div>
-          <div class="grade-kpi"><span>A</span><b>${formatNumber(gradeTotals.A,2)}</b><span>ตระกร้า</span></div>
-          <div class="grade-kpi"><span>B</span><b>${formatNumber(gradeTotals.B,2)}</b><span>ตระกร้า</span></div>
-          <div class="grade-kpi"><span>C</span><b>${formatNumber(gradeTotals.C,2)}</b><span>ตระกร้า</span></div>
-        </div>
-        <table><thead><tr><th style="width:7%">ลำดับ</th><th style="width:15%">เลขที่บิล</th><th style="width:9%">เวลา</th><th style="width:17%">ลูกค้า</th><th style="width:7%">AA</th><th style="width:7%">A</th><th style="width:7%">B</th><th style="width:7%">C</th><th style="width:9%">ตระกร้า</th><th style="width:10%">น้ำหนัก</th><th style="width:12%">รวมเงิน</th></tr></thead><tbody>${rows}<tr class="total"><td colspan="4" class="right">รวม</td><td class="right">${formatNumber(gradeTotals.AA,2)}</td><td class="right">${formatNumber(gradeTotals.A,2)}</td><td class="right">${formatNumber(gradeTotals.B,2)}</td><td class="right">${formatNumber(gradeTotals.C,2)}</td><td class="right">${formatNumber(totals.totalBaskets,2)}</td><td class="right">${formatNumber(totals.totalWeightKg,2)}</td><td class="right">${formatNumber(totals.totalAmount,2)}</td></tr></tbody></table>
+        <main class="report-page">
+          <section class="report-header">
+            <h1>สรุปการซื้อลำไยรายวัน</h1>
+            <div class="sub">ประจำวันที่ ${formatThaiDate(dateValue)} | พิมพ์เมื่อ ${formatThaiDateTime(new Date().toISOString())}</div>
+            <div class="summary-row">
+              <div class="summary-card bill-card"><b>${formatNumber(records.length,0)}</b><span>จำนวนบิล</span></div>
+              <div class="summary-card bill-card"><b>${formatNumber(totals.totalBaskets,2)}</b><span>ตระกร้ารวม</span></div>
+              <div class="summary-card bill-card"><b>${formatNumber(totals.totalWeightKg,2)}</b><span>น้ำหนักรวม Kg.</span></div>
+              <div class="summary-card bill-card"><b>${formatNumber(totals.totalAmount,2)}</b><span>ยอดเงินรายวัน</span></div>
+              <div class="summary-card grade-card"><b>${formatNumber(gradeTotals.AA,2)}</b><span>AA ตระกร้า</span></div>
+              <div class="summary-card grade-card"><b>${formatNumber(gradeTotals.A,2)}</b><span>A ตระกร้า</span></div>
+              <div class="summary-card grade-card"><b>${formatNumber(gradeTotals.B,2)}</b><span>B ตระกร้า</span></div>
+              <div class="summary-card grade-card"><b>${formatNumber(gradeTotals.C,2)}</b><span>C ตระกร้า</span></div>
+            </div>
+          </section>
+          <table>
+            <colgroup>
+              <col style="width:6%"><col style="width:15%"><col style="width:8%"><col style="width:18%">
+              <col style="width:6.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:6.5%">
+              <col style="width:8.5%"><col style="width:9.5%"><col style="width:9%">
+            </colgroup>
+            <thead><tr><th>ลำดับ</th><th>เลขที่บิล</th><th>เวลา</th><th>ลูกค้า</th><th>AA</th><th>A</th><th>B</th><th>C</th><th>ตระกร้า</th><th>น้ำหนัก</th><th>รวมเงิน</th></tr></thead>
+            <tbody>${rows}</tbody>
+            <tfoot><tr class="total"><td colspan="4" class="right">รวม</td><td class="right">${formatNumber(gradeTotals.AA,2)}</td><td class="right">${formatNumber(gradeTotals.A,2)}</td><td class="right">${formatNumber(gradeTotals.B,2)}</td><td class="right">${formatNumber(gradeTotals.C,2)}</td><td class="right">${formatNumber(totals.totalBaskets,2)}</td><td class="right">${formatNumber(totals.totalWeightKg,2)}</td><td class="right money">${formatNumber(totals.totalAmount,2)}</td></tr></tfoot>
+          </table>
+          <div class="footer-note"><span>หมายเหตุ: รายงานนี้แสดงเฉพาะบิลเงินสดประจำวันที่เลือก</span><span>TK พัฒนาพืชผล</span></div>
+        </main>
       </body></html>`;
     }
 
-    // Ensure the new daily-grade cards exist even before the first data load finishes.
+        // Ensure the new daily-grade cards exist even before the first data load finishes.
     document.addEventListener('DOMContentLoaded', () => setTimeout(() => renderDailyGradeCards(allBills.filter(b => normalizeDate(b.date) === (document.getElementById('summaryDate')?.value || toInputDate(new Date())))), 0));
 
 
@@ -4320,7 +4338,7 @@
       });
       const billTotals = sumRecords(monthlyRecords);
       const deliveryTotals = __sumDeliveries(monthlyDeliveries);
-      setText('monthSummaryText', `${MONTHS_TH[month]} ${year + 543}: ซื้อ ${formatNumber(billTotals.totalWeightKg,0)} Kg. / ${formatNumber(billTotals.totalAmount,0)} บาท | ส่งของ ${formatNumber(deliveryTotals.totalWeightKg,0)} Kg. / ${formatNumber(deliveryTotals.totalAmount,0)} บาท`);
+      setText('monthSummaryText', `${MONTHS_TH[month]} ${year + 543}: ยอดเงินรายวัน ${formatNumber(billTotals.totalAmount,0)} บาท | ยอดเงินใบส่งของ ${formatNumber(deliveryTotals.totalAmount,0)} บาท | ซื้อ ${formatNumber(billTotals.totalWeightKg,0)} Kg. | ส่งของ ${formatNumber(deliveryTotals.totalWeightKg,0)} Kg.`);
       const billsByDate = groupBy(monthlyRecords, b => normalizeDate(b.date));
       const deliveriesByDate = groupBy(monthlyDeliveries, d => normalizeDate(d.date));
       let html = WEEKDAYS_TH.map(d => `<div class="weekday">${d}</div>`).join('');
@@ -4339,13 +4357,20 @@
         const action = hasAny ? ` role="button" tabindex="0" onclick="openDayDetail('${dateStr}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDayDetail('${dateStr}')}" title="คลิกดูรายละเอียดวันที่ ${day}"` : '';
         html += `<div class="${classes.join(' ')}"${action}>
           <div class="day-num">${day}</div>
-          ${hasAny ? `<div class="day-data">${billRecs.length ? `<span class="bill-chip">ซื้อ ${billRecs.length}</span> ${formatNumber(billDayTotals.totalWeightKg,0)} Kg.<br>` : ''}${deliveryRecs.length ? `<span class="delivery-chip">ส่ง ${deliveryRecs.length}</span> ${formatNumber(deliveryDayTotals.totalWeightKg,0)} Kg.` : ''}</div><div class="day-money">${formatNumber(billDayTotals.totalAmount + deliveryDayTotals.totalAmount,0)} ฿</div>` : '<div class="day-data">-</div>'}
+          ${hasAny ? `<div class="day-data">
+            ${billRecs.length ? `<span class="bill-chip">ซื้อ ${billRecs.length}</span> ${formatNumber(billDayTotals.totalWeightKg,0)} Kg.` : '<span class="bill-chip muted-chip">ซื้อ 0</span>'}
+            ${deliveryRecs.length ? `<br><span class="delivery-chip">ส่ง ${deliveryRecs.length}</span> ${formatNumber(deliveryDayTotals.totalWeightKg,0)} Kg.` : '<br><span class="delivery-chip muted-chip">ส่ง 0</span>'}
+          </div>
+          <div class="day-money-split">
+            <span class="bill-money">รายวัน ${formatNumber(billDayTotals.totalAmount,0)} ฿</span>
+            <span class="delivery-money">ใบส่งของ ${formatNumber(deliveryDayTotals.totalAmount,0)} ฿</span>
+          </div>` : '<div class="day-data">-</div>'}
         </div>`;
       }
       grid.innerHTML = html;
     };
 
-    const __openDayDetailBeforeDeliveryManagement = openDayDetail;
+        const __openDayDetailBeforeDeliveryManagement = openDayDetail;
     openDayDetail = function(dateStr) {
       currentDetailDate = dateStr;
       const billRecords = allBills.filter(b => normalizeDate(b.date) === dateStr);
@@ -4653,12 +4678,12 @@
       const totals = d.totals || __sumDeliveryRows(d.rows, d.basketKg);
       const rows = DEFAULT_GRADES.map(g => (d.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, weightKg:0, unitPrice:0, amount:0 });
       const gradeRows = rows.map(r => `<tr>
-        <td class="center"><b>${escapeHtml(r.grade)}</b></td>
-        <td class="num">${formatNumber(r.baskets,0)}</td>
-        <td class="num">${formatNumber(r.scrapKg,0)}</td>
-        <td class="num">${formatNumber(r.weightKg,0)}</td>
-        <td class="num">${formatNumber(r.unitPrice,2)}</td>
-        <td class="num">${formatNumber(r.amount,2)}</td>
+        <td class="center grade-col"><b>${escapeHtml(r.grade)}</b></td>
+        <td class="num basket-col">${formatNumber(r.baskets,0)}</td>
+        <td class="num scrap-col">${formatNumber(r.scrapKg,0)}</td>
+        <td class="num weight-col">${formatNumber(r.weightKg,0)}</td>
+        <td class="num price-col">${formatNumber(r.unitPrice,2)}</td>
+        <td class="num amount-col">${formatNumber(r.amount,2)}</td>
       </tr>`).join('');
       return `<div class="modal-detail-frame">
         <div class="modal-detail-header">
@@ -4679,11 +4704,11 @@
       </div>
       <div class="modal-detail-frame">
         <h4 class="modal-section-title">รายการเกรดในใบส่งของ</h4>
-        <div class="modal-table-wrap"><table class="data-table"><thead><tr><th>เกรด</th><th>ตระกร้า</th><th>เศษ Kg.</th><th>น้ำหนัก Kg.</th><th>หน่วยละ</th><th>จำนวนเงิน</th></tr></thead><tbody>${gradeRows}<tr class="total"><td colspan="3" class="right">รวม</td><td class="num">${formatNumber(totals.totalWeightKg,0)}</td><td></td><td class="num">${formatNumber(totals.totalAmount,2)}</td></tr></tbody></table></div>
+        <div class="modal-table-wrap"><table class="data-table grade-detail-table delivery-grade-detail"><colgroup><col><col><col><col><col><col></colgroup><thead><tr><th>เกรด</th><th>ตระกร้า</th><th>เศษ Kg.</th><th>น้ำหนัก Kg.</th><th>หน่วยละ</th><th>จำนวนเงิน</th></tr></thead><tbody>${gradeRows}<tr class="total"><td colspan="3" class="right">รวม</td><td class="num weight-col">${formatNumber(totals.totalWeightKg,0)}</td><td></td><td class="num amount-col">${formatNumber(totals.totalAmount,2)}</td></tr></tbody></table></div>
       </div>`;
     }
 
-    function openDeliveryDetail(deliveryId) {
+        function openDeliveryDetail(deliveryId) {
       ensureDeliveryDetailModal();
       const record = allDeliveries.find(d => String(d.deliveryId) === String(deliveryId));
       if (!record) return showToast('ไม่พบข้อมูลใบส่งของที่เลือก', 'error');
@@ -4726,7 +4751,7 @@
       const totals = record.totals || sumGradeRows(record.rows || [], n(record.basketKg) || 27);
       const basketKg = n(record.basketKg) || 27;
       const rows = DEFAULT_GRADES.map(g => (record.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, unitPrice:0, weightKg:0, amount:0 });
-      const rowHtml = rows.map(r => `<tr><td class="center"><b>${escapeHtml(r.grade)}</b></td><td class="num">${formatNumber(r.baskets,2)}</td><td class="num">${formatNumber(r.scrapKg,2)}</td><td class="num">${formatNumber(r.weightKg,2)}</td><td class="num">${formatNumber(r.unitPrice,2)}</td><td class="num">${formatNumber(r.amount,2)}</td></tr>`).join('');
+      const rowHtml = rows.map(r => `<tr><td class="center grade-col"><b>${escapeHtml(r.grade)}</b></td><td class="num basket-col">${formatNumber(r.baskets,2)}</td><td class="num scrap-col">${formatNumber(r.scrapKg,2)}</td><td class="num weight-col">${formatNumber(r.weightKg,2)}</td><td class="num price-col">${formatNumber(r.unitPrice,2)}</td><td class="num amount-col">${formatNumber(r.amount,2)}</td></tr>`).join('');
       return `<div class="modal-detail-frame">
         <div class="modal-detail-header">
           <div class="modal-detail-title"><b>${escapeHtml(record.billId || '-')}</b><span>${formatThaiDate(record.date)} ${formatThaiTime(record.time)} | ลูกค้า ${escapeHtml(record.customerName || '-')}</span></div>
@@ -4743,11 +4768,11 @@
       </div>
       <div class="modal-detail-frame">
         <h4 class="modal-section-title">รายละเอียดเกรดในบิลเงินสด</h4>
-        <div class="modal-table-wrap"><table class="data-table"><thead><tr><th>เกรด</th><th>ตระกร้า</th><th>เศษ Kg.</th><th>น้ำหนัก Kg.</th><th>หน่วยละ</th><th>จำนวนเงิน</th></tr></thead><tbody>${rowHtml}</tbody></table></div>
+        <div class="modal-table-wrap"><table class="data-table grade-detail-table bill-grade-detail"><colgroup><col><col><col><col><col><col></colgroup><thead><tr><th>เกรด</th><th>ตระกร้า</th><th>เศษ Kg.</th><th>น้ำหนัก Kg.</th><th>หน่วยละ</th><th>จำนวนเงิน</th></tr></thead><tbody>${rowHtml}<tr class="total"><td colspan="3" class="right">รวม</td><td class="num weight-col">${formatNumber(totals.totalWeightKg,2)}</td><td></td><td class="num amount-col">${formatNumber(totals.totalAmount,2)}</td></tr></tbody></table></div>
       </div>`;
     };
 
-    buildDeliveryAdminTable = function(records) {
+        buildDeliveryAdminTable = function(records) {
       if (!records.length) return '<div class="empty-state">ยังไม่มีข้อมูลใบส่งของในวันที่เลือก</div>';
       const allowAdmin = Boolean(adminState.loggedIn);
       return `<div class="modal-table-wrap"><table class="data-table"><thead><tr><th>เลขที่ใบส่งของ</th><th>วันที่</th><th>บริษัท/ปลายทาง</th><th>ทะเบียนรถ</th><th>รายการเกรด</th><th>ตระกร้า</th><th>น้ำหนัก Kg.</th><th>รวมเงิน</th><th>จัดการ</th></tr></thead><tbody>${records.map(raw => {
@@ -4838,6 +4863,53 @@
         setDeliveryEditModeUI(Boolean(editingDeliveryId && adminState.loggedIn));
       }, 220);
     });
+
+
+    /* ===== Patch 2569-06-11: balanced report print, split calendar totals, aligned grade columns ===== */
+    (function injectBalancedReportAndGradeColumnStyles(){
+      const style = document.createElement('style');
+      style.textContent = `
+        .cashbill-table col:nth-child(1), .delivery-table col:nth-child(1){width:8%!important;}
+        .cashbill-table col:nth-child(2), .delivery-table col:nth-child(2){width:12%!important;}
+        .cashbill-table col:nth-child(3), .delivery-table col:nth-child(3){width:8%!important;}
+        .cashbill-table col:nth-child(4), .delivery-table col:nth-child(4){width:10%!important;}
+        .cashbill-table col:nth-child(5), .delivery-table col:nth-child(5){width:5%!important;}
+        .cashbill-table col:nth-child(6), .delivery-table col:nth-child(6){width:14%!important;}
+        .cashbill-table col:nth-child(7), .delivery-table col:nth-child(7){width:7%!important;}
+        .cashbill-table col:nth-child(8), .delivery-table col:nth-child(8){width:13%!important;}
+        .cashbill-table col:nth-child(9), .delivery-table col:nth-child(9){width:23%!important;}
+        .cashbill-table th,.cashbill-table td,.delivery-table th,.delivery-table td{vertical-align:middle!important;}
+        .cashbill-table .head-cell,.delivery-table .delivery-head{white-space:normal!important;text-align:center!important;line-height:1.22!important;}
+        .cashbill-table .row-weight,.delivery-table .delivery-weight{text-align:center!important;white-space:nowrap!important;}
+        .cashbill-table .row-amount,.delivery-table .delivery-amount{text-align:right!important;white-space:nowrap!important;}
+        .cashbill-table .row-price,.delivery-table .delivery-price{text-align:right!important;}
+        .calendar-grid .day-card{min-height:112px!important;gap:3px!important;}
+        .day-money-split{margin-top:auto;display:grid;gap:2px;font-size:10.5px;line-height:1.18;font-weight:900;}
+        .day-money-split span{display:block;border-radius:7px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .day-money-split .bill-money{background:#f2ecfb;color:#35145f;}
+        .day-money-split .delivery-money{background:#e8f7ef;color:#0f6b3f;}
+        .muted-chip{opacity:.55;}
+        .grade-detail-table{min-width:0!important;width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;}
+        .grade-detail-table col:nth-child(1){width:10%!important;}
+        .grade-detail-table col:nth-child(2){width:15%!important;}
+        .grade-detail-table col:nth-child(3){width:15%!important;}
+        .grade-detail-table col:nth-child(4){width:19%!important;}
+        .grade-detail-table col:nth-child(5){width:17%!important;}
+        .grade-detail-table col:nth-child(6){width:24%!important;}
+        .grade-detail-table th,.grade-detail-table td{white-space:normal!important;text-align:right!important;vertical-align:middle!important;line-height:1.25!important;}
+        .grade-detail-table th{text-align:center!important;}
+        .grade-detail-table .grade-col{text-align:center!important;}
+        .grade-detail-table .amount-col{font-weight:800!important;white-space:nowrap!important;}
+        .grade-detail-table .total td{font-weight:900!important;background:#eef8f1!important;}
+        @media(max-width:760px){
+          .calendar-grid .day-card{min-height:104px!important;padding:4px 3px!important;}
+          .day-money-split{font-size:8.2px!important;}
+          .day-money-split span{padding:1px 3px!important;}
+          .modal-table-wrap .grade-detail-table{min-width:560px!important;}
+        }
+      `;
+      document.head.appendChild(style);
+    })();
 
 </script>
 </body>
