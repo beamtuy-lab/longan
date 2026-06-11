@@ -4531,6 +4531,314 @@
       }, 140);
     });
 
+
+    /* ===== Patch 2569-06-11: admin-only delivery edit/delete + framed detail modals ===== */
+    let currentDetailDeliveryId = '';
+
+    (function injectAdminDeliveryModalPatchStyles(){
+      const style = document.createElement('style');
+      style.textContent = `
+        .delivery-edit-only-btn{display:none!important;}
+        .delivery-edit-only-btn.show{display:inline-flex!important;}
+        .delivery-edit-mode-note{display:none;margin-top:10px;border:1px solid rgba(20,128,74,.18);border-radius:14px;background:#f2fbf6;color:#0f6b3f;padding:9px 10px;font-size:12px;font-weight:800;line-height:1.35;}
+        .delivery-edit-mode-note.show{display:block;}
+        .click-delivery{color:#0f6b3f;text-decoration:underline;text-underline-offset:3px;cursor:pointer;background:transparent;border:0;padding:0;font:inherit;font-weight:800;text-align:left;}
+        .modal-card.wide-modal{width:min(980px,calc(100vw - 18px))!important;max-height:92vh!important;overflow:hidden!important;}
+        .detail-scroll{max-width:100%!important;overflow:auto!important;padding:10px!important;background:#f8fafc!important;}
+        .modal-detail-frame{border:1px solid rgba(75,29,120,.12);border-radius:18px;background:#fff;padding:12px;margin:0 0 12px;box-shadow:0 8px 20px rgba(39,25,70,.05);max-width:100%;overflow:hidden;}
+        .modal-detail-frame:last-child{margin-bottom:0;}
+        .modal-detail-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start;}
+        .modal-detail-title{min-width:0;}
+        .modal-detail-title b{display:block;color:#35145f;font-size:20px;line-height:1.15;overflow-wrap:anywhere;}
+        .modal-detail-title span{display:block;margin-top:3px;color:#667085;font-size:12px;font-weight:700;overflow-wrap:anywhere;}
+        .modal-detail-total{min-width:176px;border-radius:16px;background:#f2fbf6;padding:11px 12px;text-align:right;}
+        .modal-detail-total span{display:block;color:#667085;font-size:11px;font-weight:800;}
+        .modal-detail-total b{display:block;color:#16804a;font-size:24px;line-height:1.08;margin-top:3px;white-space:nowrap;}
+        .modal-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px;}
+        .modal-detail-card{border:1px solid rgba(75,29,120,.10);border-radius:14px;background:#fbfbfd;padding:9px;min-width:0;overflow:hidden;}
+        .modal-detail-card span{display:block;color:#667085;font-size:11px;font-weight:800;line-height:1.25;}
+        .modal-detail-card b{display:block;color:#182018;font-size:14px;line-height:1.28;margin-top:3px;overflow-wrap:anywhere;}
+        .modal-section-title{margin:0 0 8px;color:#35145f;font-size:14px;font-weight:900;line-height:1.25;}
+        .modal-table-wrap{width:100%;max-width:100%;overflow:auto;border:1px solid rgba(75,29,120,.10);border-radius:14px;background:#fff;-webkit-overflow-scrolling:touch;}
+        .modal-table-wrap .data-table{min-width:720px;width:100%;}
+        .modal-table-wrap .data-table th,.modal-table-wrap .data-table td{white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.28!important;vertical-align:top;}
+        .delivery-section-box{max-width:100%;overflow:hidden!important;border-radius:18px!important;background:#fff!important;}
+        .delivery-section-box > .data-table{display:block;overflow:auto;max-width:100%;}
+        #deliveryDetailModal .modal-actions .admin-only{display:none;}
+        #deliveryDetailModal .modal-actions .admin-only.show{display:inline-flex;}
+        @media(max-width:760px){
+          .modal-card.wide-modal{width:100%!important;max-height:94vh!important;}
+          .detail-scroll{max-height:64vh!important;padding:8px!important;}
+          .modal-detail-frame{border-radius:16px;padding:10px;}
+          .modal-detail-header{display:block;}
+          .modal-detail-total{margin-top:10px;width:100%;text-align:left;}
+          .modal-detail-total b{font-size:21px;}
+          .modal-detail-grid{grid-template-columns:1fr;gap:7px;}
+          .modal-detail-title b{font-size:18px;}
+          .modal-table-wrap .data-table{min-width:660px;}
+          .modal-actions{gap:7px;}
+        }
+      `;
+      document.head.appendChild(style);
+    })();
+
+    function setTextSafe(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    function ensureDeliveryEditControls() {
+      const actions = document.querySelector('#panelDelivery .delivery-side-card .form-actions');
+      if (!actions) return;
+      if (!document.getElementById('deliveryEditSaveOnlyBtn')) {
+        const btn = document.createElement('button');
+        btn.id = 'deliveryEditSaveOnlyBtn';
+        btn.className = 'secondary-btn delivery-edit-only-btn';
+        btn.type = 'button';
+        btn.innerHTML = '✅ บันทึกการแก้ไข';
+        btn.onclick = saveDeliveryEditOnly;
+        const primary = actions.querySelector('.primary-btn');
+        if (primary) primary.insertAdjacentElement('afterend', btn);
+        else actions.prepend(btn);
+      }
+      if (!document.getElementById('deliveryEditModeNote')) {
+        const note = document.createElement('div');
+        note.id = 'deliveryEditModeNote';
+        note.className = 'delivery-edit-mode-note';
+        note.textContent = 'โหมดแก้ไขใบส่งของ: แก้ไขข้อมูลแล้วกด “บันทึกการแก้ไข” หรือ “บันทึกและพิมพ์ใบส่งของ”';
+        actions.insertAdjacentElement('beforebegin', note);
+      }
+    }
+
+    function setDeliveryEditModeUI(active) {
+      ensureDeliveryEditControls();
+      const allow = Boolean(active && adminState.loggedIn);
+      const btn = document.getElementById('deliveryEditSaveOnlyBtn');
+      const note = document.getElementById('deliveryEditModeNote');
+      const primary = document.querySelector('#panelDelivery .delivery-side-card .form-actions .primary-btn');
+      if (btn) btn.classList.toggle('show', allow);
+      if (note) note.classList.toggle('show', allow);
+      if (primary) primary.innerHTML = allow ? '💾 บันทึกและพิมพ์ใบส่งของที่แก้ไข' : '💾 บันทึกและพิมพ์ใบส่งของ';
+    }
+
+    function ensureDeliveryDetailModal() {
+      if (document.getElementById('deliveryDetailModal')) return;
+      const modal = document.createElement('div');
+      modal.className = 'modal-backdrop';
+      modal.id = 'deliveryDetailModal';
+      modal.setAttribute('aria-hidden','true');
+      modal.innerHTML = `
+        <div class="modal-card wide-modal">
+          <h3 id="deliveryDetailTitle">รายละเอียดใบส่งของ</h3>
+          <p id="deliveryDetailSummary">-</p>
+          <div id="deliveryDetailBody" class="detail-scroll"></div>
+          <div class="modal-actions">
+            <button class="ghost-btn" type="button" onclick="closeDeliveryDetailModal()">ปิด</button>
+            <button class="secondary-btn" type="button" onclick="printCurrentDetailDelivery()">🖨️ พิมพ์ใบส่งของ</button>
+            <button class="primary-btn admin-only" id="deliveryDetailEditBtn" type="button" onclick="editCurrentDetailDelivery()">แก้ไข</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+
+    function closeDeliveryDetailModal() {
+      const modal = document.getElementById('deliveryDetailModal');
+      if (!modal) return;
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden','true');
+    }
+
+    function buildDeliveryDetailHTML(record) {
+      const d = __normalizeDelivery(record);
+      const totals = d.totals || __sumDeliveryRows(d.rows, d.basketKg);
+      const rows = DEFAULT_GRADES.map(g => (d.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, weightKg:0, unitPrice:0, amount:0 });
+      const gradeRows = rows.map(r => `<tr>
+        <td class="center"><b>${escapeHtml(r.grade)}</b></td>
+        <td class="num">${formatNumber(r.baskets,0)}</td>
+        <td class="num">${formatNumber(r.scrapKg,0)}</td>
+        <td class="num">${formatNumber(r.weightKg,0)}</td>
+        <td class="num">${formatNumber(r.unitPrice,2)}</td>
+        <td class="num">${formatNumber(r.amount,2)}</td>
+      </tr>`).join('');
+      return `<div class="modal-detail-frame">
+        <div class="modal-detail-header">
+          <div class="modal-detail-title">
+            <b>${escapeHtml(d.deliveryId || '-')}</b>
+            <span>${formatThaiDate(d.date)} | ${escapeHtml(d.companyName || DELIVERY_DEFAULTS.company)}</span>
+          </div>
+          <div class="modal-detail-total"><span>รวมเงินใบส่งของ</span><b>${formatNumber(totals.totalAmount,2)} บาท</b></div>
+        </div>
+        <div class="modal-detail-grid">
+          <div class="modal-detail-card"><span>ทะเบียนรถ</span><b>${escapeHtml(d.vehiclePlate || DELIVERY_DEFAULTS.vehiclePlate)}</b></div>
+          <div class="modal-detail-card"><span>ตระกร้ารวม</span><b>${formatNumber(totals.totalBasketWithScrap,0)} ตระกร้า</b></div>
+          <div class="modal-detail-card"><span>น้ำหนักรวม</span><b>${formatNumber(totals.totalWeightKg,0)} Kg.</b></div>
+          <div class="modal-detail-card"><span>ที่อยู่/ปลายทาง</span><b>${escapeHtml(d.companyAddress || DELIVERY_DEFAULTS.address)}</b></div>
+          <div class="modal-detail-card"><span>ผู้ส่ง</span><b>${escapeHtml(d.senderLabel || DELIVERY_DEFAULTS.senderLabel)}<br>${escapeHtml(d.senderName || DELIVERY_DEFAULTS.senderName)}</b></div>
+          <div class="modal-detail-card"><span>บัญชีรับเงิน</span><b>${escapeHtml(d.bankName || DELIVERY_DEFAULTS.bankName)}<br>${escapeHtml(d.accountNo || DELIVERY_DEFAULTS.accountNo)} ${escapeHtml(d.accountType || DELIVERY_DEFAULTS.accountType)}</b></div>
+        </div>
+      </div>
+      <div class="modal-detail-frame">
+        <h4 class="modal-section-title">รายการเกรดในใบส่งของ</h4>
+        <div class="modal-table-wrap"><table class="data-table"><thead><tr><th>เกรด</th><th>ตระกร้า</th><th>เศษ Kg.</th><th>น้ำหนัก Kg.</th><th>หน่วยละ</th><th>จำนวนเงิน</th></tr></thead><tbody>${gradeRows}<tr class="total"><td colspan="3" class="right">รวม</td><td class="num">${formatNumber(totals.totalWeightKg,0)}</td><td></td><td class="num">${formatNumber(totals.totalAmount,2)}</td></tr></tbody></table></div>
+      </div>`;
+    }
+
+    function openDeliveryDetail(deliveryId) {
+      ensureDeliveryDetailModal();
+      const record = allDeliveries.find(d => String(d.deliveryId) === String(deliveryId));
+      if (!record) return showToast('ไม่พบข้อมูลใบส่งของที่เลือก', 'error');
+      const d = __normalizeDelivery(record);
+      const totals = d.totals || __sumDeliveryRows(d.rows, d.basketKg);
+      currentDetailDeliveryId = d.deliveryId || '';
+      document.getElementById('deliveryDetailTitle').textContent = `รายละเอียดใบส่งของ ${d.deliveryId || '-'}`;
+      document.getElementById('deliveryDetailSummary').textContent = `${formatThaiDate(d.date)} | ${formatNumber(totals.totalWeightKg,0)} Kg. | ${formatNumber(totals.totalAmount,2)} บาท`;
+      document.getElementById('deliveryDetailBody').innerHTML = buildDeliveryDetailHTML(d);
+      const editBtn = document.getElementById('deliveryDetailEditBtn');
+      if (editBtn) editBtn.classList.toggle('show', Boolean(adminState.loggedIn));
+      const modal = document.getElementById('deliveryDetailModal');
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden','false');
+    }
+
+    function printCurrentDetailDelivery() {
+      if (currentDetailDeliveryId) printDeliveryById(currentDetailDeliveryId);
+    }
+
+    function editCurrentDetailDelivery() {
+      if (!adminState.loggedIn) return showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถแก้ไขใบส่งของได้', 'error');
+      if (!currentDetailDeliveryId) return;
+      closeDeliveryDetailModal();
+      editDelivery(currentDetailDeliveryId);
+    }
+
+    const __buildRecordsDetailTableBeforeFramedPatch = buildRecordsDetailTable;
+    buildRecordsDetailTable = function(records, showDate) {
+      if (!records.length) return '<div class="empty-state">ไม่พบข้อมูลในวันที่เลือก</div>';
+      return `<div class="modal-table-wrap"><table class="data-table"><thead><tr><th>เลขที่บิล</th>${showDate ? '<th>วันที่</th>' : ''}<th>เวลา</th><th>ลูกค้า</th><th>ตระกร้า</th><th>น้ำหนัก Kg.</th><th>รวมเงิน</th><th>ดูข้อมูล</th></tr></thead><tbody>${records.map(b => `<tr>
+        <td><button class="click-bill" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">${escapeHtml(b.billId || '-')}</button></td>
+        ${showDate ? `<td>${formatThaiDate(b.date)}</td>` : ''}<td>${formatThaiTime(b.time)}</td><td>${escapeHtml(b.customerName || '-')}</td>
+        <td class="num">${formatNumber(getTotal(b, 'totalBaskets'), 2)}</td><td class="num">${formatNumber(getTotal(b, 'totalWeightKg'), 2)}</td><td class="num">${formatNumber(getTotal(b, 'totalAmount'), 2)}</td>
+        <td><button class="small-btn" type="button" onclick="openBillDetail('${escapeAttr(b.billId || '')}')">รายละเอียด</button></td>
+      </tr>`).join('')}</tbody></table></div>`;
+    };
+
+    buildBillDetailHTML = function(record) {
+      const totals = record.totals || sumGradeRows(record.rows || [], n(record.basketKg) || 27);
+      const basketKg = n(record.basketKg) || 27;
+      const rows = DEFAULT_GRADES.map(g => (record.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, unitPrice:0, weightKg:0, amount:0 });
+      const rowHtml = rows.map(r => `<tr><td class="center"><b>${escapeHtml(r.grade)}</b></td><td class="num">${formatNumber(r.baskets,2)}</td><td class="num">${formatNumber(r.scrapKg,2)}</td><td class="num">${formatNumber(r.weightKg,2)}</td><td class="num">${formatNumber(r.unitPrice,2)}</td><td class="num">${formatNumber(r.amount,2)}</td></tr>`).join('');
+      return `<div class="modal-detail-frame">
+        <div class="modal-detail-header">
+          <div class="modal-detail-title"><b>${escapeHtml(record.billId || '-')}</b><span>${formatThaiDate(record.date)} ${formatThaiTime(record.time)} | ลูกค้า ${escapeHtml(record.customerName || '-')}</span></div>
+          <div class="modal-detail-total"><span>รวมเงินบิลเงินสด</span><b>${formatNumber(totals.totalAmount,2)} บาท</b></div>
+        </div>
+        <div class="modal-detail-grid">
+          <div class="modal-detail-card"><span>จำนวนตระกร้า</span><b>${formatNumber(totals.totalBaskets,2)} ตระกร้า</b></div>
+          <div class="modal-detail-card"><span>น้ำหนักรวม</span><b>${formatNumber(totals.totalWeightKg,2)} Kg.</b></div>
+          <div class="modal-detail-card"><span>น้ำหนักต่อ 1 ตระกร้า</span><b>${formatNumber(basketKg,0)} Kg.</b></div>
+          <div class="modal-detail-card"><span>เบอร์โทร</span><b>${escapeHtml(record.sellerPhone || '080.825.6553')}</b></div>
+          <div class="modal-detail-card"><span>บันทึกเมื่อ</span><b>${formatThaiDateTime(record.createdAt) || '-'}</b></div>
+          <div class="modal-detail-card"><span>น้ำหนักเศษรวม</span><b>${formatNumber(totals.scrapWeightKg,2)} Kg.</b></div>
+        </div>
+      </div>
+      <div class="modal-detail-frame">
+        <h4 class="modal-section-title">รายละเอียดเกรดในบิลเงินสด</h4>
+        <div class="modal-table-wrap"><table class="data-table"><thead><tr><th>เกรด</th><th>ตระกร้า</th><th>เศษ Kg.</th><th>น้ำหนัก Kg.</th><th>หน่วยละ</th><th>จำนวนเงิน</th></tr></thead><tbody>${rowHtml}</tbody></table></div>
+      </div>`;
+    };
+
+    buildDeliveryAdminTable = function(records) {
+      if (!records.length) return '<div class="empty-state">ยังไม่มีข้อมูลใบส่งของในวันที่เลือก</div>';
+      const allowAdmin = Boolean(adminState.loggedIn);
+      return `<div class="modal-table-wrap"><table class="data-table"><thead><tr><th>เลขที่ใบส่งของ</th><th>วันที่</th><th>บริษัท/ปลายทาง</th><th>ทะเบียนรถ</th><th>รายการเกรด</th><th>ตระกร้า</th><th>น้ำหนัก Kg.</th><th>รวมเงิน</th><th>จัดการ</th></tr></thead><tbody>${records.map(raw => {
+        const d = __normalizeDelivery(raw);
+        const t = d.totals || __sumDeliveryRows(d.rows, d.basketKg);
+        const adminTools = allowAdmin ? ` <button class="small-btn edit-btn" type="button" onclick="editDelivery('${escapeAttr(d.deliveryId || '')}')">แก้ไข</button> <button class="small-btn delete-btn" type="button" onclick="deleteDelivery('${escapeAttr(d.deliveryId || '')}')">ลบ</button>` : '';
+        return `<tr>
+          <td><button class="click-delivery" type="button" onclick="openDeliveryDetail('${escapeAttr(d.deliveryId || '')}')">${escapeHtml(d.deliveryId || '-')}</button></td>
+          <td>${formatThaiDate(d.date)}</td>
+          <td>${escapeHtml(d.companyName || DELIVERY_DEFAULTS.company)}</td>
+          <td>${escapeHtml(d.vehiclePlate || DELIVERY_DEFAULTS.vehiclePlate)}</td>
+          <td>${__deliveryRowsText(d)}</td>
+          <td class="num">${formatNumber(t.totalBasketWithScrap,0)}</td>
+          <td class="num">${formatNumber(t.totalWeightKg,0)}</td>
+          <td class="num">${formatNumber(t.totalAmount,2)}</td>
+          <td><button class="small-btn" type="button" onclick="printDeliveryById('${escapeAttr(d.deliveryId || '')}')">พิมพ์</button>${adminTools}</td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+    };
+
+    const __editDeliveryBeforeAdminOnlyPatch = editDelivery;
+    editDelivery = function(deliveryId) {
+      if (!adminState.loggedIn) return showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถแก้ไขใบส่งของได้', 'error');
+      __editDeliveryBeforeAdminOnlyPatch(deliveryId);
+      setDeliveryEditModeUI(true);
+    };
+
+    const __deleteDeliveryBeforeAdminOnlyPatch = deleteDelivery;
+    deleteDelivery = async function(deliveryId) {
+      if (!adminState.loggedIn) return showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบใบส่งของได้', 'error');
+      return await __deleteDeliveryBeforeAdminOnlyPatch(deliveryId);
+    };
+
+    const __saveDeliveryAndPrintBeforeAdminOnlyPatch = saveDeliveryAndPrint;
+    saveDeliveryAndPrint = async function(event) {
+      if (editingDeliveryId && !adminState.loggedIn) {
+        event.preventDefault();
+        return showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถบันทึกการแก้ไขใบส่งของได้', 'error');
+      }
+      await __saveDeliveryAndPrintBeforeAdminOnlyPatch(event);
+      setDeliveryEditModeUI(false);
+    };
+
+    async function saveDeliveryEditOnly() {
+      if (!adminState.loggedIn) return showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถบันทึกการแก้ไขใบส่งของได้', 'error');
+      if (!editingDeliveryId) return showToast('ยังไม่ได้เลือกใบส่งของสำหรับแก้ไข', 'error');
+      const payload = getDeliveryPayload();
+      payload.deliveryId = editingDeliveryId;
+      if (editingDeliveryCreatedAt) payload.createdAt = editingDeliveryCreatedAt;
+      if (payload.totals.totalWeightKg <= 0 || payload.totals.totalAmount <= 0) return showToast('กรุณากรอกจำนวนตระกร้า/น้ำหนักเศษ และราคาในใบส่งของก่อนบันทึก', 'error');
+      try {
+        showLoading('update');
+        __saveCurrentDeliveryPrices();
+        const saved = await __saveDeliveryRecord(payload);
+        editingDeliveryId = '';
+        editingDeliveryCreatedAt = '';
+        allDeliveries = [saved, ...allDeliveries.filter(d => String(d.deliveryId) !== String(saved.deliveryId))].map(__normalizeDelivery);
+        window.allDeliveries = allDeliveries;
+        showToast('บันทึกการแก้ไขใบส่งของสำเร็จ', 'success');
+        setDeliveryEditModeUI(false);
+        clearDeliveryForm(false);
+        await loadDeliverySummary(true);
+        renderSummary();
+        renderAdminPanel();
+      } catch (err) {
+        showToast(err.message || 'บันทึกการแก้ไขใบส่งของไม่สำเร็จ', 'error');
+      } finally { hideLoading(); }
+    }
+
+    const __clearDeliveryFormBeforeAdminModalPatch = clearDeliveryForm;
+    clearDeliveryForm = function(showMessage = true) {
+      __clearDeliveryFormBeforeAdminModalPatch(showMessage);
+      setDeliveryEditModeUI(false);
+    };
+
+    const __adminLogoutBeforeDeliveryPatch = adminLogout;
+    adminLogout = function() {
+      editingDeliveryId = '';
+      editingDeliveryCreatedAt = '';
+      setDeliveryEditModeUI(false);
+      __adminLogoutBeforeDeliveryPatch();
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        ensureDeliveryEditControls();
+        ensureDeliveryDetailModal();
+        setDeliveryEditModeUI(Boolean(editingDeliveryId && adminState.loggedIn));
+      }, 220);
+    });
+
 </script>
 </body>
 </html>
