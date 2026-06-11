@@ -1720,7 +1720,7 @@
      * ตั้งค่า URL ของ Google Apps Script Web App ที่ Deploy แล้วเท่านั้น
      * ห้ามใช้ localStorage เพื่อป้องกัน URL ค้างในบางเครื่อง
      **********************************************************************/
-    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzqnq8jMp6OkwzAT-I1aTj1EN4OGdGAdS2LEsKt5eLxzLmsJ8ayBgeWLUcVvAObvQBP/exec';
+    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwRq3lIrsysiV_3VyL1AF2j7oyVNsZvftX-2HesfrOTTUThbjTkwVJVUHh0GAp8a5Zr/exec';
 
     const DEFAULT_GRADES = ['AA', 'A', 'B', 'C'];
     const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -4019,6 +4019,517 @@
       `;
       document.head.appendChild(style);
     })();
+
+
+
+    /* ===== Patch 2569-06-11: delivery price memory + delivery summary/admin CRUD ===== */
+    let allDeliveries = Array.isArray(window.allDeliveries) ? window.allDeliveries : [];
+    let editingDeliveryId = '';
+    let editingDeliveryCreatedAt = '';
+    const TK_DELIVERY_PRICE_MEMORY_KEY = 'tk_longan_delivery_grade_prices_v1';
+    const TK_DELIVERY_RECORDS_FALLBACK_KEY = 'tk_longan_delivery_records_v1';
+
+    (function injectDeliveryManagementStyles(){
+      const style = document.createElement('style');
+      style.textContent = `
+        .delivery-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0 12px;}
+        .delivery-summary-card{border:1px solid rgba(75,29,120,.10);border-radius:14px;background:#fbfffd;padding:10px 12px;box-shadow:0 8px 18px rgba(39,25,70,.05);}
+        .delivery-summary-card span{display:block;color:#667085;font-size:11px;font-weight:700;}
+        .delivery-summary-card b{display:block;color:#16804a;font-size:20px;line-height:1.05;margin-top:4px;}
+        .delivery-summary-card small{display:block;color:#35145f;font-size:11px;font-weight:700;margin-top:3px;}
+        .delivery-admin-shell{margin-top:12px;}
+        .delivery-chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 6px;font-weight:800;font-size:10px;background:#e8f7ef;color:#0f6b3f;white-space:nowrap;}
+        .bill-chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 6px;font-weight:800;font-size:10px;background:#eee7f8;color:#35145f;white-space:nowrap;}
+        .day-card.has-delivery{border-color:rgba(22,128,74,.28)!important;box-shadow:inset 0 0 0 1px rgba(22,128,74,.08);cursor:pointer;}
+        .day-card.has-bill.has-delivery{background:#f8fff8!important;}
+        .delivery-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin:8px 0 10px;}
+        .delivery-detail-head h4{margin:0;color:#35145f;font-size:15px;line-height:1.3;}
+        .delivery-detail-head span{color:#667085;font-size:12px;font-weight:700;}
+        .delivery-section-box{border:1px solid rgba(75,29,120,.10);border-radius:14px;background:#fff;padding:10px;margin:10px 0;}
+        @media(max-width:760px){.delivery-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.delivery-summary-card{padding:9px;}.delivery-summary-card b{font-size:17px;}.delivery-detail-head{display:block;}.delivery-admin-shell .data-table{min-width:920px;}}
+        @media(max-width:380px){.delivery-summary-grid{grid-template-columns:1fr;}}
+      `;
+      document.head.appendChild(style);
+    })();
+
+    function __safeParseJson(value, fallback) {
+      try { const parsed = JSON.parse(value || ''); return parsed ?? fallback; } catch (_) { return fallback; }
+    }
+
+    function __readDeliveryPriceMemory() {
+      try {
+        const parsed = __safeParseJson(localStorage.getItem(TK_DELIVERY_PRICE_MEMORY_KEY), {});
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (_) { return {}; }
+    }
+
+    function __writeDeliveryPriceMemory(memory) {
+      try { localStorage.setItem(TK_DELIVERY_PRICE_MEMORY_KEY, JSON.stringify(memory || {})); } catch (_) {}
+    }
+
+    function __saveCurrentDeliveryPrices() {
+      const memory = __readDeliveryPriceMemory();
+      document.querySelectorAll('#deliveryForm tr[data-delivery-grade]').forEach(row => {
+        const grade = row.dataset.deliveryGrade;
+        const input = row.querySelector('.delivery-price');
+        const value = String(input?.value || '').trim();
+        if (grade && value !== '' && Number.isFinite(Number(value.replace(/,/g, '')))) memory[grade] = value;
+      });
+      __writeDeliveryPriceMemory(memory);
+    }
+
+    function __loadRememberedDeliveryPrices() {
+      const memory = __readDeliveryPriceMemory();
+      document.querySelectorAll('#deliveryForm tr[data-delivery-grade]').forEach(row => {
+        const grade = row.dataset.deliveryGrade;
+        const input = row.querySelector('.delivery-price');
+        if (grade && input && memory[grade] !== undefined && String(memory[grade]).trim() !== '') input.value = memory[grade];
+      });
+      calculateDelivery();
+    }
+
+    function __bindRememberDeliveryPrices() {
+      document.querySelectorAll('#deliveryForm tr[data-delivery-grade] .delivery-price').forEach(input => {
+        if (input.dataset.deliveryPriceMemoryBound === '1') return;
+        input.dataset.deliveryPriceMemoryBound = '1';
+        const save = () => { __saveCurrentDeliveryPrices(); calculateDelivery(); };
+        input.addEventListener('input', save);
+        input.addEventListener('change', save);
+        input.addEventListener('blur', save);
+      });
+    }
+
+    function __readFallbackDeliveries() {
+      try {
+        const parsed = __safeParseJson(localStorage.getItem(TK_DELIVERY_RECORDS_FALLBACK_KEY), []);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_) { return []; }
+    }
+
+    function __writeFallbackDeliveries(records) {
+      try { localStorage.setItem(TK_DELIVERY_RECORDS_FALLBACK_KEY, JSON.stringify(Array.isArray(records) ? records : [])); } catch (_) {}
+    }
+
+    function __newDeliveryId(dateValue) {
+      const iso = normalizeDate(dateValue) || toInputDate(new Date());
+      const stamp = Date.now().toString().slice(-6);
+      const count = String(__readFallbackDeliveries().filter(d => normalizeDate(d.date) === iso).length + 1).padStart(2, '0');
+      return `DN-${iso.replaceAll('-', '')}-${count}-${stamp}`;
+    }
+
+    function __normalizeDelivery(record) {
+      const rows = DEFAULT_GRADES.map(grade => {
+        const found = (record?.rows || []).find(r => String(r.grade) === grade) || { grade };
+        const basketKg = n(record?.basketKg) || n((record?.totals || {}).basketKg) || 27;
+        const baskets = n(found.baskets);
+        const scrapKg = n(found.scrapKg);
+        const unitPrice = n(found.unitPrice);
+        const weightKg = n(found.weightKg) || ((baskets * basketKg) + scrapKg);
+        const amount = n(found.amount) || (weightKg * unitPrice);
+        return { grade, baskets, scrapKg, unitPrice, weightKg, amount };
+      });
+      const totals = __sumDeliveryRows(rows, n(record?.basketKg) || n((record?.totals || {}).basketKg) || 27);
+      return { ...(record || {}), rows, totals, basketKg: n(record?.basketKg) || totals.basketKg || 27 };
+    }
+
+    function __sumDeliveryRows(rows, basketKgValue = 27) {
+      const basketKg = n(basketKgValue) || 27;
+      const total = (rows || []).reduce((a, r) => {
+        a.basketTotal += n(r.baskets);
+        a.scrapBasketCount += n(r.scrapKg) > 0 ? 1 : 0;
+        a.totalWeightKg += n(r.weightKg) || ((n(r.baskets) * basketKg) + n(r.scrapKg));
+        a.totalAmount += n(r.amount) || ((n(r.weightKg) || ((n(r.baskets) * basketKg) + n(r.scrapKg))) * n(r.unitPrice));
+        return a;
+      }, { basketKg, basketTotal:0, scrapBasketCount:0, totalBasketWithScrap:0, totalWeightKg:0, totalAmount:0 });
+      total.totalBasketWithScrap = total.basketTotal + total.scrapBasketCount;
+      return total;
+    }
+
+    function __sumDeliveries(records) {
+      return (records || []).reduce((a, raw) => {
+        const d = __normalizeDelivery(raw);
+        a.count += 1;
+        a.basketTotal += n(d.totals.basketTotal);
+        a.scrapBasketCount += n(d.totals.scrapBasketCount);
+        a.totalBasketWithScrap += n(d.totals.totalBasketWithScrap);
+        a.totalWeightKg += n(d.totals.totalWeightKg);
+        a.totalAmount += n(d.totals.totalAmount);
+        return a;
+      }, { count:0, basketTotal:0, scrapBasketCount:0, totalBasketWithScrap:0, totalWeightKg:0, totalAmount:0 });
+    }
+
+    async function loadDeliverySummary(silent = true) {
+      let records = [];
+      let loadedFromGas = false;
+      try {
+        const res = await gasPost('read_all_deliveries', {});
+        records = Array.isArray(res.records) ? res.records : (Array.isArray(res.deliveries) ? res.deliveries : []);
+        loadedFromGas = true;
+      } catch (_) {
+        try {
+          const joiner = CONFIG_WEB_APP_URL.includes('?') ? '&' : '?';
+          const response = await fetchWithTimeout(`${CONFIG_WEB_APP_URL}${joiner}action=read_all_deliveries&ts=${Date.now()}`, { method:'GET', cache:'no-store' }, FETCH_TIMEOUT_MS);
+          if (response.ok) {
+            const json = safeJson(await response.text());
+            if (json.ok) {
+              records = Array.isArray(json.records) ? json.records : (Array.isArray(json.deliveries) ? json.deliveries : []);
+              loadedFromGas = true;
+            }
+          }
+        } catch (_) {}
+      }
+      if (!loadedFromGas) records = __readFallbackDeliveries();
+      allDeliveries = records.map(__normalizeDelivery).sort((a,b) => String(b.createdAt || b.date || '').localeCompare(String(a.createdAt || a.date || '')));
+      window.allDeliveries = allDeliveries;
+      return allDeliveries;
+    }
+
+    async function __persistDeliveryLocal(record, mode = 'create') {
+      const list = __readFallbackDeliveries();
+      const normalized = __normalizeDelivery(record);
+      if (!normalized.deliveryId) normalized.deliveryId = __newDeliveryId(normalized.date);
+      if (!normalized.createdAt) normalized.createdAt = new Date().toISOString();
+      normalized.updatedAt = new Date().toISOString();
+      const index = list.findIndex(item => String(item.deliveryId) === String(normalized.deliveryId));
+      if (mode === 'delete') {
+        const filtered = list.filter(item => String(item.deliveryId) !== String(normalized.deliveryId));
+        __writeFallbackDeliveries(filtered);
+        return { ok:true, record:normalized, records:filtered };
+      }
+      if (index >= 0) list[index] = normalized;
+      else list.unshift(normalized);
+      __writeFallbackDeliveries(list);
+      return { ok:true, record:normalized, records:list };
+    }
+
+    async function __saveDeliveryRecord(payload) {
+      const isEdit = Boolean(editingDeliveryId || payload.deliveryId);
+      const action = isEdit ? 'update_delivery' : 'create_delivery';
+      const payloadWithId = { ...payload };
+      if (editingDeliveryId) payloadWithId.deliveryId = editingDeliveryId;
+      if (editingDeliveryCreatedAt) payloadWithId.createdAt = editingDeliveryCreatedAt;
+      try {
+        const res = await gasPost(action, adminState.loggedIn ? { ...payloadWithId, password: adminState.password } : payloadWithId);
+        const saved = __normalizeDelivery(res.record || payloadWithId);
+        await __persistDeliveryLocal(saved, 'upsert');
+        return saved;
+      } catch (err) {
+        const fallback = await __persistDeliveryLocal(payloadWithId, 'upsert');
+        const saved = __normalizeDelivery(fallback.record || payloadWithId);
+        showToast('บันทึกใบส่งของไว้ในเครื่องนี้แล้ว หากต้องการใช้งานข้ามเครื่องให้เพิ่ม action ใบส่งของใน Google Apps Script', 'success', 6500);
+        return saved;
+      }
+    }
+
+    function ensureDeliverySummaryUI() {
+      if (!document.getElementById('deliverySummaryGrid')) {
+        const gradeGrid = document.getElementById('dailyGradeGrid') || document.querySelector('#panelSummary .kpi-grid');
+        if (gradeGrid) {
+          const grid = document.createElement('div');
+          grid.className = 'delivery-summary-grid';
+          grid.id = 'deliverySummaryGrid';
+          grid.innerHTML = `
+            <div class="delivery-summary-card"><span>ใบส่งของรายวัน</span><b id="kpiDeliveryBills">0</b><small>รายการ</small></div>
+            <div class="delivery-summary-card"><span>ตระกร้าใบส่งของ</span><b id="kpiDeliveryBaskets">0</b><small>ตระกร้า</small></div>
+            <div class="delivery-summary-card"><span>น้ำหนักใบส่งของ</span><b id="kpiDeliveryWeight">0</b><small>กิโลกรัม</small></div>
+            <div class="delivery-summary-card"><span>ยอดเงินใบส่งของ</span><b id="kpiDeliveryAmount">0.00</b><small>บาท</small></div>`;
+          gradeGrid.insertAdjacentElement('afterend', grid);
+        }
+      }
+    }
+
+    function ensureDeliveryAdminUI() {
+      if (document.getElementById('deliveryAdminTableContainer')) return;
+      const adminShell = document.querySelector('#panelAdmin .admin-table-shell');
+      if (!adminShell) return;
+      const shell = document.createElement('div');
+      shell.className = 'table-shell delivery-admin-shell';
+      shell.innerHTML = `
+        <div class="block-head">
+          <h3>จัดการใบส่งของ</h3>
+          <span>พิมพ์ แก้ไข หรือลบใบส่งของจากวันที่ที่เลือก</span>
+        </div>
+        <div class="table-responsive" id="deliveryAdminTableContainer"></div>`;
+      adminShell.insertAdjacentElement('afterend', shell);
+    }
+
+    function __deliveryRowsText(record) {
+      const d = __normalizeDelivery(record);
+      return DEFAULT_GRADES.map(g => {
+        const row = d.rows.find(r => r.grade === g) || {};
+        const weight = n(row.weightKg);
+        return weight > 0 ? `${g}: ${formatNumber(weight,0)} Kg. / ${formatNumber(row.amount,2)} ฿` : `${g}: -`;
+      }).join('<br>');
+    }
+
+    function buildDeliveryAdminTable(records) {
+      if (!records.length) return '<div class="empty-state">ยังไม่มีข้อมูลใบส่งของในวันที่เลือก</div>';
+      return `<table class="data-table"><thead><tr><th>เลขที่ใบส่งของ</th><th>วันที่</th><th>บริษัท/ปลายทาง</th><th>ทะเบียนรถ</th><th>รายการเกรด</th><th>ตระกร้า</th><th>น้ำหนัก Kg.</th><th>รวมเงิน</th><th>จัดการ</th></tr></thead><tbody>${records.map(raw => {
+        const d = __normalizeDelivery(raw);
+        const t = d.totals || __sumDeliveryRows(d.rows, d.basketKg);
+        return `<tr>
+          <td><b>${escapeHtml(d.deliveryId || '-')}</b></td>
+          <td>${formatThaiDate(d.date)}</td>
+          <td>${escapeHtml(d.companyName || DELIVERY_DEFAULTS.company)}</td>
+          <td>${escapeHtml(d.vehiclePlate || DELIVERY_DEFAULTS.vehiclePlate)}</td>
+          <td>${__deliveryRowsText(d)}</td>
+          <td class="num">${formatNumber(t.totalBasketWithScrap,0)}</td>
+          <td class="num">${formatNumber(t.totalWeightKg,0)}</td>
+          <td class="num">${formatNumber(t.totalAmount,2)}</td>
+          <td><button class="small-btn" type="button" onclick="printDeliveryById('${escapeAttr(d.deliveryId || '')}')">พิมพ์</button> <button class="small-btn edit-btn" type="button" onclick="editDelivery('${escapeAttr(d.deliveryId || '')}')">แก้ไข</button> <button class="small-btn delete-btn" type="button" onclick="deleteDelivery('${escapeAttr(d.deliveryId || '')}')">ลบ</button></td>
+        </tr>`;
+      }).join('')}</tbody></table>`;
+    }
+
+    function renderDeliverySummaryCards(dateValue) {
+      ensureDeliverySummaryUI();
+      const records = allDeliveries.filter(d => normalizeDate(d.date) === normalizeDate(dateValue));
+      const totals = __sumDeliveries(records);
+      setTextSafe('kpiDeliveryBills', formatNumber(records.length,0));
+      setTextSafe('kpiDeliveryBaskets', formatNumber(totals.totalBasketWithScrap,0));
+      setTextSafe('kpiDeliveryWeight', formatNumber(totals.totalWeightKg,0));
+      setTextSafe('kpiDeliveryAmount', formatNumber(totals.totalAmount,2));
+    }
+
+    const __loadSummaryBeforeDeliveryManagement = loadSummary;
+    loadSummary = async function(silent = false) {
+      await __loadSummaryBeforeDeliveryManagement(silent);
+      await loadDeliverySummary(true);
+      try { renderSummary(); } catch (_) {}
+    };
+
+    const __renderSummaryBeforeDeliveryManagement = renderSummary;
+    renderSummary = function() {
+      __renderSummaryBeforeDeliveryManagement();
+      const dateValue = getSummaryDateValue ? getSummaryDateValue() : (document.getElementById('summaryDate')?.dataset.iso || document.getElementById('summaryDate')?.value || toInputDate(new Date()));
+      renderDeliverySummaryCards(dateValue);
+    };
+
+    renderCalendar = function(month, year) {
+      const grid = document.getElementById('calendarGrid');
+      const first = new Date(year, month, 1);
+      const last = new Date(year, month + 1, 0);
+      const today = toInputDate(new Date());
+      const monthlyRecords = allBills.filter(b => {
+        const d = parseLocalDate(normalizeDate(b.date));
+        return d && d.getFullYear() === year && d.getMonth() === month;
+      });
+      const monthlyDeliveries = allDeliveries.filter(item => {
+        const d = parseLocalDate(normalizeDate(item.date));
+        return d && d.getFullYear() === year && d.getMonth() === month;
+      });
+      const billTotals = sumRecords(monthlyRecords);
+      const deliveryTotals = __sumDeliveries(monthlyDeliveries);
+      setText('monthSummaryText', `${MONTHS_TH[month]} ${year + 543}: ซื้อ ${formatNumber(billTotals.totalWeightKg,0)} Kg. / ${formatNumber(billTotals.totalAmount,0)} บาท | ส่งของ ${formatNumber(deliveryTotals.totalWeightKg,0)} Kg. / ${formatNumber(deliveryTotals.totalAmount,0)} บาท`);
+      const billsByDate = groupBy(monthlyRecords, b => normalizeDate(b.date));
+      const deliveriesByDate = groupBy(monthlyDeliveries, d => normalizeDate(d.date));
+      let html = WEEKDAYS_TH.map(d => `<div class="weekday">${d}</div>`).join('');
+      for (let i = 0; i < first.getDay(); i++) html += '<div class="day-card empty"></div>';
+      for (let day = 1; day <= last.getDate(); day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const billRecs = billsByDate[dateStr] || [];
+        const deliveryRecs = deliveriesByDate[dateStr] || [];
+        const billDayTotals = sumRecords(billRecs);
+        const deliveryDayTotals = __sumDeliveries(deliveryRecs);
+        const classes = ['day-card'];
+        if (dateStr === today) classes.push('today');
+        if (billRecs.length) classes.push('has-data','has-bill');
+        if (deliveryRecs.length) classes.push('has-data','has-delivery');
+        const hasAny = billRecs.length || deliveryRecs.length;
+        const action = hasAny ? ` role="button" tabindex="0" onclick="openDayDetail('${dateStr}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDayDetail('${dateStr}')}" title="คลิกดูรายละเอียดวันที่ ${day}"` : '';
+        html += `<div class="${classes.join(' ')}"${action}>
+          <div class="day-num">${day}</div>
+          ${hasAny ? `<div class="day-data">${billRecs.length ? `<span class="bill-chip">ซื้อ ${billRecs.length}</span> ${formatNumber(billDayTotals.totalWeightKg,0)} Kg.<br>` : ''}${deliveryRecs.length ? `<span class="delivery-chip">ส่ง ${deliveryRecs.length}</span> ${formatNumber(deliveryDayTotals.totalWeightKg,0)} Kg.` : ''}</div><div class="day-money">${formatNumber(billDayTotals.totalAmount + deliveryDayTotals.totalAmount,0)} ฿</div>` : '<div class="day-data">-</div>'}
+        </div>`;
+      }
+      grid.innerHTML = html;
+    };
+
+    const __openDayDetailBeforeDeliveryManagement = openDayDetail;
+    openDayDetail = function(dateStr) {
+      currentDetailDate = dateStr;
+      const billRecords = allBills.filter(b => normalizeDate(b.date) === dateStr);
+      const deliveryRecords = allDeliveries.filter(d => normalizeDate(d.date) === dateStr);
+      const billTotals = sumRecords(billRecords);
+      const deliveryTotals = __sumDeliveries(deliveryRecords);
+      document.getElementById('dayDetailTitle').textContent = `รายละเอียดวันที่ ${formatThaiDate(dateStr)}`;
+      document.getElementById('dayDetailSummary').textContent = `บิลซื้อ ${billRecords.length} รายการ / ${formatNumber(billTotals.totalWeightKg,0)} Kg. / ${formatNumber(billTotals.totalAmount,2)} บาท | ใบส่งของ ${deliveryRecords.length} รายการ / ${formatNumber(deliveryTotals.totalWeightKg,0)} Kg. / ${formatNumber(deliveryTotals.totalAmount,2)} บาท`;
+      const billHtml = `<div class="delivery-section-box"><div class="delivery-detail-head"><div><h4>🧾 สรุปบิลเงินสด</h4><span>${billRecords.length} รายการ</span></div></div>${buildRecordsDetailTable(billRecords, true)}</div>`;
+      const deliveryHtml = `<div class="delivery-section-box"><div class="delivery-detail-head"><div><h4>🚚 สรุปใบส่งของ</h4><span>${deliveryRecords.length} รายการ</span></div></div>${buildDeliveryAdminTable(deliveryRecords)}</div>`;
+      document.getElementById('dayDetailBody').innerHTML = billHtml + deliveryHtml;
+      document.getElementById('dayDetailModal').classList.add('active');
+      document.getElementById('dayDetailModal').setAttribute('aria-hidden','false');
+    };
+
+    const __renderAdminPanelBeforeDeliveryManagement = renderAdminPanel;
+    renderAdminPanel = function() {
+      __renderAdminPanelBeforeDeliveryManagement();
+      ensureDeliveryAdminUI();
+      const dateValue = getAdminDateValue ? getAdminDateValue() : (document.getElementById('adminDate')?.dataset.iso || toInputDate(new Date()));
+      const records = allDeliveries.filter(d => normalizeDate(d.date) === normalizeDate(dateValue));
+      const container = document.getElementById('deliveryAdminTableContainer');
+      if (container) container.innerHTML = buildDeliveryAdminTable(records);
+    };
+
+    function printDeliveryById(deliveryId) {
+      const record = allDeliveries.find(d => String(d.deliveryId) === String(deliveryId));
+      if (!record) return showToast('ไม่พบข้อมูลใบส่งของที่ต้องการพิมพ์', 'error');
+      const win = window.open('', '_blank');
+      if (!win) return showToast('เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต Pop-up', 'error');
+      win.document.write(buildDeliveryPrintHTML(record));
+      win.document.close();
+      win.focus();
+      setTimeout(() => win.print(), 550);
+    }
+
+    function editDelivery(deliveryId) {
+      const record = allDeliveries.find(d => String(d.deliveryId) === String(deliveryId));
+      if (!record) return showToast('ไม่พบข้อมูลใบส่งของที่ต้องการแก้ไข', 'error');
+      const d = __normalizeDelivery(record);
+      editingDeliveryId = d.deliveryId || '';
+      editingDeliveryCreatedAt = d.createdAt || '';
+      setDeliveryDateValue(normalizeDate(d.date) || toInputDate(new Date()));
+      const setVal = (id, value) => { const el = document.getElementById(id); if (el) el.value = value ?? ''; };
+      setVal('deliveryTitle', d.title || DELIVERY_DEFAULTS.title);
+      setVal('deliveryCompany', d.companyName || DELIVERY_DEFAULTS.company);
+      setVal('deliveryAddress', d.companyAddress || DELIVERY_DEFAULTS.address);
+      setVal('deliveryBasketKg', n(d.basketKg) || 27);
+      setVal('deliveryFreightText', d.freightText || DELIVERY_DEFAULTS.freightText);
+      setVal('deliveryVehicleProvince', d.vehicleProvince || DELIVERY_DEFAULTS.vehicleProvince);
+      setVal('deliveryVehiclePlate', d.vehiclePlate || DELIVERY_DEFAULTS.vehiclePlate);
+      setVal('deliverySenderLabel', d.senderLabel || DELIVERY_DEFAULTS.senderLabel);
+      setVal('deliverySenderName', d.senderName || DELIVERY_DEFAULTS.senderName);
+      setVal('deliveryBankName', d.bankName || DELIVERY_DEFAULTS.bankName);
+      setVal('deliveryAccountNo', d.accountNo || DELIVERY_DEFAULTS.accountNo);
+      setVal('deliveryAccountType', d.accountType || DELIVERY_DEFAULTS.accountType);
+      const byGrade = Object.fromEntries((d.rows || []).map(r => [r.grade, r]));
+      document.querySelectorAll('tr[data-delivery-grade]').forEach(row => {
+        const r = byGrade[row.dataset.deliveryGrade] || {};
+        const basket = row.querySelector('.delivery-basket');
+        const scrap = row.querySelector('.delivery-scrap');
+        const price = row.querySelector('.delivery-price');
+        if (basket) basket.value = formatNumber(n(r.baskets), 0).replace(/\.00$/,'');
+        if (scrap) scrap.value = formatNumber(n(r.scrapKg), 0).replace(/\.00$/,'');
+        if (price) price.value = String(n(r.unitPrice) || '');
+      });
+      calculateDelivery();
+      switchPanel('delivery');
+      showToast(`กำลังแก้ไขใบส่งของ ${d.deliveryId}`, 'success');
+    }
+
+    async function deleteDelivery(deliveryId) {
+      const record = allDeliveries.find(d => String(d.deliveryId) === String(deliveryId));
+      if (!record) return showToast('ไม่พบข้อมูลใบส่งของที่ต้องการลบ', 'error');
+      if (!confirm(`ยืนยันลบใบส่งของเลขที่ ${deliveryId} ?`)) return;
+      try {
+        showLoading('delete');
+        try { await gasPost('delete_delivery', { deliveryId, password: adminState.password }); } catch (_) {}
+        await __persistDeliveryLocal({ ...record, deliveryId }, 'delete');
+        await loadDeliverySummary(true);
+        renderSummary();
+        renderAdminPanel();
+        showToast('ลบใบส่งของสำเร็จ', 'success');
+      } catch (err) {
+        showToast(err.message || 'ลบใบส่งของไม่สำเร็จ', 'error');
+      } finally { hideLoading(); }
+    }
+
+    saveDeliveryAndPrint = async function(event) {
+      event.preventDefault();
+      const payload = getDeliveryPayload();
+      if (editingDeliveryId) payload.deliveryId = editingDeliveryId;
+      if (editingDeliveryCreatedAt) payload.createdAt = editingDeliveryCreatedAt;
+      if (payload.totals.totalWeightKg <= 0 || payload.totals.totalAmount <= 0) return showToast('กรุณากรอกจำนวนตระกร้า/น้ำหนักเศษ และราคาในใบส่งของก่อนบันทึก', 'error');
+      __saveCurrentDeliveryPrices();
+      playPremiumSound('start');
+      const printWin = window.open('', '_blank');
+      if (printWin) {
+        printWin.document.write('<!doctype html><html lang="th"><head><title>กำลังจัดทำใบส่งของ</title><meta charset="utf-8"></head><body style="font-family:sans-serif;padding:24px;">กำลังบันทึกและจัดรูปแบบใบส่งของ...</body></html>');
+        printWin.document.close();
+      }
+      try {
+        showLoading(editingDeliveryId ? 'update' : 'save');
+        const saved = await __saveDeliveryRecord(payload);
+        editingDeliveryId = '';
+        editingDeliveryCreatedAt = '';
+        allDeliveries = [saved, ...allDeliveries.filter(d => String(d.deliveryId) !== String(saved.deliveryId))].map(__normalizeDelivery);
+        showToast('บันทึกใบส่งของสำเร็จ กำลังเปิดหน้าต่างพิมพ์', 'success');
+        playPremiumSound('success');
+        if (printWin) {
+          printWin.document.open();
+          printWin.document.write(buildDeliveryPrintHTML(saved));
+          printWin.document.close();
+          printWin.focus();
+          setTimeout(() => printWin.print(), 550);
+        } else {
+          const fallback = window.open('', '_blank');
+          if (!fallback) return showToast('เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต Pop-up สำหรับเว็บไซต์นี้', 'error');
+          fallback.document.write(buildDeliveryPrintHTML(saved));
+          fallback.document.close();
+          setTimeout(() => fallback.print(), 550);
+        }
+        clearDeliveryForm(false);
+        renderSummary();
+        renderAdminPanel();
+      } catch (err) {
+        if (printWin) {
+          printWin.document.open();
+          printWin.document.write(`<pre style="white-space:pre-wrap;font-family:sans-serif;padding:24px;color:#b42318;">${escapeHtml(err.message || err)}</pre>`);
+          printWin.document.close();
+        }
+        showToast(connectionErrorText(err), 'error', 8500);
+      } finally { hideLoading(); }
+    };
+
+    const __clearDeliveryFormBeforeManagement = clearDeliveryForm;
+    clearDeliveryForm = function(showMessage = true) {
+      document.querySelectorAll('tr[data-delivery-grade]').forEach(row => {
+        const basket = row.querySelector('.delivery-basket');
+        const scrap = row.querySelector('.delivery-scrap');
+        if (basket) basket.value = '0';
+        if (scrap) scrap.value = '0';
+      });
+      editingDeliveryId = '';
+      editingDeliveryCreatedAt = '';
+      setDeliveryDateValue(toInputDate(new Date()));
+      __loadRememberedDeliveryPrices();
+      calculateDelivery();
+      if (showMessage !== false) showToast('ล้างรายการใบส่งของแล้ว', 'success');
+    };
+
+    const __initDeliveryFormBeforeManagement = initDeliveryForm;
+    initDeliveryForm = function() {
+      __initDeliveryFormBeforeManagement();
+      __loadRememberedDeliveryPrices();
+      __bindRememberDeliveryPrices();
+    };
+
+    const __adminLoginBeforeDeliveryManagement = adminLogin;
+    adminLogin = async function() {
+      await __adminLoginBeforeDeliveryManagement();
+      await loadDeliverySummary(true);
+      renderAdminPanel();
+    };
+
+    const __handleAdminDateChangeBeforeDeliveryManagement = typeof handleAdminDateChange === 'function' ? handleAdminDateChange : null;
+    handleAdminDateChange = function() {
+      const iso = getAdminDateValue();
+      if (__handleAdminDateChangeBeforeDeliveryManagement) __handleAdminDateChangeBeforeDeliveryManagement();
+      const input = __thaiDateInputById ? __thaiDateInputById('adminDate') : document.getElementById('adminDate');
+      if (input && input.type !== 'date') input.value = formatThaiDate(iso);
+      renderAdminPanel();
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(async () => {
+        initDeliveryForm();
+        ensureDeliverySummaryUI();
+        ensureDeliveryAdminUI();
+        await loadDeliverySummary(true);
+        try { renderSummary(); } catch (_) {}
+        try { renderAdminPanel(); } catch (_) {}
+      }, 140);
+    });
 
 </script>
 </body>
