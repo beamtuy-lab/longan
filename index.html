@@ -1365,7 +1365,7 @@
           <div>
             <div class="kicker">ระบบบิลเงินสดลำไย</div>
             <h1>ระบบซื้อลำไยบิลเงินสด</h1>
-            <p>บันทึกซื้อ คำนวณเงิน พิมพ์บิล A4 และสรุปยอด</p>
+            <p>บันทึกซื้อ คำนวณเงิน พิมพ์บิล A4 กรอกใบส่งของ และสรุปยอด</p>
           </div>
         </div>
       </div>
@@ -1379,6 +1379,7 @@
 
     <nav class="nav-actions" aria-label="เมนูหลัก">
       <button class="nav-btn active" id="btnBill" type="button" onclick="switchPanel('bill')"><span class="icon">🧾</span> กรอกบิล</button>
+      <button class="nav-btn" id="btnDelivery" type="button" onclick="switchPanel('delivery')"><span class="icon">🚚</span> กรอกใบส่งของ</button>
       <button class="nav-btn" id="btnSummary" type="button" onclick="switchPanel('summary')"><span class="icon">📊</span> สรุปข้อมูล</button>
       <button class="nav-btn admin-nav" id="btnAdmin" type="button" onclick="switchPanel('admin')"><span class="icon">🛠️</span> จัดการ Admin</button>
     </nav>
@@ -1505,6 +1506,126 @@
       </div>
     </section>
 
+
+    <section class="panel" id="panelDelivery">
+      <div class="section-title">
+        <div>
+          <h2>กรอกใบส่งของลำไย</h2>
+          <p>ออกแบบตามแบบฟอร์ม Excel “บิลส่งของ TK พืชผล” พร้อมคำนวณน้ำหนัก จำนวนเงิน และพิมพ์ A4</p>
+        </div>
+      </div>
+
+      <div class="delivery-editor-wrap">
+        <form id="deliveryForm" onsubmit="saveDeliveryAndPrint(event)">
+          <div class="delivery-sheet editor">
+            <table class="delivery-table" aria-label="แบบฟอร์มใบส่งของลำไย">
+              <colgroup><col><col><col><col><col><col><col><col><col></colgroup>
+              <tbody>
+                <tr><td colspan="9" class="delivery-title-cell"><input id="deliveryTitle" class="delivery-input center strong" value="บิลส่งของ TK พืชผล"></td></tr>
+                <tr>
+                  <td colspan="7" class="delivery-company"><input id="deliveryCompany" class="delivery-input left strong" value="บริษัท ไทยหวั้ง อโกรโปรดักส์ อินเตอร์เนชั่นแนล"></td>
+                  <td colspan="2"><input id="deliveryDate" class="delivery-input center" type="date" required></td>
+                </tr>
+                <tr><td colspan="9"><input id="deliveryAddress" class="delivery-input left" value="176 หมู่ 6 ตำบลสันทรายงาม อำเภอเทิง จังหวัด เชียงราย 57160"></td></tr>
+                <tr>
+                  <th class="delivery-head">เกรด</th>
+                  <th colspan="6" class="delivery-head">รายการ</th>
+                  <th class="delivery-head">หน่วยละ</th>
+                  <th class="delivery-head">จำนวนเงิน</th>
+                </tr>
+                <tr data-delivery-grade="AA">
+                  <td class="delivery-grade">AA</td>
+                  <td><input class="delivery-input right delivery-basket" type="text" inputmode="decimal" value="0"></td>
+                  <td class="center strong">เศษ</td>
+                  <td><input class="delivery-input center delivery-scrap" type="text" inputmode="decimal" value="0"></td>
+                  <td class="center">=</td>
+                  <td class="delivery-weight right strong">-</td>
+                  <td class="center strong">Kg.</td>
+                  <td><input class="delivery-input right delivery-price" type="text" inputmode="decimal" value="18"></td>
+                  <td class="delivery-amount right strong">0.00</td>
+                </tr>
+                <tr data-delivery-grade="A">
+                  <td class="delivery-grade">A</td>
+                  <td><input class="delivery-input right delivery-basket" type="text" inputmode="decimal" value="0"></td>
+                  <td class="center strong">เศษ</td>
+                  <td><input class="delivery-input center delivery-scrap" type="text" inputmode="decimal" value="0"></td>
+                  <td class="center">=</td>
+                  <td class="delivery-weight right strong">-</td>
+                  <td class="center strong">Kg.</td>
+                  <td><input class="delivery-input right delivery-price" type="text" inputmode="decimal" value="9.5"></td>
+                  <td class="delivery-amount right strong">0.00</td>
+                </tr>
+                <tr data-delivery-grade="B">
+                  <td class="delivery-grade">B</td>
+                  <td><input class="delivery-input right delivery-basket" type="text" inputmode="decimal" value="0"></td>
+                  <td class="center strong">เศษ</td>
+                  <td><input class="delivery-input center delivery-scrap" type="text" inputmode="decimal" value="0"></td>
+                  <td class="center">=</td>
+                  <td class="delivery-weight right strong">-</td>
+                  <td class="center strong">Kg.</td>
+                  <td><input class="delivery-input right delivery-price" type="text" inputmode="decimal" value="5.5"></td>
+                  <td class="delivery-amount right strong">0.00</td>
+                </tr>
+                <tr data-delivery-grade="C">
+                  <td class="delivery-grade">C</td>
+                  <td><input class="delivery-input right delivery-basket" type="text" inputmode="decimal" value="0"></td>
+                  <td class="center strong">เศษ</td>
+                  <td><input class="delivery-input center delivery-scrap" type="text" inputmode="decimal" value="0"></td>
+                  <td class="center">=</td>
+                  <td class="delivery-weight right strong">-</td>
+                  <td class="center strong">Kg.</td>
+                  <td><input class="delivery-input right delivery-price" type="text" inputmode="decimal" value="2"></td>
+                  <td class="delivery-amount right strong">0.00</td>
+                </tr>
+                <tr><td></td><td class="delivery-sub-label">รวม</td><td class="center strong" id="deliveryBasketTotalCell">0</td><td colspan="4" class="center strong">ตระกร้า</td><td></td><td></td></tr>
+                <tr><td></td><td class="delivery-sub-label">เศษ</td><td class="center strong" id="deliveryScrapBasketCell">0</td><td colspan="4" class="center strong">ตระกร้า</td><td></td><td></td></tr>
+                <tr><td></td><td class="delivery-sub-label">รวมทั้งหมด</td><td class="center strong delivery-soft-fill" id="deliveryTotalBasketCell">0</td><td colspan="4" class="center strong delivery-soft-fill">ตระกร้า</td><td></td><td></td></tr>
+                <tr><td></td><td class="delivery-sub-label">น้ำหนักทั้งหมด</td><td class="center strong delivery-soft-fill" id="deliveryTotalWeightCell">0</td><td colspan="4" class="center strong delivery-soft-fill">กิโลกรัม</td><td></td><td></td></tr>
+                <tr><td colspan="7" class="center strong"><input id="deliveryFreightText" class="delivery-input center strong" value="ราคานี้รวมค่าบรรทุก"></td><td></td><td></td></tr>
+                <tr><td colspan="7" class="center strong"><input id="deliveryVehicleProvince" class="delivery-input center strong" value="ทะเบียนรถ พะเยา"></td><td></td><td></td></tr>
+                <tr><td colspan="7" class="center strong"><input id="deliveryVehiclePlate" class="delivery-input center strong delivery-red" value="70-3322 พะเยา"></td><td></td><td></td></tr>
+                <tr><td colspan="9" class="blank-row"></td></tr>
+                <tr><td colspan="9" class="blank-row"></td></tr>
+                <tr><td></td><td colspan="6" class="center strong"><input id="deliverySenderLabel" class="delivery-input center strong" value="จาก ตี๋ (พะเยา รหัส 004)"></td><td></td><td></td></tr>
+                <tr><td></td><td colspan="6" class="center strong"><input id="deliverySenderName" class="delivery-input center strong" value="นายทองบุญ ตุ้ยคำ"></td><td></td><td></td></tr>
+                <tr><td></td><td colspan="6" class="center"><input id="deliveryBankName" class="delivery-input center" value="ธนาคารกสิกรไทย สาขาสี่แยกแม่ต๋ำพะเยา"></td><td></td><td></td></tr>
+                <tr><td></td><td colspan="6" class="center"><input id="deliveryAccountNo" class="delivery-input center strong" value="เลขที่บัญชี 448 - 2 - 19679 - 4"></td><td></td><td></td></tr>
+                <tr><td></td><td colspan="6" class="center"><input id="deliveryAccountType" class="delivery-input center" value="(ออมทรัพย์)"></td><td></td><td></td></tr>
+                <tr><td colspan="9" class="blank-row"></td></tr>
+                <tr><td colspan="8" class="delivery-total-label">รวมเงิน</td><td class="delivery-total-amount" id="deliveryTotalAmountCell">0.00</td></tr>
+                <tr><td colspan="5" class="strong">ผู้รับของ…………………………...........………</td><td colspan="4" class="strong">ผู้ส่งของ <span id="deliverySignatureSender">ตี๋ (พะเยา)</span>…………………………..</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </form>
+
+        <aside class="side-card delivery-side-card">
+          <h3>สรุปใบส่งของ</h3>
+          <div class="mini-stat">
+            <div class="mini-icon">🚚</div>
+            <div><b id="deliverySideBaskets">0</b><span>รวมทั้งหมด (ตระกร้า)</span></div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-icon">⚖️</div>
+            <div><b id="deliverySideWeight">0</b><span>น้ำหนักทั้งหมด (Kg.)</span></div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-icon">💵</div>
+            <div><b id="deliverySideAmount">0.00</b><span>รวมเงิน (บาท)</span></div>
+          </div>
+          <div class="field-box mt-10">
+            <label for="deliveryBasketKg">น้ำหนักต่อ 1 ตระกร้า</label>
+            <input id="deliveryBasketKg" type="text" inputmode="decimal" value="27" oninput="calculateDelivery()">
+          </div>
+          <div class="form-actions">
+            <button class="primary-btn" type="button" onclick="document.getElementById('deliveryForm').requestSubmit()">💾 บันทึกและพิมพ์ใบส่งของ</button>
+            <button class="secondary-btn" type="button" onclick="clearDeliveryForm()">🧹 ล้างรายการ</button>
+            <button class="ghost-btn" type="button" onclick="previewDeliveryOnly()">👁️ ดูตัวอย่างก่อนพิมพ์</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
     <section class="panel" id="panelSummary">
       <div class="section-title">
         <div>
@@ -1599,7 +1720,7 @@
      * ตั้งค่า URL ของ Google Apps Script Web App ที่ Deploy แล้วเท่านั้น
      * ห้ามใช้ localStorage เพื่อป้องกัน URL ค้างในบางเครื่อง
      **********************************************************************/
-    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyi-uPM8sKHA0WRamojW6aFIIw-hesmqTVSrK2dUQApQHt53P-21HLBNovYyCXTI9M5/exec';
+    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzqnq8jMp6OkwzAT-I1aTj1EN4OGdGAdS2LEsKt5eLxzLmsJ8ayBgeWLUcVvAObvQBP/exec';
 
     const DEFAULT_GRADES = ['AA', 'A', 'B', 'C'];
     const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -3532,6 +3653,290 @@
         __bindRememberGradePrices();
       }, 60);
     });
+
+
+
+    (function injectDeliveryStyles(){
+      const style = document.createElement('style');
+      style.textContent = `
+    /* ===== Patch 2569-06-11: delivery note menu, form and print template ===== */
+    .delivery-editor-wrap { display:grid; grid-template-columns:minmax(0, 1fr) 260px; gap:18px; align-items:start; }
+    .delivery-sheet.editor { width:100%; overflow:auto; border:1px solid rgba(17,24,39,.22); border-radius:18px; background:#fff; box-shadow:0 18px 48px rgba(28,20,45,.12); }
+    .delivery-table { width:100%; min-width:860px; border-collapse:collapse; table-layout:fixed; font-family:'Sarabun','Prompt',sans-serif; color:#111; background:#fff; }
+    .delivery-table col:nth-child(1){width:8%;}.delivery-table col:nth-child(2){width:15%;}.delivery-table col:nth-child(3){width:12%;}.delivery-table col:nth-child(4){width:10%;}.delivery-table col:nth-child(5){width:4%;}.delivery-table col:nth-child(6){width:15%;}.delivery-table col:nth-child(7){width:8%;}.delivery-table col:nth-child(8){width:12%;}.delivery-table col:nth-child(9){width:16%;}
+    .delivery-table th,.delivery-table td { border:1.2px solid #111; padding:5px 6px; min-height:32px; font-size:clamp(13px,1.4vw,17px); line-height:1.15; vertical-align:middle; background:#fff; overflow:hidden; overflow-wrap:anywhere; }
+    .delivery-title-cell { font-size:clamp(20px,2.7vw,30px) !important; font-weight:800; text-align:center; }
+    .delivery-company { font-size:clamp(16px,2.1vw,22px) !important; font-weight:700; }
+    .delivery-head { background:#eaf3df !important; font-weight:800; text-align:center; font-size:clamp(15px,1.8vw,20px) !important; }
+    .delivery-grade { font-size:clamp(18px,2.2vw,26px) !important; font-weight:800; text-align:center; }
+    .delivery-sub-label { font-weight:800; text-align:right; white-space:nowrap; }
+    .delivery-soft-fill { background:#eaf3df !important; }
+    .delivery-total-label { background:#eaf3df !important; text-align:center; font-weight:800; font-size:clamp(18px,2.2vw,25px) !important; }
+    .delivery-total-amount { color:#ef0000; font-weight:800; text-align:right; font-size:clamp(18px,2.2vw,25px) !important; }
+    .delivery-input { width:100%; border:0; outline:none; background:transparent; color:#111; font-family:'Sarabun','Prompt',sans-serif; font-size:inherit; font-weight:500; min-width:0; }
+    .delivery-input:focus { background:#f0fff6; box-shadow:inset 0 -3px 0 rgba(20,128,74,.28); }
+    .delivery-input.center,.center { text-align:center; }.delivery-input.left { text-align:left; }.delivery-input.right,.right { text-align:right; }.strong { font-weight:800 !important; }
+    .delivery-red { color:#ef0000 !important; }
+    .blank-row { height:34px; }
+    .delivery-side-card { position:sticky; top:12px; }
+    #btnDelivery.active, #btnDelivery:hover { background:#4b1d78 !important; color:#fff !important; }
+    @media (min-width:961px){ .nav-actions { grid-template-columns:repeat(4,minmax(0,1fr)) !important; } .admin-nav.show{display:flex;} }
+    @media (max-width:960px){ .delivery-editor-wrap{grid-template-columns:1fr;} .delivery-side-card{position:static;} }
+    @media (max-width:760px){ .delivery-table{min-width:760px;} .delivery-sheet.editor{border-radius:12px;} }
+`;
+      document.head.appendChild(style);
+    })();
+
+    const DELIVERY_DEFAULTS = {
+      title: 'บิลส่งของ TK พืชผล',
+      company: 'บริษัท ไทยหวั้ง อโกรโปรดักส์ อินเตอร์เนชั่นแนล',
+      address: '176 หมู่ 6 ตำบลสันทรายงาม อำเภอเทิง จังหวัด เชียงราย 57160',
+      freightText: 'ราคานี้รวมค่าบรรทุก',
+      vehicleProvince: 'ทะเบียนรถ พะเยา',
+      vehiclePlate: '70-3322 พะเยา',
+      senderLabel: 'จาก ตี๋ (พะเยา รหัส 004)',
+      senderName: 'นายทองบุญ ตุ้ยคำ',
+      bankName: 'ธนาคารกสิกรไทย สาขาสี่แยกแม่ต๋ำพะเยา',
+      accountNo: 'เลขที่บัญชี 448 - 2 - 19679 - 4',
+      accountType: '(ออมทรัพย์)',
+      signatureSender: 'ตี๋ (พะเยา)'
+    };
+
+    function initDeliveryForm() {
+      const dateInput = document.getElementById('deliveryDate');
+      if (dateInput && !dateInput.value) dateInput.value = toInputDate(new Date());
+      bindDeliveryInputs();
+      calculateDelivery();
+    }
+
+    function bindDeliveryInputs() {
+      document.querySelectorAll('#deliveryForm input, #deliveryBasketKg').forEach(input => {
+        if (input.dataset.deliveryBound === '1') return;
+        input.dataset.deliveryBound = '1';
+        input.addEventListener('input', calculateDelivery);
+        input.addEventListener('change', calculateDelivery);
+      });
+      document.querySelectorAll('#deliveryForm .delivery-basket, #deliveryForm .delivery-scrap, #deliveryForm .delivery-price').forEach(input => {
+        if (input.dataset.deliverySelectBound === '1') return;
+        input.dataset.deliverySelectBound = '1';
+        const selectZero = () => {
+          const value = String(input.value || '').trim();
+          if (value === '0' || value === '0.0' || value === '0.00') requestAnimationFrame(() => input.select());
+        };
+        input.addEventListener('focus', selectZero);
+        input.addEventListener('click', selectZero);
+      });
+    }
+
+    function calculateDelivery() {
+      const basketKg = n(document.getElementById('deliveryBasketKg')?.value) || 27;
+      let basketTotal = 0;
+      let scrapBasketCount = 0;
+      let totalWeightKg = 0;
+      let totalAmount = 0;
+      document.querySelectorAll('tr[data-delivery-grade]').forEach(row => {
+        const baskets = n(row.querySelector('.delivery-basket')?.value);
+        const scrapKg = n(row.querySelector('.delivery-scrap')?.value);
+        const price = n(row.querySelector('.delivery-price')?.value);
+        const weightKg = (baskets * basketKg) + scrapKg;
+        const amount = weightKg * price;
+        basketTotal += baskets;
+        if (scrapKg > 0) scrapBasketCount += 1;
+        totalWeightKg += weightKg;
+        totalAmount += amount;
+        const weightCell = row.querySelector('.delivery-weight');
+        const amountCell = row.querySelector('.delivery-amount');
+        if (weightCell) weightCell.textContent = weightKg > 0 ? formatNumber(weightKg, 0) : '-';
+        if (amountCell) amountCell.textContent = amount > 0 ? formatNumber(amount, 2) : '0.00';
+      });
+      const totalBasketWithScrap = basketTotal + scrapBasketCount;
+      setTextSafe('deliveryBasketTotalCell', formatNumber(basketTotal, 0));
+      setTextSafe('deliveryScrapBasketCell', formatNumber(scrapBasketCount, 0));
+      setTextSafe('deliveryTotalBasketCell', formatNumber(totalBasketWithScrap, 0));
+      setTextSafe('deliveryTotalWeightCell', formatNumber(totalWeightKg, 0));
+      setTextSafe('deliveryTotalAmountCell', formatNumber(totalAmount, 2));
+      setTextSafe('deliverySideBaskets', formatNumber(totalBasketWithScrap, 0));
+      setTextSafe('deliverySideWeight', formatNumber(totalWeightKg, 0));
+      setTextSafe('deliverySideAmount', formatNumber(totalAmount, 2));
+      const sig = document.getElementById('deliverySignatureSender');
+      if (sig) sig.textContent = shortSenderName(document.getElementById('deliverySenderLabel')?.value || DELIVERY_DEFAULTS.signatureSender);
+      return { basketKg, basketTotal, scrapBasketCount, totalBasketWithScrap, totalWeightKg, totalAmount };
+    }
+
+    function setTextSafe(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+    function valueById(id, fallback = '') { const el = document.getElementById(id); return el ? String(el.value || '').trim() : fallback; }
+    function shortSenderName(text) {
+      const raw = String(text || '').replace(/^จาก\s*/,'').trim();
+      const m = raw.match(/ตี๋\s*\(พะเยา\)/);
+      return m ? m[0] : (raw || DELIVERY_DEFAULTS.signatureSender);
+    }
+
+    function getDeliveryPayload() {
+      const totals = calculateDelivery();
+      const rows = Array.from(document.querySelectorAll('tr[data-delivery-grade]')).map(row => {
+        const grade = row.dataset.deliveryGrade;
+        const baskets = n(row.querySelector('.delivery-basket')?.value);
+        const scrapKg = n(row.querySelector('.delivery-scrap')?.value);
+        const unitPrice = n(row.querySelector('.delivery-price')?.value);
+        const weightKg = (baskets * totals.basketKg) + scrapKg;
+        const amount = weightKg * unitPrice;
+        return { grade, baskets, scrapKg, unitPrice, weightKg, amount };
+      });
+      return {
+        deliveryId: '',
+        title: valueById('deliveryTitle', DELIVERY_DEFAULTS.title),
+        companyName: valueById('deliveryCompany', DELIVERY_DEFAULTS.company),
+        companyAddress: valueById('deliveryAddress', DELIVERY_DEFAULTS.address),
+        date: valueById('deliveryDate', toInputDate(new Date())),
+        basketKg: totals.basketKg,
+        rows,
+        totals,
+        freightText: valueById('deliveryFreightText', DELIVERY_DEFAULTS.freightText),
+        vehicleProvince: valueById('deliveryVehicleProvince', DELIVERY_DEFAULTS.vehicleProvince),
+        vehiclePlate: valueById('deliveryVehiclePlate', DELIVERY_DEFAULTS.vehiclePlate),
+        senderLabel: valueById('deliverySenderLabel', DELIVERY_DEFAULTS.senderLabel),
+        senderName: valueById('deliverySenderName', DELIVERY_DEFAULTS.senderName),
+        bankName: valueById('deliveryBankName', DELIVERY_DEFAULTS.bankName),
+        accountNo: valueById('deliveryAccountNo', DELIVERY_DEFAULTS.accountNo),
+        accountType: valueById('deliveryAccountType', DELIVERY_DEFAULTS.accountType),
+        signatureSender: shortSenderName(valueById('deliverySenderLabel', DELIVERY_DEFAULTS.senderLabel))
+      };
+    }
+
+    async function saveDeliveryAndPrint(event) {
+      event.preventDefault();
+      const payload = getDeliveryPayload();
+      if (payload.totals.totalWeightKg <= 0 || payload.totals.totalAmount <= 0) return showToast('กรุณากรอกจำนวนตระกร้า/น้ำหนักเศษ และราคาในใบส่งของก่อนบันทึก', 'error');
+      playPremiumSound('start');
+      const printWin = window.open('', '_blank');
+      if (printWin) {
+        printWin.document.write('<!doctype html><html lang="th"><head><title>กำลังจัดทำใบส่งของ</title><meta charset="utf-8"></head><body style="font-family:sans-serif;padding:24px;">กำลังบันทึกและจัดรูปแบบใบส่งของ...</body></html>');
+        printWin.document.close();
+      }
+      try {
+        showLoading('save');
+        const res = await gasPost('create_delivery', payload);
+        const saved = res.record || payload;
+        showToast('บันทึกใบส่งของสำเร็จ กำลังเปิดหน้าต่างพิมพ์', 'success');
+        playPremiumSound('success');
+        if (printWin) {
+          printWin.document.open();
+          printWin.document.write(buildDeliveryPrintHTML(saved));
+          printWin.document.close();
+          printWin.focus();
+          setTimeout(() => printWin.print(), 550);
+        } else {
+          const fallback = window.open('', '_blank');
+          if (!fallback) return showToast('เบราว์เซอร์บล็อกหน้าต่างพิมพ์ กรุณาอนุญาต Pop-up สำหรับเว็บไซต์นี้', 'error');
+          fallback.document.write(buildDeliveryPrintHTML(saved));
+          fallback.document.close();
+          setTimeout(() => fallback.print(), 550);
+        }
+      } catch (err) {
+        if (printWin) {
+          printWin.document.open();
+          printWin.document.write(`<pre style="white-space:pre-wrap;font-family:sans-serif;padding:24px;color:#b42318;">${escapeHtml(err.message || err)}</pre>`);
+          printWin.document.close();
+        }
+        showToast(connectionErrorText(err), 'error', 8500);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function previewDeliveryOnly() {
+      const payload = getDeliveryPayload();
+      payload.deliveryId = payload.deliveryId || 'PREVIEW';
+      payload.createdAt = new Date().toISOString();
+      const win = window.open('', '_blank');
+      if (!win) return showToast('เบราว์เซอร์บล็อกหน้าต่างตัวอย่าง กรุณาอนุญาต Pop-up', 'error');
+      win.document.write(buildDeliveryPrintHTML(payload));
+      win.document.close();
+    }
+
+    function clearDeliveryForm() {
+      document.querySelectorAll('tr[data-delivery-grade]').forEach(row => {
+        row.querySelector('.delivery-basket').value = '0';
+        row.querySelector('.delivery-scrap').value = '0';
+      });
+      const dateInput = document.getElementById('deliveryDate');
+      if (dateInput) dateInput.value = toInputDate(new Date());
+      calculateDelivery();
+      showToast('ล้างรายการใบส่งของแล้ว', 'success');
+    }
+
+    function formatEnglishDate(value) {
+      const d = parseLocalDate(normalizeDate(value));
+      if (!d) return '-';
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    function deliveryRowPrint(r) {
+      return `<tr><td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets,0)}</td><td class="center">เศษ</td><td class="center">${n(r.scrapKg) > 0 ? formatNumber(r.scrapKg,0) : ''}</td><td class="center">=</td><td class="right">${formatNumber(r.weightKg,0)}</td><td class="center strong">Kg.</td><td class="right">${formatNumber(r.unitPrice,2)}</td><td class="right amount">${formatNumber(r.amount,2)}</td></tr>`;
+    }
+
+    function buildDeliveryPrintHTML(record) {
+      const rows = DEFAULT_GRADES.map(g => (record.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, unitPrice:0, weightKg:0, amount:0 });
+      const totals = record.totals || rows.reduce((a, r) => {
+        a.basketTotal += n(r.baskets);
+        a.scrapBasketCount += n(r.scrapKg) > 0 ? 1 : 0;
+        a.totalWeightKg += n(r.weightKg);
+        a.totalAmount += n(r.amount);
+        return a;
+      }, { basketTotal:0, scrapBasketCount:0, totalWeightKg:0, totalAmount:0 });
+      const totalBasketWithScrap = n(totals.totalBasketWithScrap || totals.totalDeliveryBaskets) || (n(totals.basketTotal) + n(totals.scrapBasketCount));
+      return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>ใบส่งของ ${escapeHtml(record.deliveryId || '')}</title>
+      <style>
+        @page{size:A4 portrait;margin:6mm;} *{box-sizing:border-box;} body{margin:0;background:#fff;color:#111;font-family:'TH Sarabun New','Sarabun',Arial,sans-serif;}
+        .no-print{text-align:center;padding:6px;font-family:Arial,sans-serif}.no-print button{padding:8px 14px;border:0;border-radius:8px;background:#4b1d78;color:#fff;font-weight:700;}
+        .page{width:198mm;margin:0 auto;} table{width:100%;border-collapse:collapse;table-layout:fixed;} col:nth-child(1){width:8%;} col:nth-child(2){width:15%;} col:nth-child(3){width:12%;} col:nth-child(4){width:10%;} col:nth-child(5){width:4%;} col:nth-child(6){width:15%;} col:nth-child(7){width:8%;} col:nth-child(8){width:12%;} col:nth-child(9){width:16%;}
+        th,td{border:1px solid #111;padding:1.25mm 1.1mm;font-size:15.5pt;line-height:1.06;height:10.5mm;vertical-align:middle;overflow:hidden;white-space:nowrap;text-overflow:clip;} .title{font-size:22pt;font-weight:800;text-align:center;height:12mm}.company{font-size:19pt}.address{font-size:17pt}.head{background:#eaf3df;font-weight:800;text-align:center;font-size:16.5pt}.center{text-align:center}.right{text-align:right}.strong{font-weight:800}.grade{font-weight:800;text-align:center;font-size:18pt}.amount{font-weight:800}.soft{background:#eaf3df}.red{color:#ef0000}.text-center{text-align:center;font-weight:800;font-size:18pt}.total-label{background:#eaf3df;text-align:center;font-weight:800;font-size:19pt}.total-amount{color:#ef0000;font-weight:800;text-align:right;font-size:18.5pt}.signature{font-size:14.8pt;font-weight:800;}
+        .meta{font:700 7pt Arial,sans-serif;color:#555;border:0;height:auto;padding:0 0 1mm;text-align:right;}.blank td{height:10mm;}
+        @media print{.no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+      </style><script>window.onafterprint=function(){setTimeout(function(){window.close();},180)};function printAndClose(){window.print();setTimeout(function(){window.close();},900)}<\/script></head><body>
+        <div class="no-print"><button onclick="printAndClose()">พิมพ์ใบส่งของ</button></div><div class="page"><div class="meta">${escapeHtml(record.deliveryId || '')} ${record.createdAt ? '| '+escapeHtml(formatThaiDateTime(record.createdAt)) : ''}</div>
+        <table><colgroup><col><col><col><col><col><col><col><col><col></colgroup><tbody>
+          <tr><td colspan="9" class="title">${escapeHtml(record.title || DELIVERY_DEFAULTS.title)}</td></tr>
+          <tr><td colspan="7" class="company">${escapeHtml(record.companyName || DELIVERY_DEFAULTS.company)}</td><td colspan="2" class="center">${escapeHtml(formatEnglishDate(record.date))}</td></tr>
+          <tr><td colspan="9" class="address">${escapeHtml(record.companyAddress || DELIVERY_DEFAULTS.address)}</td></tr>
+          <tr><th class="head">เกรด</th><th colspan="6" class="head">รายการ</th><th class="head">หน่วยละ</th><th class="head">จำนวนเงิน</th></tr>
+          ${rows.map(deliveryRowPrint).join('')}
+          <tr><td></td><td class="right strong">รวม</td><td class="center strong">${formatNumber(totals.basketTotal,0)}</td><td colspan="4" class="center strong">ตระกร้า</td><td></td><td></td></tr>
+          <tr><td></td><td class="right strong">เศษ</td><td class="center strong">${formatNumber(totals.scrapBasketCount,0)}</td><td colspan="4" class="center strong">ตระกร้า</td><td></td><td></td></tr>
+          <tr><td></td><td class="right strong">รวมทั้งหมด</td><td class="center strong soft">${formatNumber(totalBasketWithScrap,0)}</td><td colspan="4" class="center strong soft">ตระกร้า</td><td></td><td></td></tr>
+          <tr><td></td><td class="right strong">น้ำหนักทั้งหมด</td><td class="center strong soft">${formatNumber(totals.totalWeightKg,0)}</td><td colspan="4" class="center strong soft">กิโลกรัม</td><td></td><td></td></tr>
+          <tr><td colspan="7" class="text-center">${escapeHtml(record.freightText || DELIVERY_DEFAULTS.freightText)}</td><td></td><td></td></tr>
+          <tr><td colspan="7" class="text-center">${escapeHtml(record.vehicleProvince || DELIVERY_DEFAULTS.vehicleProvince)}</td><td></td><td></td></tr>
+          <tr><td colspan="7" class="text-center red">${escapeHtml(record.vehiclePlate || DELIVERY_DEFAULTS.vehiclePlate)}</td><td></td><td></td></tr>
+          <tr class="blank"><td colspan="9"></td></tr><tr class="blank"><td colspan="9"></td></tr>
+          <tr><td></td><td colspan="6" class="text-center">${escapeHtml(record.senderLabel || DELIVERY_DEFAULTS.senderLabel)}</td><td></td><td></td></tr>
+          <tr><td></td><td colspan="6" class="text-center">${escapeHtml(record.senderName || DELIVERY_DEFAULTS.senderName)}</td><td></td><td></td></tr>
+          <tr><td></td><td colspan="6" class="center">${escapeHtml(record.bankName || DELIVERY_DEFAULTS.bankName)}</td><td></td><td></td></tr>
+          <tr><td></td><td colspan="6" class="center strong">${escapeHtml(record.accountNo || DELIVERY_DEFAULTS.accountNo)}</td><td></td><td></td></tr>
+          <tr><td></td><td colspan="6" class="center">${escapeHtml(record.accountType || DELIVERY_DEFAULTS.accountType)}</td><td></td><td></td></tr>
+          <tr class="blank"><td colspan="9"></td></tr>
+          <tr><td colspan="8" class="total-label">รวมเงิน</td><td class="total-amount">${formatNumber(totals.totalAmount,2)}</td></tr>
+          <tr><td colspan="5" class="signature">ผู้รับของ…………………………...........………</td><td colspan="4" class="signature">ผู้ส่งของ ${escapeHtml(record.signatureSender || DELIVERY_DEFAULTS.signatureSender)}…………………………..</td></tr>
+        </tbody></table></div></body></html>`;
+    }
+
+    const __switchPanelBeforeDelivery = switchPanel;
+    switchPanel = function(panel) {
+      if (panel === 'admin' && !adminState.loggedIn) { openAdminModal(); return; }
+      ['bill','delivery','summary','admin'].forEach(name => {
+        const panelEl = document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1));
+        const btnEl = document.getElementById('btn' + name.charAt(0).toUpperCase() + name.slice(1));
+        if (panelEl) panelEl.classList.toggle('active', panel === name);
+        if (btnEl) btnEl.classList.toggle('active', panel === name);
+      });
+      if (panel === 'delivery') initDeliveryForm();
+      if (panel === 'summary') loadSummary();
+      if (panel === 'admin') { loadSummary(true).then(renderAdminPanel); }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => setTimeout(initDeliveryForm, 80));
+    if (document.readyState !== 'loading') setTimeout(initDeliveryForm, 80);
 
 </script>
 </body>
