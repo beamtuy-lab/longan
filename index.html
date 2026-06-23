@@ -263,9 +263,9 @@
     .cashbill-table .right { text-align: right; }
     .cashbill-table .bold { font-weight: 800; }
     .cashbill-table .grade { font-size: clamp(22px, 3vw, 31px); font-weight: 800; text-align: center; }
-    .cashbill-table .amount { font-weight: 800; text-align: right; }
+    .cashbill-table .amount { font-weight: 800; text-align: center; }
     .cashbill-table .total-label { background: #d8d8d8; font-weight: 800; text-align: center; font-size: clamp(20px, 3vw, 32px); }
-    .cashbill-table .total-amount { color: #b41710; font-weight: 800; text-align: right; font-size: clamp(20px, 3vw, 30px); }
+    .cashbill-table .total-amount { color: #b41710; font-weight: 800; text-align: center; font-size: clamp(20px, 3vw, 30px); }
     .cashbill-table .sub-label { font-weight: 800; white-space: nowrap; text-align: right; }
     .bill-input,
     .bill-date,
@@ -1258,7 +1258,21 @@
       .bill-detail-total b { font-size:21px; }
     }
 
-  </style>
+  
+
+    /* ===== Requested patch: center cash-bill numeric fields ===== */
+    #billForm .row-basket,
+    #billForm .row-scrap,
+    #billForm .row-price,
+    #billForm .row-amount,
+    #billForm #totalAmountCell {
+      text-align: center !important;
+    }
+    #billForm .cashbill-table .amount,
+    #billForm .cashbill-table .total-amount {
+      text-align: center !important;
+    }
+</style>
 </head>
 <body>
   <div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
@@ -2397,7 +2411,7 @@
         .grade { text-align:center; font-weight:800; font-size:22pt; }
         .sub-label { text-align:right; font-weight:800; white-space:nowrap; }
         .total-label { background:#d8d8d8; font-size:24pt; font-weight:800; text-align:center; }
-        .total-amount { color:#b41710; font-weight:800; text-align:right; font-size:22pt; }
+        .total-amount { color:#b41710; font-weight:800; text-align:center; font-size:22pt; }
         .small { font-size:16pt; }
         @media print { .no-print { display:none; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     
@@ -2600,7 +2614,7 @@
 
     function receiptGradeRow(r) {
       return `<tr>
-        <td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets, 2)}</td><td class="center bold">เศษ</td><td class="center">${formatNumber(r.scrapKg, 2)}</td><td class="center">=</td><td class="center bold">${formatDash(r.weightKg, 2)}</td><td class="center bold">Kg.</td><td class="right">${formatNumber(r.unitPrice, 2)}</td><td class="right bold">${r.amount > 0 ? formatNumber(r.amount, 2) : '-'}</td>
+        <td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets, 2)}</td><td class="center bold">เศษ</td><td class="center">${formatNumber(r.scrapKg, 2)}</td><td class="center">=</td><td class="center bold">${formatDash(r.weightKg, 2)}</td><td class="center bold">Kg.</td><td class="center">${formatNumber(r.unitPrice, 2)}</td><td class="center bold">${r.amount > 0 ? formatNumber(r.amount, 2) : '-'}</td>
       </tr>`;
     }
 
@@ -2936,7 +2950,7 @@
         table{width:100%;height:calc(100% - 4.8mm);border-collapse:collapse;table-layout:fixed;} col:nth-child(1){width:9%;} col:nth-child(2){width:14%;} col:nth-child(3){width:11%;} col:nth-child(4){width:11%;} col:nth-child(5){width:8%;} col:nth-child(6){width:13%;} col:nth-child(7){width:7%;} col:nth-child(8){width:12%;} col:nth-child(9){width:15%;}
         th,td{border:.8px solid #111;padding:.8mm .75mm;font-size:9.4pt;line-height:1.34;vertical-align:middle;overflow:visible;overflow-wrap:anywhere;word-break:normal;}
         .title{background:#d9d9d9;font-size:14pt;line-height:1.28;font-weight:800;text-align:center;padding:.95mm;} .head{background:#d9d9d9;font-weight:800;text-align:center;white-space:normal;line-height:1.28;}
-        .center{text-align:center}.right{text-align:right}.bold{font-weight:800}.grade{text-align:center;font-weight:800;font-size:11.8pt;line-height:1.28}.sub-label{text-align:right;font-weight:800;white-space:normal}.total-label{background:#d9d9d9;font-size:12.4pt;line-height:1.28;font-weight:800;text-align:center}.total-amount{color:#b41710;font-weight:800;text-align:right;font-size:12.4pt;line-height:1.28}.total-row td{border-top:1px solid #111;background:#eeeeee;}
+        .center{text-align:center}.right{text-align:right}.bold{font-weight:800}.grade{text-align:center;font-weight:800;font-size:11.8pt;line-height:1.28}.sub-label{text-align:right;font-weight:800;white-space:normal}.total-label{background:#d9d9d9;font-size:12.4pt;line-height:1.28;font-weight:800;text-align:center}.total-amount{color:#b41710;font-weight:800;text-align:center;font-size:12.4pt;line-height:1.28}.total-row td{border-top:1px solid #111;background:#eeeeee;}
         @media print{.no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.receipt-copy{margin-bottom:3mm;}}
       </style></head><body><script>window.onafterprint=function(){setTimeout(function(){window.close();},180)};function printAndClose(){window.print();setTimeout(function(){window.close();},900)}<\/script><div class="no-print"><button onclick="printAndClose()">พิมพ์บิล</button></div><div class="page">${copyOne}${copyTwo}</div></body></html>`;
     }
@@ -2961,7 +2975,7 @@
     }
 
     function receiptGradeRow(r) {
-      return `<tr><td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets,0)}</td><td class="center bold">เศษ</td><td class="center">${formatNumber(r.scrapKg,0)}</td><td class="center">=</td><td class="center bold">${formatDash(r.weightKg,0)}</td><td class="center bold">Kg.</td><td class="right">${formatNumber(r.unitPrice,2)}</td><td class="right bold">${n(r.amount)>0?formatNumber(r.amount,2):'-'}</td></tr>`;
+      return `<tr><td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets,0)}</td><td class="center bold">เศษ</td><td class="center">${formatNumber(r.scrapKg,0)}</td><td class="center">=</td><td class="center bold">${formatDash(r.weightKg,0)}</td><td class="center bold">Kg.</td><td class="center">${formatNumber(r.unitPrice,2)}</td><td class="center bold">${n(r.amount)>0?formatNumber(r.amount,2):'-'}</td></tr>`;
     }
 
 
@@ -4881,8 +4895,10 @@
         .cashbill-table th,.cashbill-table td,.delivery-table th,.delivery-table td{vertical-align:middle!important;}
         .cashbill-table .head-cell,.delivery-table .delivery-head{white-space:normal!important;text-align:center!important;line-height:1.22!important;}
         .cashbill-table .row-weight,.delivery-table .delivery-weight{text-align:center!important;white-space:nowrap!important;}
-        .cashbill-table .row-amount,.delivery-table .delivery-amount{text-align:right!important;white-space:nowrap!important;}
-        .cashbill-table .row-price,.delivery-table .delivery-price{text-align:right!important;}
+        .cashbill-table .row-amount{text-align:center!important;white-space:nowrap!important;}
+        .delivery-table .delivery-amount{text-align:right!important;white-space:nowrap!important;}
+        .cashbill-table .row-price{text-align:center!important;}
+        .delivery-table .delivery-price{text-align:right!important;}
         .calendar-grid .day-card{min-height:112px!important;gap:3px!important;}
         .day-money-split{margin-top:auto;display:grid;gap:2px;font-size:10.5px;line-height:1.18;font-weight:900;}
         .day-money-split span{display:block;border-radius:7px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
