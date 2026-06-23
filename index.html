@@ -4895,10 +4895,8 @@
         .cashbill-table th,.cashbill-table td,.delivery-table th,.delivery-table td{vertical-align:middle!important;}
         .cashbill-table .head-cell,.delivery-table .delivery-head{white-space:normal!important;text-align:center!important;line-height:1.22!important;}
         .cashbill-table .row-weight,.delivery-table .delivery-weight{text-align:center!important;white-space:nowrap!important;}
-        .cashbill-table .row-amount{text-align:center!important;white-space:nowrap!important;}
-        .delivery-table .delivery-amount{text-align:right!important;white-space:nowrap!important;}
-        .cashbill-table .row-price{text-align:center!important;}
-        .delivery-table .delivery-price{text-align:right!important;}
+        .cashbill-table .row-amount,.delivery-table .delivery-amount{text-align:right!important;white-space:nowrap!important;}
+        .cashbill-table .row-price,.delivery-table .delivery-price{text-align:right!important;}
         .calendar-grid .day-card{min-height:112px!important;gap:3px!important;}
         .day-money-split{margin-top:auto;display:grid;gap:2px;font-size:10.5px;line-height:1.18;font-weight:900;}
         .day-money-split span{display:block;border-radius:7px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -4926,6 +4924,116 @@
       `;
       document.head.appendChild(style);
     })();
+
+    /* ===== Patch 2569-06-23: center delivery form/print + cash summary labels ===== */
+    (function injectFinalCenterAlignmentPatch(){
+      const style = document.createElement('style');
+      style.textContent = `
+        /* Center every visible cell/input on delivery form */
+        #panelDelivery .delivery-table th,
+        #panelDelivery .delivery-table td,
+        #panelDelivery .delivery-table .delivery-company,
+        #panelDelivery .delivery-table .delivery-sub-label,
+        #panelDelivery .delivery-table .delivery-total-label,
+        #panelDelivery .delivery-table .delivery-total-amount,
+        #panelDelivery .delivery-table .delivery-weight,
+        #panelDelivery .delivery-table .delivery-amount {
+          text-align:center !important;
+          vertical-align:middle !important;
+        }
+        #panelDelivery .delivery-table .delivery-input,
+        #panelDelivery .delivery-table .delivery-input.left,
+        #panelDelivery .delivery-table .delivery-input.right,
+        #panelDelivery .delivery-table .delivery-basket,
+        #panelDelivery .delivery-table .delivery-scrap,
+        #panelDelivery .delivery-table .delivery-price {
+          text-align:center !important;
+        }
+        #panelDelivery .delivery-table .delivery-sub-label {
+          white-space:normal !important;
+          overflow:visible !important;
+          overflow-wrap:anywhere !important;
+          word-break:normal !important;
+          line-height:1.15 !important;
+        }
+        #panelDelivery .delivery-table .delivery-total-amount { white-space:nowrap !important; }
+      `;
+      document.head.appendChild(style);
+    })();
+
+    /* Center summary labels in cash-bill print block */
+    buildReceiptBlock = function(record, copyLabel) {
+      const rows = Object.fromEntries(DEFAULT_GRADES.map(g => [g, (record.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, unitPrice:0, weightKg:0, amount:0 }]));
+      const basketKg = n(record.basketKg) || 27;
+      const baseTotals = record.totals || sumGradeRows(record.rows || [], basketKg);
+      const totals = { ...baseTotals, totalBaskets: basketKg > 0 ? n(baseTotals.totalWeightKg) / basketKg : 0 };
+      return `<div class="receipt-copy"><div class="meta-line"><span>${escapeHtml(record.billId || '')} | ${escapeHtml(copyLabel || '')}</span><span>${formatThaiDateTime(record.createdAt)}</span></div><table><colgroup><col><col><col><col><col><col><col><col><col></colgroup><tbody>
+        <tr><td colspan="9" class="title">บิลเงินสด TK พัฒนาพืชผล</td></tr>
+        <tr><td class="bold center">ชื่อลูกค้า</td><td colspan="2" class="center bold">${escapeHtml(record.customerName || '-')}</td><td class="bold center">เวลา</td><td colspan="2" class="center">${escapeHtml(formatThaiTime(record.time))}</td><td colspan="3" class="center">${escapeHtml(formatThaiDate(record.date))}</td></tr>
+        <tr><td colspan="9" class="center bold">โทร ${escapeHtml(record.sellerPhone || '080.825.6553')} (น้ำหนัก ${formatNumber(basketKg, 0)} Kg. = 1 ตระกร้า)</td></tr>
+        <tr><th class="head">เกรด</th><th class="head">ตระกร้า</th><th colspan="2" class="head">น้ำหนักเศษ</th><th colspan="3" class="head">น้ำหนักรวม</th><th class="head">หน่วยละ</th><th class="head">จำนวนเงิน</th></tr>
+        ${DEFAULT_GRADES.map(g => receiptGradeRow(rows[g])).join('')}
+        <tr><td></td><td class="center bold">ตระกร้ารวม</td><td class="center bold">${formatNumber(totals.totalBaskets,2)}</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td></tr>
+        <tr><td></td><td class="center bold">น.น.ตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="center bold">น.น.เศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="center bold">น้ำหนักทั้งหมด</td><td class="center bold">${formatNumber(totals.totalWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr class="total-row"><td colspan="8" class="total-label">รวมเงินทั้งหมด</td><td class="total-amount">${formatNumber(totals.totalAmount,2)}</td></tr>
+      </tbody></table></div>`;
+    };
+
+    /* Center grade values in delivery print rows */
+    deliveryRowPrint = function(r) {
+      return `<tr><td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets,0)}</td><td class="center">เศษ</td><td class="center">${n(r.scrapKg) > 0 ? formatNumber(r.scrapKg,0) : ''}</td><td class="center">=</td><td class="center strong">${formatNumber(r.weightKg,0)}</td><td class="center strong">Kg.</td><td class="center">${formatNumber(r.unitPrice,2)}</td><td class="center amount">${formatNumber(r.amount,2)}</td></tr>`;
+    };
+
+    /* Rebuild delivery print template to prevent clipped labels and center amount columns */
+    buildDeliveryPrintHTML = function(record) {
+      const rows = DEFAULT_GRADES.map(g => (record.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, unitPrice:0, weightKg:0, amount:0 });
+      const totals = record.totals || rows.reduce((a, r) => {
+        a.basketTotal += n(r.baskets);
+        a.scrapBasketCount += n(r.scrapKg) > 0 ? 1 : 0;
+        a.totalWeightKg += n(r.weightKg);
+        a.totalAmount += n(r.amount);
+        return a;
+      }, { basketTotal:0, scrapBasketCount:0, totalWeightKg:0, totalAmount:0 });
+      const totalBasketWithScrap = n(totals.totalBasketWithScrap || totals.totalDeliveryBaskets) || (n(totals.basketTotal) + n(totals.scrapBasketCount));
+      return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>ใบส่งของ ${escapeHtml(record.deliveryId || '')}</title>
+      <style>
+        @page{size:A4 portrait;margin:6mm;} *{box-sizing:border-box;} body{margin:0;background:#fff;color:#111;font-family:'TH Sarabun New','Sarabun',Arial,sans-serif;}
+        .no-print{text-align:center;padding:6px;font-family:Arial,sans-serif}.no-print button{padding:8px 14px;border:0;border-radius:8px;background:#4b1d78;color:#fff;font-weight:700;}
+        .page{width:198mm;margin:0 auto;} table{width:100%;border-collapse:collapse;table-layout:fixed;} col:nth-child(1){width:8%;} col:nth-child(2){width:15%;} col:nth-child(3){width:12%;} col:nth-child(4){width:10%;} col:nth-child(5){width:4%;} col:nth-child(6){width:15%;} col:nth-child(7){width:8%;} col:nth-child(8){width:12%;} col:nth-child(9){width:16%;}
+        th,td{border:1px solid #111;padding:1.05mm .9mm;font-size:15pt;line-height:1.08;height:10.3mm;vertical-align:middle;overflow:visible;white-space:normal;text-overflow:clip;overflow-wrap:anywhere;word-break:normal;text-align:center;}
+        .title{font-size:22pt;font-weight:800;text-align:center;height:12mm}.company{font-size:18.5pt;text-align:center}.address{font-size:16.5pt;text-align:center}.head{background:#eaf3df;font-weight:800;text-align:center;font-size:16pt}.center{text-align:center}.right{text-align:center}.strong{font-weight:800}.grade{font-weight:800;text-align:center;font-size:18pt}.amount{font-weight:800;text-align:center;white-space:nowrap}.soft{background:#eaf3df}.red{color:#ef0000}.text-center{text-align:center;font-weight:800;font-size:18pt}.total-label{background:#eaf3df;text-align:center;font-weight:800;font-size:19pt}.total-amount{color:#ef0000;font-weight:800;text-align:center;font-size:18.5pt;white-space:nowrap}.signature{font-size:14.8pt;font-weight:800;text-align:center;}
+        .summary-label{text-align:center!important;font-weight:800!important;font-size:13.8pt!important;line-height:1.02!important;white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere!important;word-break:normal!important;padding-left:.35mm!important;padding-right:.35mm!important;}
+        .summary-unit{text-align:center!important;font-weight:800!important;}
+        .meta{font:700 7pt Arial,sans-serif;color:#555;border:0;height:auto;padding:0 0 1mm;text-align:right;}.blank td{height:10mm;}
+        @media print{.no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+      </style><script>window.onafterprint=function(){setTimeout(function(){window.close();},180)};function printAndClose(){window.print();setTimeout(function(){window.close();},900)}<\/script></head><body>
+        <div class="no-print"><button onclick="printAndClose()">พิมพ์ใบส่งของ</button></div><div class="page"><div class="meta">${escapeHtml(record.deliveryId || '')} ${record.createdAt ? '| '+escapeHtml(formatThaiDateTime(record.createdAt)) : ''}</div>
+        <table><colgroup><col><col><col><col><col><col><col><col><col></colgroup><tbody>
+          <tr><td colspan="9" class="title">${escapeHtml(record.title || DELIVERY_DEFAULTS.title)}</td></tr>
+          <tr><td colspan="7" class="company">${escapeHtml(record.companyName || DELIVERY_DEFAULTS.company)}</td><td colspan="2" class="center">${escapeHtml(formatEnglishDate(record.date))}</td></tr>
+          <tr><td colspan="9" class="address">${escapeHtml(record.companyAddress || DELIVERY_DEFAULTS.address)}</td></tr>
+          <tr><th class="head">เกรด</th><th colspan="6" class="head">รายการ</th><th class="head">หน่วยละ</th><th class="head">จำนวนเงิน</th></tr>
+          ${rows.map(deliveryRowPrint).join('')}
+          <tr><td></td><td class="summary-label">รวม</td><td class="center strong">${formatNumber(totals.basketTotal,0)}</td><td colspan="4" class="summary-unit">ตระกร้า</td><td></td><td></td></tr>
+          <tr><td></td><td class="summary-label">เศษ</td><td class="center strong">${formatNumber(totals.scrapBasketCount,0)}</td><td colspan="4" class="summary-unit">ตระกร้า</td><td></td><td></td></tr>
+          <tr><td></td><td class="summary-label soft">รวมทั้งหมด</td><td class="center strong soft">${formatNumber(totalBasketWithScrap,0)}</td><td colspan="4" class="summary-unit soft">ตระกร้า</td><td></td><td></td></tr>
+          <tr><td></td><td class="summary-label soft">น้ำหนักทั้งหมด</td><td class="center strong soft">${formatNumber(totals.totalWeightKg,0)}</td><td colspan="4" class="summary-unit soft">กิโลกรัม</td><td></td><td></td></tr>
+          <tr><td colspan="7" class="text-center">${escapeHtml(record.freightText || DELIVERY_DEFAULTS.freightText)}</td><td></td><td></td></tr>
+          <tr><td colspan="7" class="text-center">${escapeHtml(record.vehicleProvince || DELIVERY_DEFAULTS.vehicleProvince)}</td><td></td><td></td></tr>
+          <tr><td colspan="7" class="text-center red">${escapeHtml(record.vehiclePlate || DELIVERY_DEFAULTS.vehiclePlate)}</td><td></td><td></td></tr>
+          <tr class="blank"><td colspan="9"></td></tr><tr class="blank"><td colspan="9"></td></tr>
+          <tr><td></td><td colspan="6" class="text-center">${escapeHtml(record.senderLabel || DELIVERY_DEFAULTS.senderLabel)}</td><td></td><td></td></tr>
+          <tr><td></td><td colspan="6" class="text-center">${escapeHtml(record.senderName || DELIVERY_DEFAULTS.senderName)}</td><td></td><td></td></tr>
+          <tr><td></td><td colspan="6" class="center">${escapeHtml(record.bankName || DELIVERY_DEFAULTS.bankName)}</td><td></td><td></td></tr>
+          <tr><td></td><td colspan="6" class="center strong">${escapeHtml(record.accountNo || DELIVERY_DEFAULTS.accountNo)}</td><td></td><td></td></tr>
+          <tr><td></td><td colspan="6" class="center">${escapeHtml(record.accountType || DELIVERY_DEFAULTS.accountType)}</td><td></td><td></td></tr>
+          <tr class="blank"><td colspan="9"></td></tr>
+          <tr><td colspan="8" class="total-label">รวมเงิน</td><td class="total-amount">${formatNumber(totals.totalAmount,2)}</td></tr>
+          <tr><td colspan="5" class="signature">ผู้รับของ…………………………...........………</td><td colspan="4" class="signature">ผู้ส่งของ ${escapeHtml(record.signatureSender || DELIVERY_DEFAULTS.signatureSender)}…………………………..</td></tr>
+        </tbody></table></div></body></html>`;
+    };
 
 </script>
 </body>
