@@ -1476,16 +1476,16 @@
                   <td class="row-amount amount">0.00</td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">ตระกร้ารวม</td><td class="center bold" id="totalBasketCell">0.00</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td>
+                  <td></td><td class="sub-label" class="center">ตระกร้ารวม</td><td class="center bold" id="totalBasketCell">0.00</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">น.น.ตระกร้า</td><td class="center bold" id="basketWeightCell">-</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
+                  <td></td><td class="sub-label" class="center">น้ำหนักตระกร้า</td><td class="center bold" id="basketWeightCell">-</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">น.น.เศษรวม</td><td class="center bold" id="scrapWeightCell">0</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
+                  <td></td><td class="sub-label" class="center">น้ำหนักเศษรวม</td><td class="center bold" id="scrapWeightCell">0</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">น้ำหนักทั้งหมด</td><td class="center bold" id="totalWeightCell">0</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
+                  <td></td><td class="sub-label" class="center">น้ำหนักทั้งหมด</td><td class="center bold" id="totalWeightCell">0</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
                 </tr>
                 <tr>
                   <td colspan="8" class="total-label">รวมเงิน</td>
@@ -2602,10 +2602,10 @@
             <tr><td colspan="9" class="center bold">โทร ${escapeHtml(record.sellerPhone || '080.825.6553')} (น้ำหนัก ${formatNumber(basketKg, 0)} Kg. = 1 ตระกร้า)</td></tr>
             <tr><th class="head">เกรด</th><th class="head">ตระกร้า</th><th colspan="2" class="head">น้ำหนักเศษ</th><th colspan="3" class="head">น้ำหนักรวม</th><th class="head">หน่วยละ</th><th class="head">จำนวนเงิน</th></tr>
             ${DEFAULT_GRADES.map(g => receiptGradeRow(rows[g])).join('')}
-            <tr><td></td><td class="sub-label">ตระกร้ารวม</td><td class="center bold">${formatNumber(totals.totalBaskets, 2)}</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td></tr>
-            <tr><td></td><td class="sub-label">น.น.ตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg, 2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
-            <tr><td></td><td class="sub-label">น.น.เศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg, 2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
-            <tr><td></td><td class="sub-label">น้ำหนักทั้งหมด</td><td class="center bold">${formatNumber(totals.totalWeightKg, 2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+            <tr><td></td><td class="sub-label" class="center">ตระกร้ารวม</td><td class="center bold">${formatNumber(totals.totalBaskets, 2)}</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td></tr>
+            <tr><td></td><td class="sub-label" class="center">น้ำหนักตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg, 2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+            <tr><td></td><td class="sub-label" class="center">น้ำหนักเศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg, 2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+            <tr><td></td><td class="sub-label" class="center">น้ำหนักทั้งหมด</td><td class="center bold">${formatNumber(totals.totalWeightKg, 2)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
             <tr><td colspan="8" class="total-label">รวมเงิน</td><td class="total-amount">${formatNumber(totals.totalAmount, 2)}</td></tr>
           </tbody>
         </table>
@@ -2966,10 +2966,10 @@
         <tr><td colspan="9" class="center bold">โทร ${escapeHtml(record.sellerPhone || '080.825.6553')} (น้ำหนัก ${formatNumber(basketKg, 0)} Kg. = 1 ตระกร้า)</td></tr>
         <tr><th class="head">เกรด</th><th class="head">ตระกร้า</th><th colspan="2" class="head">น้ำหนักเศษ</th><th colspan="3" class="head">น้ำหนักรวม</th><th class="head">หน่วยละ</th><th class="head">จำนวนเงิน</th></tr>
         ${DEFAULT_GRADES.map(g => receiptGradeRow(rows[g])).join('')}
-        <tr><td></td><td class="sub-label">ตระกร้ารวม</td><td class="center bold">${formatNumber(totals.totalBaskets,2)}</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td></tr>
-        <tr><td></td><td class="sub-label">น.น.ตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
-        <tr><td></td><td class="sub-label">น.น.เศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
-        <tr><td></td><td class="sub-label">น้ำหนักทั้งหมด</td><td class="center bold">${formatNumber(totals.totalWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label" class="center">ตระกร้ารวม</td><td class="center bold">${formatNumber(totals.totalBaskets,2)}</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label" class="center">น้ำหนักตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label" class="center">น้ำหนักเศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="sub-label" class="center">น้ำหนักทั้งหมด</td><td class="center bold">${formatNumber(totals.totalWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
         <tr class="total-row"><td colspan="8" class="total-label">รวมเงินทั้งหมด</td><td class="total-amount">${formatNumber(totals.totalAmount,2)}</td></tr>
       </tbody></table></div>`;
     }
@@ -4974,8 +4974,8 @@
         <tr><th class="head">เกรด</th><th class="head">ตระกร้า</th><th colspan="2" class="head">น้ำหนักเศษ</th><th colspan="3" class="head">น้ำหนักรวม</th><th class="head">หน่วยละ</th><th class="head">จำนวนเงิน</th></tr>
         ${DEFAULT_GRADES.map(g => receiptGradeRow(rows[g])).join('')}
         <tr><td></td><td class="center bold">ตระกร้ารวม</td><td class="center bold">${formatNumber(totals.totalBaskets,2)}</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td></tr>
-        <tr><td></td><td class="center bold">น.น.ตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
-        <tr><td></td><td class="center bold">น.น.เศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="center bold">น้ำหนักตระกร้า</td><td class="center bold">${formatDash(totals.basketWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
+        <tr><td></td><td class="center bold">น้ำหนักเศษรวม</td><td class="center bold">${formatNumber(totals.scrapWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
         <tr><td></td><td class="center bold">น้ำหนักทั้งหมด</td><td class="center bold">${formatNumber(totals.totalWeightKg,0)}</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td></tr>
         <tr class="total-row"><td colspan="8" class="total-label">รวมเงินทั้งหมด</td><td class="total-amount">${formatNumber(totals.totalAmount,2)}</td></tr>
       </tbody></table></div>`;
