@@ -1734,7 +1734,7 @@
      * ตั้งค่า URL ของ Google Apps Script Web App ที่ Deploy แล้วเท่านั้น
      * ห้ามใช้ localStorage เพื่อป้องกัน URL ค้างในบางเครื่อง
      **********************************************************************/
-    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwRq3lIrsysiV_3VyL1AF2j7oyVNsZvftX-2HesfrOTTUThbjTkwVJVUHh0GAp8a5Zr/exec';
+    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby91nCZj0JaPqNdYIXK1htLABawtdfKcuWbtVOwm9y6ffriug2I5GfMJcx34yFWGLY/exec';
 
     const DEFAULT_GRADES = ['AA', 'A', 'B', 'C'];
     const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -5035,6 +5035,251 @@
         </tbody></table></div></body></html>`;
     };
 
+
+
+    /* ======================================================================
+     * DB Stability Patch 2569-07-01
+     * - เพิ่ม timeout แบบแยก read/write
+     * - retry พร้อม exponential backoff สำหรับ network/timeout/5xx/429
+     * - ใช้ GET เป็นทางหลักสำหรับการอ่านข้อมูล และ POST สำหรับการเขียน
+     * - cache ฝั่ง client ชั่วคราว ลดการยิง GAS ซ้ำเมื่อเปลี่ยนหน้าเร็ว ๆ
+     * - คืนเมนู delivery ให้ทำงานครบใน switchPanel เวอร์ชันท้ายสุด
+     * ====================================================================== */
+    var GAS_READ_TIMEOUT_MS = 25000;
+    var GAS_WRITE_TIMEOUT_MS = 35000;
+    var GAS_RETRY_MAX = 2;
+    var GAS_RETRY_BASE_MS = 650;
+    var GAS_CLIENT_CACHE_MS = 12000;
+    var __gasClientCache = {
+      bills: { records: null, loadedAt: 0, promise: null },
+      deliveries: { records: null, loadedAt: 0, promise: null }
+    };
+
+    function sleep_(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function isReadGasAction_(action) {
+      return action === 'read_all' || action === 'read_all_deliveries' || action === 'read_deliveries' || action === 'ping';
+    }
+
+    function isMutationGasAction_(action) {
+      return ['create_bill', 'update_bill', 'delete_bill', 'create_delivery', 'update_delivery', 'delete_delivery', 'change_admin_password'].includes(action);
+    }
+
+    function clearClientDataCache_(action) {
+      if (!action || action.includes('bill')) {
+        __gasClientCache.bills.records = null;
+        __gasClientCache.bills.loadedAt = 0;
+        __gasClientCache.bills.promise = null;
+      }
+      if (!action || action.includes('delivery')) {
+        __gasClientCache.deliveries.records = null;
+        __gasClientCache.deliveries.loadedAt = 0;
+        __gasClientCache.deliveries.promise = null;
+      }
+    }
+
+    function shouldRetryGas_(err, response) {
+      const msg = String((err && err.message) || err || '').toLowerCase();
+      if (response && (response.status === 429 || response.status >= 500)) return true;
+      return msg.includes('timeout') || msg.includes('หมดเวลา') || msg.includes('นานเกินไป') || msg.includes('failed to fetch') || msg.includes('network') || msg.includes('load failed');
+    }
+
+    async function fetchWithTimeout(resource, options = {}, timeoutMs = GAS_READ_TIMEOUT_MS) {
+      const finalOptions = { cache: 'no-store', redirect: 'follow', ...options };
+      if (window.AbortController) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          return await fetch(resource, { ...finalOptions, signal: controller.signal });
+        } catch (err) {
+          if (err && err.name === 'AbortError') throw new Error(`เชื่อมต่อฐานข้อมูลใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`);
+          throw err;
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+      return await Promise.race([
+        fetch(resource, finalOptions),
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`เชื่อมต่อฐานข้อมูลใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`)), timeoutMs))
+      ]);
+    }
+
+    async function readGasJson_(response) {
+      const text = await response.text();
+      const json = safeJson(text);
+      if (!json.ok) throw new Error(json.message || 'Google Apps Script ส่งผลลัพธ์ไม่สำเร็จ');
+      return json;
+    }
+
+    function buildGasGetUrl_(action, payload = {}, force = false) {
+      ensureConfiguredUrl();
+      const joiner = CONFIG_WEB_APP_URL.includes('?') ? '&' : '?';
+      const params = new URLSearchParams();
+      params.set('action', action);
+      params.set('ts', String(force ? Date.now() : Math.floor(Date.now() / GAS_CLIENT_CACHE_MS)));
+      if (payload && Object.keys(payload).length) params.set('payload', JSON.stringify(payload));
+      return `${CONFIG_WEB_APP_URL}${joiner}${params.toString()}`;
+    }
+
+    async function gasRequest_(action, payload = {}, options = {}) {
+      ensureConfiguredUrl();
+      const method = options.method || (isReadGasAction_(action) ? 'GET' : 'POST');
+      const timeoutMs = options.timeoutMs || (isReadGasAction_(action) ? GAS_READ_TIMEOUT_MS : GAS_WRITE_TIMEOUT_MS);
+      const maxRetry = Number.isInteger(options.maxRetry) ? options.maxRetry : GAS_RETRY_MAX;
+      let lastErr = null;
+      for (let attempt = 0; attempt <= maxRetry; attempt++) {
+        let response = null;
+        try {
+          if (method === 'GET') {
+            response = await fetchWithTimeout(buildGasGetUrl_(action, payload, options.force), { method: 'GET' }, timeoutMs);
+          } else {
+            response = await fetchWithTimeout(CONFIG_WEB_APP_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({ action, payload, ts: Date.now(), requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}` })
+            }, timeoutMs);
+          }
+          if (!response.ok) {
+            const err = new Error(`เชื่อมต่อ GAS ไม่สำเร็จ (${response.status})`);
+            if (attempt < maxRetry && shouldRetryGas_(err, response)) throw err;
+            throw err;
+          }
+          const json = await readGasJson_(response);
+          if (isMutationGasAction_(action)) clearClientDataCache_(action);
+          return json;
+        } catch (err) {
+          lastErr = err;
+          if (attempt >= maxRetry || !shouldRetryGas_(err, response)) break;
+          const wait = GAS_RETRY_BASE_MS * Math.pow(2, attempt) + Math.floor(Math.random() * 250);
+          await sleep_(wait);
+        }
+      }
+      throw lastErr || new Error('เชื่อมต่อฐานข้อมูลไม่สำเร็จ');
+    }
+
+    async function gasPost(action, payload = {}) {
+      return gasRequest_(action, payload, { method: 'POST', force: true });
+    }
+
+    async function gasGet(action, payload = {}, options = {}) {
+      return gasRequest_(action, payload, { method: 'GET', ...options });
+    }
+
+    async function gasReadAll(options = {}) {
+      const force = Boolean(options.force);
+      const cache = __gasClientCache.bills;
+      if (!force && cache.records && (Date.now() - cache.loadedAt) < GAS_CLIENT_CACHE_MS) {
+        return { ok: true, records: cache.records, cachedClient: true };
+      }
+      if (!force && cache.promise) return cache.promise;
+      const promise = (async () => {
+        try {
+          const res = force
+            ? await gasPost('read_all', { useCache: false })
+            : await gasGet('read_all', {}, { force: false });
+          cache.records = Array.isArray(res.records) ? res.records : [];
+          cache.loadedAt = Date.now();
+          return { ...res, records: cache.records };
+        } finally {
+          cache.promise = null;
+        }
+      })();
+      cache.promise = promise;
+      return promise;
+    }
+
+    async function gasReadDeliveries(options = {}) {
+      const force = Boolean(options.force);
+      const cache = __gasClientCache.deliveries;
+      if (!force && cache.records && (Date.now() - cache.loadedAt) < GAS_CLIENT_CACHE_MS) {
+        return { ok: true, records: cache.records, cachedClient: true };
+      }
+      if (!force && cache.promise) return cache.promise;
+      const promise = (async () => {
+        try {
+          const res = force
+            ? await gasPost('read_all_deliveries', { useCache: false })
+            : await gasGet('read_all_deliveries', {}, { force: false });
+          cache.records = Array.isArray(res.records) ? res.records : (Array.isArray(res.deliveries) ? res.deliveries : []);
+          cache.loadedAt = Date.now();
+          return { ...res, records: cache.records };
+        } finally {
+          cache.promise = null;
+        }
+      })();
+      cache.promise = promise;
+      return promise;
+    }
+
+    async function loadSummary(silent = false, force = false) {
+      try {
+        if (!silent) {
+          playPremiumSound('start');
+          showLoading('read');
+        }
+        const billPromise = gasReadAll({ force });
+        const deliveryPromise = (typeof loadDeliverySummary === 'function') ? loadDeliverySummary(true, force) : Promise.resolve([]);
+        const res = await billPromise;
+        allBills = Array.isArray(res.records) ? res.records : [];
+        await deliveryPromise.catch(() => []);
+        renderSummary();
+      } catch (err) {
+        allBills = Array.isArray(allBills) ? allBills : [];
+        try { renderSummary(); } catch (_) {}
+        showToast(connectionErrorText(err), 'error', 8500);
+      } finally {
+        if (!silent) hideLoading();
+      }
+    }
+
+    async function loadDeliverySummary(silent = true, force = false) {
+      let records = [];
+      let loadedFromGas = false;
+      try {
+        const res = await gasReadDeliveries({ force });
+        records = Array.isArray(res.records) ? res.records : (Array.isArray(res.deliveries) ? res.deliveries : []);
+        loadedFromGas = true;
+      } catch (err) {
+        if (!silent) showToast(connectionErrorText(err), 'error', 6500);
+      }
+      if (!loadedFromGas && typeof __readFallbackDeliveries === 'function') records = __readFallbackDeliveries();
+      if (typeof __normalizeDelivery === 'function') {
+        allDeliveries = records.map(__normalizeDelivery).sort((a,b) => String(b.createdAt || b.date || '').localeCompare(String(a.createdAt || a.date || '')));
+      } else {
+        allDeliveries = records;
+      }
+      window.allDeliveries = allDeliveries;
+      return allDeliveries;
+    }
+
+    function switchPanel(panel) {
+      if (panel === 'admin' && !adminState.loggedIn) {
+        openAdminModal();
+        return;
+      }
+      ['bill', 'delivery', 'summary', 'admin'].forEach(name => {
+        const panelEl = document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1));
+        const btnEl = document.getElementById('btn' + name.charAt(0).toUpperCase() + name.slice(1));
+        if (panelEl) panelEl.classList.toggle('active', panel === name);
+        if (btnEl) btnEl.classList.toggle('active', panel === name);
+      });
+      if (panel === 'summary') loadSummary(false, false);
+      if (panel === 'delivery') loadDeliverySummary(true, false).then(() => { try { if (typeof renderSummary === 'function') renderSummary(); } catch (_) {} });
+      if (panel === 'admin') loadSummary(true, false).then(() => { try { renderAdminPanel(); } catch (_) {} });
+    }
+
+    function connectionErrorText(err) {
+      const message = String((err && err.message) || err || 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ');
+      return `${message}\n\nแนวทางตรวจสอบ: 1) CONFIG_WEB_APP_URL ต้องเป็น URL /exec ของ Deployment ล่าสุด 2) Deploy ต้องตั้ง Execute as: Me และ Who has access: Anyone/Anyone with the link 3) ใน Code.gs ต้องตั้ง SPREADSHEET_ID ให้ถูกต้อง หรือผูกสคริปต์กับ Google Sheet 4) หากเพิ่งแก้ Code.gs ให้กด Deploy > Manage deployments > Edit > New version`;
+    }
+
+    // เปิด summary/admin ให้สดใหม่หลังบันทึกหรือลบ โดยไม่ต้อง refresh หน้าเว็บ
+    const __originalShowToastForDbPatch = showToast;
+    showToast = function(message, type = '', timeout = 4200) {
+      return __originalShowToastForDbPatch(message, type, timeout);
+    };
 </script>
 </body>
 </html>
