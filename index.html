@@ -1540,7 +1540,7 @@
                   <td colspan="7" class="delivery-company"><input id="deliveryCompany" class="delivery-input left strong" value="บริษัท ไทยหวั้ง อโกรโปรดักส์ อินเตอร์เนชั่นแนล"></td>
                   <td colspan="2"><input id="deliveryDate" class="delivery-input center thai-display-input" type="text" inputmode="numeric" placeholder="11 มิ.ย. 2569" required></td>
                 </tr>
-                <tr><td colspan="9"><input id="deliveryAddress" class="delivery-input left" value="176 หมู่ 6 ตำบลสันทรายงาม อำเภอเทิง จังหวัด เชียงราย 57160"></td></tr>
+                <tr><td colspan="9"><input id="deliveryAddress" class="delivery-input center" value="176 หมู่ 6 ตำบลสันทรายงาม อำเภอเทิง จังหวัด เชียงราย 57160"></td></tr>
                 <tr>
                   <th class="delivery-head">เกรด</th>
                   <th colspan="6" class="delivery-head">รายการ</th>
@@ -3708,6 +3708,7 @@
     .delivery-input { width:100%; border:0; outline:none; background:transparent; color:#111; font-family:'Sarabun','Prompt',sans-serif; font-size:inherit; font-weight:500; min-width:0; }
     .delivery-input:focus { background:#f0fff6; box-shadow:inset 0 -3px 0 rgba(20,128,74,.28); }
     .delivery-input.center,.center { text-align:center; }.delivery-input.left { text-align:left; }.delivery-input.right,.right { text-align:right; }.strong { font-weight:800 !important; }
+    #deliveryAddress { text-align:center !important; }
     .delivery-red { color:#ef0000 !important; }
     .blank-row { height:34px; }
     .delivery-side-card { position:sticky; top:12px; }
@@ -3962,7 +3963,7 @@
         @page{size:A4 portrait;margin:6mm;} *{box-sizing:border-box;} body{margin:0;background:#fff;color:#111;font-family:'TH Sarabun New','Sarabun',Arial,sans-serif;}
         .no-print{text-align:center;padding:6px;font-family:Arial,sans-serif}.no-print button{padding:8px 14px;border:0;border-radius:8px;background:#4b1d78;color:#fff;font-weight:700;}
         .page{width:198mm;margin:0 auto;} table{width:100%;border-collapse:collapse;table-layout:fixed;} col:nth-child(1){width:8%;} col:nth-child(2){width:15%;} col:nth-child(3){width:12%;} col:nth-child(4){width:10%;} col:nth-child(5){width:4%;} col:nth-child(6){width:15%;} col:nth-child(7){width:8%;} col:nth-child(8){width:12%;} col:nth-child(9){width:16%;}
-        th,td{border:1px solid #111;padding:1.25mm 1.1mm;font-size:15.5pt;line-height:1.06;height:10.5mm;vertical-align:middle;overflow:hidden;white-space:nowrap;text-overflow:clip;} .title{font-size:22pt;font-weight:800;text-align:center;height:12mm}.company{font-size:19pt}.address{font-size:17pt}.head{background:#eaf3df;font-weight:800;text-align:center;font-size:16.5pt}.center{text-align:center}.right{text-align:right}.strong{font-weight:800}.grade{font-weight:800;text-align:center;font-size:18pt}.amount{font-weight:800}.soft{background:#eaf3df}.red{color:#ef0000}.text-center{text-align:center;font-weight:800;font-size:18pt}.total-label{background:#eaf3df;text-align:center;font-weight:800;font-size:19pt}.total-amount{color:#ef0000;font-weight:800;text-align:right;font-size:18.5pt}.signature{font-size:14.8pt;font-weight:800;}
+        th,td{border:1px solid #111;padding:1.25mm 1.1mm;font-size:15.5pt;line-height:1.06;height:10.5mm;vertical-align:middle;overflow:hidden;white-space:nowrap;text-overflow:clip;} .title{font-size:22pt;font-weight:800;text-align:center;height:12mm}.company{font-size:19pt}.address{font-size:17pt;text-align:center}.head{background:#eaf3df;font-weight:800;text-align:center;font-size:16.5pt}.center{text-align:center}.right{text-align:right}.strong{font-weight:800}.grade{font-weight:800;text-align:center;font-size:18pt}.amount{font-weight:800}.soft{background:#eaf3df}.red{color:#ef0000}.text-center{text-align:center;font-weight:800;font-size:18pt}.total-label{background:#eaf3df;text-align:center;font-weight:800;font-size:19pt}.total-amount{color:#ef0000;font-weight:800;text-align:right;font-size:18.5pt}.signature{font-size:14.8pt;font-weight:800;}
         .meta{font:700 7pt Arial,sans-serif;color:#555;border:0;height:auto;padding:0 0 1mm;text-align:right;}.blank td{height:10mm;}
         @media print{.no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
       </style><script>window.onafterprint=function(){setTimeout(function(){window.close();},180)};function printAndClose(){window.print();setTimeout(function(){window.close();},900)}<\/script></head><body>
@@ -5052,7 +5053,7 @@
         .title { height:12mm; max-height:12mm; font-size:21pt; font-weight:800; line-height:1.05; }
         .company { height:11mm; max-height:11mm; font-size:16.4pt; font-weight:700; line-height:1.05; text-align:center; }
         .date-cell { height:11mm; max-height:11mm; font-size:13.2pt; font-weight:700; white-space:nowrap; }
-        .address { height:9mm; max-height:9mm; font-size:13.8pt; font-weight:500; line-height:1.05; text-align:left; }
+        .address { height:9mm; max-height:9mm; font-size:13.8pt; font-weight:500; line-height:1.05; text-align:center; }
         .head { height:9mm; max-height:9mm; background:#eaf3df; font-weight:800; font-size:13.8pt; line-height:1.05; }
         .grade-row td { height:9.2mm; max-height:9.2mm; }
         .grade { font-weight:800; font-size:16.5pt; }
@@ -5060,7 +5061,8 @@
         .num { text-align:center; white-space:nowrap; }
         .amount, .total-amount { white-space:nowrap; font-weight:800; text-align:center; }
         .summary-row td { height:8.7mm; max-height:8.7mm; }
-        .summary-label { text-align:center; font-weight:800; font-size:12.5pt; line-height:1.02; }
+        .summary-label { text-align:center; font-weight:800; font-size:12pt; line-height:1.02; white-space:nowrap; overflow:visible; word-break:keep-all; overflow-wrap:normal; }
+        .no-break-label { white-space:nowrap !important; word-break:keep-all !important; overflow-wrap:normal !important; }
         .summary-value { text-align:center; font-weight:800; white-space:nowrap; }
         .summary-unit { text-align:center; font-weight:800; }
         .soft { background:#eaf3df; }
@@ -5113,7 +5115,7 @@
           <tr class="summary-row"><td></td><td class="summary-label">รวม</td><td class="summary-value">${formatNumber(totals.basketTotal,0)}</td><td colspan="4" class="summary-unit">ตระกร้า</td><td></td><td></td></tr>
           <tr class="summary-row"><td></td><td class="summary-label">เศษ</td><td class="summary-value">${formatNumber(totals.scrapBasketCount,0)}</td><td colspan="4" class="summary-unit">ตระกร้า</td><td></td><td></td></tr>
           <tr class="summary-row"><td></td><td class="summary-label soft">รวมทั้งหมด</td><td class="summary-value soft">${formatNumber(totalBasketWithScrap,0)}</td><td colspan="4" class="summary-unit soft">ตระกร้า</td><td></td><td></td></tr>
-          <tr class="summary-row"><td></td><td class="summary-label soft">น้ำหนักทั้งหมด</td><td class="summary-value soft">${formatNumber(totals.totalWeightKg,0)}</td><td colspan="4" class="summary-unit soft">กิโลกรัม</td><td></td><td></td></tr>
+          <tr class="summary-row"><td></td><td class="summary-label soft no-break-label">น้ำหนักทั้งหมด</td><td class="summary-value soft">${formatNumber(totals.totalWeightKg,0)}</td><td colspan="4" class="summary-unit soft">กิโลกรัม</td><td></td><td></td></tr>
           <tr class="info-row"><td colspan="7" class="text-center">${escapeHtml(record.freightText || DELIVERY_DEFAULTS.freightText)}</td><td></td><td></td></tr>
           <tr class="info-row"><td colspan="7" class="text-center">${escapeHtml(record.vehicleProvince || DELIVERY_DEFAULTS.vehicleProvince)}</td><td></td><td></td></tr>
           <tr class="info-row"><td colspan="7" class="text-center red">${escapeHtml(record.vehiclePlate || DELIVERY_DEFAULTS.vehiclePlate)}</td><td></td><td></td></tr>
