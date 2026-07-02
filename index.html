@@ -1272,6 +1272,33 @@
     #billForm .cashbill-table .total-amount {
       text-align: center !important;
     }
+
+
+    /* ===== Requested patch: cash-bill form summary labels stay on one line ===== */
+    #billForm .cashbill-summary-label,
+    #billForm .cashbill-summary-unit {
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      overflow-wrap: normal !important;
+      text-align: center !important;
+    }
+    #billForm .cashbill-summary-label {
+      padding-left: 2px !important;
+      padding-right: 2px !important;
+    }
+    @media (max-width: 760px) {
+      #billForm .cashbill-summary-label,
+      #billForm .cashbill-summary-unit {
+        font-size: 8.4px !important;
+        letter-spacing: -0.02em !important;
+      }
+    }
+    @media (max-width: 390px) {
+      #billForm .cashbill-summary-label,
+      #billForm .cashbill-summary-unit {
+        font-size: 7.8px !important;
+      }
+    }
 </style>
 </head>
 <body>
@@ -1479,13 +1506,13 @@
                   <td></td><td class="sub-label">ตระกร้ารวม</td><td class="center bold" id="totalBasketCell">0.00</td><td class="center bold" colspan="4">ตระกร้า</td><td></td><td></td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">น้ำหนักตระกร้า</td><td class="center bold" id="basketWeightCell">-</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
+                  <td colspan="2" class="sub-label cashbill-summary-label">น้ำหนักตระกร้า</td><td class="center bold" id="basketWeightCell">-</td><td class="center bold cashbill-summary-unit" colspan="4">กิโลกรัม</td><td></td><td></td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">น้ำหนักเศษรวม</td><td class="center bold" id="scrapWeightCell">0</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
+                  <td colspan="2" class="sub-label cashbill-summary-label">น้ำหนักเศษรวม</td><td class="center bold" id="scrapWeightCell">0</td><td class="center bold cashbill-summary-unit" colspan="4">กิโลกรัม</td><td></td><td></td>
                 </tr>
                 <tr>
-                  <td></td><td class="sub-label">น้ำหนักทั้งหมด</td><td class="center bold" id="totalWeightCell">0</td><td class="center bold" colspan="4">กิโลกรัม</td><td></td><td></td>
+                  <td colspan="2" class="sub-label cashbill-summary-label">น้ำหนักทั้งหมด</td><td class="center bold" id="totalWeightCell">0</td><td class="center bold cashbill-summary-unit" colspan="4">กิโลกรัม</td><td></td><td></td>
                 </tr>
                 <tr>
                   <td colspan="8" class="total-label">รวมเงิน</td>
