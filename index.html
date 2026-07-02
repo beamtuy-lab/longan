@@ -4981,61 +4981,153 @@
       </tbody></table></div>`;
     };
 
-    /* Center grade values in delivery print rows */
+    /* ===== Print Consistency Patch 2569-07-02: fixed delivery print layout across computers ===== */
     deliveryRowPrint = function(r) {
-      return `<tr><td class="grade">${escapeHtml(r.grade)}</td><td class="center">${formatNumber(r.baskets,0)}</td><td class="center">เศษ</td><td class="center">${n(r.scrapKg) > 0 ? formatNumber(r.scrapKg,0) : ''}</td><td class="center">=</td><td class="center strong">${formatNumber(r.weightKg,0)}</td><td class="center strong">Kg.</td><td class="center">${formatNumber(r.unitPrice,2)}</td><td class="center amount">${formatNumber(r.amount,2)}</td></tr>`;
+      return `<tr class="grade-row">
+        <td class="grade">${escapeHtml(r.grade)}</td>
+        <td class="num basket-col">${formatNumber(r.baskets,0)}</td>
+        <td class="label-col">เศษ</td>
+        <td class="num scrap-col">${n(r.scrapKg) > 0 ? formatNumber(r.scrapKg,0) : ''}</td>
+        <td class="eq-col">=</td>
+        <td class="num strong weight-col">${formatNumber(r.weightKg,0)}</td>
+        <td class="unit-col strong">Kg.</td>
+        <td class="num price-col">${formatNumber(r.unitPrice,2)}</td>
+        <td class="num amount">${formatNumber(r.amount,2)}</td>
+      </tr>`;
     };
 
-    /* Rebuild delivery print template to prevent clipped labels and center amount columns */
     buildDeliveryPrintHTML = function(record) {
       const rows = DEFAULT_GRADES.map(g => (record.rows || []).find(r => r.grade === g) || { grade:g, baskets:0, scrapKg:0, unitPrice:0, weightKg:0, amount:0 });
-      const totals = record.totals || rows.reduce((a, r) => {
+      const computedTotals = rows.reduce((a, r) => {
         a.basketTotal += n(r.baskets);
         a.scrapBasketCount += n(r.scrapKg) > 0 ? 1 : 0;
         a.totalWeightKg += n(r.weightKg);
         a.totalAmount += n(r.amount);
         return a;
       }, { basketTotal:0, scrapBasketCount:0, totalWeightKg:0, totalAmount:0 });
+      const totals = { ...computedTotals, ...(record.totals || {}) };
       const totalBasketWithScrap = n(totals.totalBasketWithScrap || totals.totalDeliveryBaskets) || (n(totals.basketTotal) + n(totals.scrapBasketCount));
-      return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>ใบส่งของ ${escapeHtml(record.deliveryId || '')}</title>
+      const printedAt = record.createdAt ? ` | ${escapeHtml(formatThaiDateTime(record.createdAt))}` : '';
+
+      return `<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ใบส่งของ ${escapeHtml(record.deliveryId || '')}</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
       <style>
-        @page{size:A4 portrait;margin:6mm;} *{box-sizing:border-box;} body{margin:0;background:#fff;color:#111;font-family:'TH Sarabun New','Sarabun',Arial,sans-serif;}
-        .no-print{text-align:center;padding:6px;font-family:Arial,sans-serif}.no-print button{padding:8px 14px;border:0;border-radius:8px;background:#4b1d78;color:#fff;font-weight:700;}
-        .page{width:198mm;margin:0 auto;} table{width:100%;border-collapse:collapse;table-layout:fixed;} col:nth-child(1){width:8%;} col:nth-child(2){width:15%;} col:nth-child(3){width:12%;} col:nth-child(4){width:10%;} col:nth-child(5){width:4%;} col:nth-child(6){width:15%;} col:nth-child(7){width:8%;} col:nth-child(8){width:12%;} col:nth-child(9){width:16%;}
-        th,td{border:1px solid #111;padding:1.05mm .9mm;font-size:15pt;line-height:1.08;height:10.3mm;vertical-align:middle;overflow:visible;white-space:normal;text-overflow:clip;overflow-wrap:anywhere;word-break:normal;text-align:center;}
-        .title{font-size:22pt;font-weight:800;text-align:center;height:12mm}.company{font-size:18.5pt;text-align:center}.address{font-size:16.5pt;text-align:center}.head{background:#eaf3df;font-weight:800;text-align:center;font-size:16pt}.center{text-align:center}.right{text-align:center}.strong{font-weight:800}.grade{font-weight:800;text-align:center;font-size:18pt}.amount{font-weight:800;text-align:center;white-space:nowrap}.soft{background:#eaf3df}.red{color:#ef0000}.text-center{text-align:center;font-weight:800;font-size:18pt}.total-label{background:#eaf3df;text-align:center;font-weight:800;font-size:19pt}.total-amount{color:#ef0000;font-weight:800;text-align:center;font-size:18.5pt;white-space:nowrap}.signature{font-size:14.8pt;font-weight:800;text-align:center;}
-        .summary-label{text-align:center!important;font-weight:800!important;font-size:13.8pt!important;line-height:1.02!important;white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere!important;word-break:normal!important;padding-left:.35mm!important;padding-right:.35mm!important;}
-        .summary-unit{text-align:center!important;font-weight:800!important;}
-        .meta{font:700 7pt Arial,sans-serif;color:#555;border:0;height:auto;padding:0 0 1mm;text-align:right;}.blank td{height:10mm;}
-        @media print{.no-print{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-      </style><script>window.onafterprint=function(){setTimeout(function(){window.close();},180)};function printAndClose(){window.print();setTimeout(function(){window.close();},900)}<\/script></head><body>
-        <div class="no-print"><button onclick="printAndClose()">พิมพ์ใบส่งของ</button></div><div class="page"><div class="meta">${escapeHtml(record.deliveryId || '')} ${record.createdAt ? '| '+escapeHtml(formatThaiDateTime(record.createdAt)) : ''}</div>
-        <table><colgroup><col><col><col><col><col><col><col><col><col></colgroup><tbody>
+        @page { size:A4 portrait; margin:5mm; }
+        * { box-sizing:border-box; }
+        html, body { width:210mm; min-height:297mm; margin:0; padding:0; background:#fff; color:#111; }
+        body {
+          font-family:'Sarabun','Tahoma','Arial',sans-serif;
+          font-size:12pt;
+          line-height:1;
+          -webkit-text-size-adjust:100%;
+          text-size-adjust:100%;
+          font-variant-numeric:tabular-nums;
+          -webkit-font-smoothing:antialiased;
+          text-rendering:geometricPrecision;
+          -webkit-print-color-adjust:exact;
+          print-color-adjust:exact;
+        }
+        .no-print { text-align:center; padding:6px; font-family:'Sarabun','Tahoma',sans-serif; }
+        .no-print button { padding:8px 14px; border:0; border-radius:8px; background:#4b1d78; color:#fff; font-weight:700; font-family:inherit; cursor:pointer; }
+        .page { width:200mm; min-height:286mm; margin:0 auto; }
+        .meta { height:5mm; line-height:5mm; overflow:hidden; text-align:right; color:#555; font:700 7pt/5mm 'Sarabun','Tahoma',sans-serif; }
+        table { width:200mm; height:276mm; border-collapse:collapse; table-layout:fixed; border:1.05px solid #111; }
+        col:nth-child(1){width:8%;} col:nth-child(2){width:14%;} col:nth-child(3){width:10%;} col:nth-child(4){width:10%;} col:nth-child(5){width:5%;} col:nth-child(6){width:14%;} col:nth-child(7){width:7%;} col:nth-child(8){width:13%;} col:nth-child(9){width:19%;}
+        th, td {
+          border:.8px solid #111;
+          padding:0 1.05mm;
+          height:8.8mm;
+          max-height:8.8mm;
+          vertical-align:middle;
+          overflow:hidden;
+          white-space:normal;
+          overflow-wrap:break-word;
+          word-break:normal;
+          text-align:center;
+          font-size:13.2pt;
+          font-weight:500;
+          line-height:1.05;
+        }
+        .title { height:12mm; max-height:12mm; font-size:21pt; font-weight:800; line-height:1.05; }
+        .company { height:11mm; max-height:11mm; font-size:16.4pt; font-weight:700; line-height:1.05; text-align:center; }
+        .date-cell { height:11mm; max-height:11mm; font-size:13.2pt; font-weight:700; white-space:nowrap; }
+        .address { height:9mm; max-height:9mm; font-size:13.8pt; font-weight:500; line-height:1.05; text-align:left; }
+        .head { height:9mm; max-height:9mm; background:#eaf3df; font-weight:800; font-size:13.8pt; line-height:1.05; }
+        .grade-row td { height:9.2mm; max-height:9.2mm; }
+        .grade { font-weight:800; font-size:16.5pt; }
+        .strong { font-weight:800; }
+        .num { text-align:center; white-space:nowrap; }
+        .amount, .total-amount { white-space:nowrap; font-weight:800; text-align:center; }
+        .summary-row td { height:8.7mm; max-height:8.7mm; }
+        .summary-label { text-align:center; font-weight:800; font-size:12.5pt; line-height:1.02; }
+        .summary-value { text-align:center; font-weight:800; white-space:nowrap; }
+        .summary-unit { text-align:center; font-weight:800; }
+        .soft { background:#eaf3df; }
+        .info-row td { height:8.8mm; max-height:8.8mm; }
+        .text-center { text-align:center; font-weight:800; font-size:15.7pt; line-height:1.04; }
+        .red { color:#ef0000; }
+        .blank-row-print td { height:12.5mm; max-height:12.5mm; padding:0; }
+        .sender-row td { height:8.6mm; max-height:8.6mm; }
+        .sender-main { text-align:center; font-weight:800; font-size:15.2pt; line-height:1.04; }
+        .sender-sub { text-align:center; font-weight:600; font-size:13.8pt; line-height:1.04; }
+        .total-print-row td { height:10mm; max-height:10mm; }
+        .total-label { background:#eaf3df; text-align:center; font-weight:800; font-size:17pt; line-height:1.04; }
+        .total-amount { color:#ef0000; font-size:15.8pt; line-height:1.04; }
+        .signature-row td { height:10.5mm; max-height:10.5mm; }
+        .signature { font-size:13.4pt; font-weight:800; text-align:left; line-height:1.05; white-space:nowrap; }
+        .signature.sender { text-align:center; }
+        @media print {
+          html, body { width:210mm; min-height:297mm; }
+          .no-print { display:none !important; }
+          .page { width:200mm; margin:0 auto; }
+        }
+      </style>
+      <script>
+        (function(){
+          var nativePrint = window.print.bind(window);
+          var printing = false;
+          window.__tkPrintWhenReady = function(){
+            if (printing) return;
+            printing = true;
+            var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+            fontsReady.catch(function(){}).then(function(){
+              setTimeout(function(){ nativePrint(); }, 160);
+            }).finally(function(){
+              setTimeout(function(){ printing = false; }, 1400);
+            });
+          };
+          window.print = window.__tkPrintWhenReady;
+          window.onafterprint = function(){ setTimeout(function(){ window.close(); }, 180); };
+          window.printAndClose = window.__tkPrintWhenReady;
+        })();
+      <\/script></head><body>
+        <div class="no-print"><button onclick="printAndClose()">พิมพ์ใบส่งของ</button></div>
+        <div class="page"><div class="meta">${escapeHtml(record.deliveryId || '')}${printedAt}</div>
+        <table aria-label="ใบส่งของ TK พืชผล"><colgroup><col><col><col><col><col><col><col><col><col></colgroup><tbody>
           <tr><td colspan="9" class="title">${escapeHtml(record.title || DELIVERY_DEFAULTS.title)}</td></tr>
-          <tr><td colspan="7" class="company">${escapeHtml(record.companyName || DELIVERY_DEFAULTS.company)}</td><td colspan="2" class="center">${escapeHtml(formatEnglishDate(record.date))}</td></tr>
+          <tr><td colspan="7" class="company">${escapeHtml(record.companyName || DELIVERY_DEFAULTS.company)}</td><td colspan="2" class="date-cell">${escapeHtml(formatThaiDate(record.date))}</td></tr>
           <tr><td colspan="9" class="address">${escapeHtml(record.companyAddress || DELIVERY_DEFAULTS.address)}</td></tr>
           <tr><th class="head">เกรด</th><th colspan="6" class="head">รายการ</th><th class="head">หน่วยละ</th><th class="head">จำนวนเงิน</th></tr>
           ${rows.map(deliveryRowPrint).join('')}
-          <tr><td></td><td class="summary-label">รวม</td><td class="center strong">${formatNumber(totals.basketTotal,0)}</td><td colspan="4" class="summary-unit">ตระกร้า</td><td></td><td></td></tr>
-          <tr><td></td><td class="summary-label">เศษ</td><td class="center strong">${formatNumber(totals.scrapBasketCount,0)}</td><td colspan="4" class="summary-unit">ตระกร้า</td><td></td><td></td></tr>
-          <tr><td></td><td class="summary-label soft">รวมทั้งหมด</td><td class="center strong soft">${formatNumber(totalBasketWithScrap,0)}</td><td colspan="4" class="summary-unit soft">ตระกร้า</td><td></td><td></td></tr>
-          <tr><td></td><td class="summary-label soft">น้ำหนักทั้งหมด</td><td class="center strong soft">${formatNumber(totals.totalWeightKg,0)}</td><td colspan="4" class="summary-unit soft">กิโลกรัม</td><td></td><td></td></tr>
-          <tr><td colspan="7" class="text-center">${escapeHtml(record.freightText || DELIVERY_DEFAULTS.freightText)}</td><td></td><td></td></tr>
-          <tr><td colspan="7" class="text-center">${escapeHtml(record.vehicleProvince || DELIVERY_DEFAULTS.vehicleProvince)}</td><td></td><td></td></tr>
-          <tr><td colspan="7" class="text-center red">${escapeHtml(record.vehiclePlate || DELIVERY_DEFAULTS.vehiclePlate)}</td><td></td><td></td></tr>
-          <tr class="blank"><td colspan="9"></td></tr><tr class="blank"><td colspan="9"></td></tr>
-          <tr><td></td><td colspan="6" class="text-center">${escapeHtml(record.senderLabel || DELIVERY_DEFAULTS.senderLabel)}</td><td></td><td></td></tr>
-          <tr><td></td><td colspan="6" class="text-center">${escapeHtml(record.senderName || DELIVERY_DEFAULTS.senderName)}</td><td></td><td></td></tr>
-          <tr><td></td><td colspan="6" class="center">${escapeHtml(record.bankName || DELIVERY_DEFAULTS.bankName)}</td><td></td><td></td></tr>
-          <tr><td></td><td colspan="6" class="center strong">${escapeHtml(record.accountNo || DELIVERY_DEFAULTS.accountNo)}</td><td></td><td></td></tr>
-          <tr><td></td><td colspan="6" class="center">${escapeHtml(record.accountType || DELIVERY_DEFAULTS.accountType)}</td><td></td><td></td></tr>
-          <tr class="blank"><td colspan="9"></td></tr>
-          <tr><td colspan="8" class="total-label">รวมเงิน</td><td class="total-amount">${formatNumber(totals.totalAmount,2)}</td></tr>
-          <tr><td colspan="5" class="signature">ผู้รับของ…………………………...........………</td><td colspan="4" class="signature">ผู้ส่งของ ${escapeHtml(record.signatureSender || DELIVERY_DEFAULTS.signatureSender)}…………………………..</td></tr>
+          <tr class="summary-row"><td></td><td class="summary-label">รวม</td><td class="summary-value">${formatNumber(totals.basketTotal,0)}</td><td colspan="4" class="summary-unit">ตระกร้า</td><td></td><td></td></tr>
+          <tr class="summary-row"><td></td><td class="summary-label">เศษ</td><td class="summary-value">${formatNumber(totals.scrapBasketCount,0)}</td><td colspan="4" class="summary-unit">ตระกร้า</td><td></td><td></td></tr>
+          <tr class="summary-row"><td></td><td class="summary-label soft">รวมทั้งหมด</td><td class="summary-value soft">${formatNumber(totalBasketWithScrap,0)}</td><td colspan="4" class="summary-unit soft">ตระกร้า</td><td></td><td></td></tr>
+          <tr class="summary-row"><td></td><td class="summary-label soft">น้ำหนักทั้งหมด</td><td class="summary-value soft">${formatNumber(totals.totalWeightKg,0)}</td><td colspan="4" class="summary-unit soft">กิโลกรัม</td><td></td><td></td></tr>
+          <tr class="info-row"><td colspan="7" class="text-center">${escapeHtml(record.freightText || DELIVERY_DEFAULTS.freightText)}</td><td></td><td></td></tr>
+          <tr class="info-row"><td colspan="7" class="text-center">${escapeHtml(record.vehicleProvince || DELIVERY_DEFAULTS.vehicleProvince)}</td><td></td><td></td></tr>
+          <tr class="info-row"><td colspan="7" class="text-center red">${escapeHtml(record.vehiclePlate || DELIVERY_DEFAULTS.vehiclePlate)}</td><td></td><td></td></tr>
+          <tr class="blank-row-print"><td colspan="9"></td></tr><tr class="blank-row-print"><td colspan="9"></td></tr>
+          <tr class="sender-row"><td></td><td colspan="6" class="sender-main">${escapeHtml(record.senderLabel || DELIVERY_DEFAULTS.senderLabel)}</td><td></td><td></td></tr>
+          <tr class="sender-row"><td></td><td colspan="6" class="sender-main">${escapeHtml(record.senderName || DELIVERY_DEFAULTS.senderName)}</td><td></td><td></td></tr>
+          <tr class="sender-row"><td></td><td colspan="6" class="sender-sub">${escapeHtml(record.bankName || DELIVERY_DEFAULTS.bankName)}</td><td></td><td></td></tr>
+          <tr class="sender-row"><td></td><td colspan="6" class="sender-sub strong">${escapeHtml(record.accountNo || DELIVERY_DEFAULTS.accountNo)}</td><td></td><td></td></tr>
+          <tr class="sender-row"><td></td><td colspan="6" class="sender-sub">${escapeHtml(record.accountType || DELIVERY_DEFAULTS.accountType)}</td><td></td><td></td></tr>
+          <tr class="blank-row-print"><td colspan="9"></td></tr>
+          <tr class="total-print-row"><td colspan="8" class="total-label">รวมเงิน</td><td class="total-amount">${formatNumber(totals.totalAmount,2)}</td></tr>
+          <tr class="signature-row"><td colspan="5" class="signature">ผู้รับของ…………………………...........………</td><td colspan="4" class="signature sender">ผู้ส่งของ ${escapeHtml(record.signatureSender || DELIVERY_DEFAULTS.signatureSender)}…………………………..</td></tr>
         </tbody></table></div></body></html>`;
     };
-
-
 
     /* ======================================================================
      * DB Stability Patch 2569-07-01
