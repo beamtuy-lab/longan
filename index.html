@@ -1673,7 +1673,7 @@
           <h2>หน้าสรุปการซื้อลำไย</h2>
           <p>สรุปรายวันและปฏิทินสรุปรายเดือน</p>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="secondary-btn daily-print-btn" type="button" onclick="printDailySummary()">🖨️ พิมพ์สรุปรายวัน</button><button class="secondary-btn" type="button" onclick="loadSummary()">🔄 โหลดข้อมูลใหม่</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="secondary-btn daily-print-btn" type="button" onclick="printDailySummary()">🖨️ พิมพ์สรุปรายวัน</button><button class="secondary-btn" type="button" onclick="loadSummary(false, true)">🔄 โหลดข้อมูลใหม่</button></div>
       </div>
 
       <div class="summary-tools">
@@ -1761,7 +1761,7 @@
      * ตั้งค่า URL ของ Google Apps Script Web App ที่ Deploy แล้วเท่านั้น
      * ห้ามใช้ localStorage เพื่อป้องกัน URL ค้างในบางเครื่อง
      **********************************************************************/
-    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxcu4G4DqXkW4lQfNzzcYHea5csZLZkQrCmBrlfCr6FXXHTC0tDvDTRG9N5GIKfwiD_/exec';
+    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyNw9RVwk9jpBXax28-kH_AruwC3DGJCUaYh3bIGa_3fGH3HPZz6ErFFylCa4hUavCP/exec';
 
     const DEFAULT_GRADES = ['AA', 'A', 'B', 'C'];
     const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -5401,6 +5401,201 @@
     showToast = function(message, type = '', timeout = 4200) {
       return __originalShowToastForDbPatch(message, type, timeout);
     };
+
+    /* ======================================================================
+     * DB Stability Patch 2569-07-08
+     * เป้าหมาย: โหลดเร็วขึ้น, อ่านข้อมูลสดจริงเมื่อกดรีเฟรช, ลด 404 หลัง admin,
+     * และไม่โหลดใบส่งของซ้ำในหน้าสรุป/หน้า admin โดยไม่จำเป็น
+     * ====================================================================== */
+    (function(){
+      if (window.__TK_DB_STABILITY_PATCH_25690708__) return;
+      window.__TK_DB_STABILITY_PATCH_25690708__ = true;
+
+      // ลด client cache ให้สั้นมาก เพื่อให้เปิดจากเครื่องอื่นเห็นข้อมูลชุดเดียวกันเร็วขึ้น
+      GAS_READ_TIMEOUT_MS = 18000;
+      GAS_WRITE_TIMEOUT_MS = 42000;
+      GAS_RETRY_MAX = 2;
+      GAS_RETRY_BASE_MS = 520;
+      GAS_CLIENT_CACHE_MS = 3500;
+
+      function isActivePanel_(name) {
+        const el = document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1));
+        return !!(el && el.classList.contains('active'));
+      }
+
+      function normalizeGasUrlForMessage_() {
+        const url = String(CONFIG_WEB_APP_URL || '').trim();
+        if (!url) return 'ยังไม่ได้ตั้งค่า CONFIG_WEB_APP_URL';
+        if (!/\/exec(\?|$)/.test(url)) return 'CONFIG_WEB_APP_URL ไม่ได้ลงท้ายด้วย /exec';
+        return '';
+      }
+
+      function buildGasJsonpUrl_(action, payload = {}, force = false, callbackName = '') {
+        ensureConfiguredUrl();
+        const joiner = CONFIG_WEB_APP_URL.includes('?') ? '&' : '?';
+        const params = new URLSearchParams();
+        params.set('action', action);
+        params.set('ts', String(force ? Date.now() : Math.floor(Date.now() / GAS_CLIENT_CACHE_MS)));
+        if (payload && Object.keys(payload).length) params.set('payload', JSON.stringify(payload));
+        if (callbackName) params.set('callback', callbackName);
+        return `${CONFIG_WEB_APP_URL}${joiner}${params.toString()}`;
+      }
+
+      function gasJsonpGet_(action, payload = {}, options = {}) {
+        return new Promise((resolve, reject) => {
+          const callbackName = `__tkGasJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          const script = document.createElement('script');
+          const timeoutMs = options.timeoutMs || GAS_READ_TIMEOUT_MS;
+          let done = false;
+          const cleanup = () => {
+            try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
+            try { script.remove(); } catch (_) {}
+          };
+          const timer = setTimeout(() => {
+            if (done) return;
+            done = true;
+            cleanup();
+            reject(new Error(`เชื่อมต่อฐานข้อมูลผ่าน JSONP ใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`));
+          }, timeoutMs);
+          window[callbackName] = json => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            cleanup();
+            if (!json || json.ok === false) reject(new Error((json && json.message) || 'Google Apps Script ส่งผลลัพธ์ไม่สำเร็จ'));
+            else resolve(json);
+          };
+          script.onerror = () => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            cleanup();
+            reject(new Error('เชื่อมต่อ GAS ไม่สำเร็จผ่าน JSONP อาจเกิดจาก URL Deployment ไม่ถูกต้องหรือ Web App ไม่ได้เผยแพร่เป็น /exec'));
+          };
+          script.src = buildGasJsonpUrl_(action, payload, options.force, callbackName);
+          document.head.appendChild(script);
+        });
+      }
+
+      const __tkGasRequestBase_25690708 = gasRequest_;
+      gasRequest_ = async function(action, payload = {}, options = {}) {
+        const healthMessage = normalizeGasUrlForMessage_();
+        if (healthMessage) throw new Error(healthMessage);
+
+        // อ่านข้อมูลใช้ GET ก่อน ถ้าโดน CORS/Failed to fetch ให้ใช้ JSONP ที่ Code.gs รองรับ callback อยู่แล้ว
+        if (isReadGasAction_(action) && options.method !== 'POST') {
+          try {
+            return await __tkGasRequestBase_25690708(action, payload, { ...options, method: 'GET' });
+          } catch (err) {
+            const msg = String((err && err.message) || err || '').toLowerCase();
+            if (msg.includes('(404)') || msg.includes('404')) throw err;
+            if (msg.includes('failed to fetch') || msg.includes('load failed') || msg.includes('network') || msg.includes('cors') || msg.includes('นานเกินไป') || msg.includes('timeout')) {
+              const res = await gasJsonpGet_(action, payload, { force: Boolean(options.force), timeoutMs: options.timeoutMs || GAS_READ_TIMEOUT_MS });
+              return res;
+            }
+            throw err;
+          }
+        }
+        return __tkGasRequestBase_25690708(action, payload, options);
+      };
+
+      gasPost = async function(action, payload = {}) {
+        return gasRequest_(action, payload, { method: 'POST', force: true, maxRetry: GAS_RETRY_MAX });
+      };
+
+      gasGet = async function(action, payload = {}, options = {}) {
+        return gasRequest_(action, payload, { method: 'GET', ...options });
+      };
+
+      gasReadAll = async function(options = {}) {
+        const force = Boolean(options.force);
+        const cache = __gasClientCache.bills;
+        if (!force && cache.records && (Date.now() - cache.loadedAt) < GAS_CLIENT_CACHE_MS) {
+          return { ok: true, records: cache.records, cachedClient: true };
+        }
+        if (!force && cache.promise) return cache.promise;
+        const promise = (async () => {
+          try {
+            const res = force
+              ? await gasPost('read_all', { useCache: false, forceFresh: true })
+              : await gasGet('read_all', { useCache: true }, { force: false, maxRetry: 1 });
+            cache.records = Array.isArray(res.records) ? res.records : [];
+            cache.loadedAt = Date.now();
+            return { ...res, records: cache.records };
+          } finally {
+            cache.promise = null;
+          }
+        })();
+        cache.promise = promise;
+        return promise;
+      };
+
+      // หน้าสรุปและหน้า Admin อ่านเฉพาะบิลเงินสดเท่านั้น เพื่อไม่ให้ endpoint ใบส่งของทำให้ช้า/เกิด 404 แทรก
+      loadSummary = async function(silent = false, force = false, options = {}) {
+        try {
+          if (!silent) {
+            playPremiumSound('start');
+            showLoading('read');
+          }
+          const res = await gasReadAll({ force });
+          allBills = Array.isArray(res.records) ? res.records : [];
+
+          if (options.loadDeliveries === true && typeof loadDeliverySummary === 'function') {
+            await loadDeliverySummary(true, force).catch(() => []);
+          }
+
+          renderSummary();
+          if (adminState.loggedIn && isActivePanel_('admin')) {
+            try { renderAdminPanel(); } catch (_) {}
+          }
+        } catch (err) {
+          allBills = Array.isArray(allBills) ? allBills : [];
+          try { renderSummary(); } catch (_) {}
+          showToast(connectionErrorText(err), 'error', 8500);
+        } finally {
+          if (!silent) hideLoading();
+        }
+      };
+
+      switchPanel = function(panel) {
+        if (panel === 'admin' && !adminState.loggedIn) {
+          openAdminModal();
+          return;
+        }
+        ['bill', 'delivery', 'summary', 'admin'].forEach(name => {
+          const panelEl = document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1));
+          const btnEl = document.getElementById('btn' + name.charAt(0).toUpperCase() + name.slice(1));
+          if (panelEl) panelEl.classList.toggle('active', panel === name);
+          if (btnEl) btnEl.classList.toggle('active', panel === name);
+        });
+        if (panel === 'summary') loadSummary(false, false);
+        if (panel === 'delivery') loadDeliverySummary(true, false).then(() => { try { renderDeliveryHistory(); } catch (_) {} });
+        if (panel === 'admin') loadSummary(true, false).then(() => { try { renderAdminPanel(); } catch (_) {} });
+      };
+
+      const __tkConnectionErrorTextBase_25690708 = connectionErrorText;
+      connectionErrorText = function(err) {
+        const message = String((err && err.message) || err || 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ');
+        if (message.includes('(404)') || message.includes('404')) {
+          return `เชื่อมต่อ GAS ไม่สำเร็จ (404)\n\nสาเหตุหลักคือ CONFIG_WEB_APP_URL ไม่ใช่ URL /exec ของ Deployment ล่าสุด หรือ Deployment เดิมถูกลบ/หมดสิทธิ์เข้าถึง\n\nให้เปิด Apps Script > Deploy > Manage deployments > Edit > New version แล้วคัดลอก Web app URL ที่ลงท้าย /exec มาใส่ใน CONFIG_WEB_APP_URL`;
+        }
+        return __tkConnectionErrorTextBase_25690708(err);
+      };
+
+      window.refreshDataNow = function() {
+        clearClientDataCache_('bill');
+        return loadSummary(false, true);
+      };
+
+      // เมื่อผู้ใช้กลับมาที่แท็บเดิม ให้ดึงข้อมูลสดแบบเงียบ ๆ หากข้อมูลเริ่มเก่าแล้ว
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) return;
+        const cache = __gasClientCache.bills;
+        const stale = !cache.loadedAt || (Date.now() - cache.loadedAt) > 45000;
+        if (stale && (isActivePanel_('summary') || isActivePanel_('admin'))) loadSummary(true, true);
+      });
+    })();
+
 </script>
 </body>
 </html>
