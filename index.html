@@ -1761,7 +1761,7 @@
      * ตั้งค่า URL ของ Google Apps Script Web App ที่ Deploy แล้วเท่านั้น
      * ห้ามใช้ localStorage เพื่อป้องกัน URL ค้างในบางเครื่อง
      **********************************************************************/
-    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyNw9RVwk9jpBXax28-kH_AruwC3DGJCUaYh3bIGa_3fGH3HPZz6ErFFylCa4hUavCP/exec';
+    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwNXiF2Xs_2sm5wEcUhxuuhsu47hoaYHq4dFUHl-8nkfKD66pKU24_sUzpukNzG63xA/exec';
 
     const DEFAULT_GRADES = ['AA', 'A', 'B', 'C'];
     const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -2324,7 +2324,7 @@
       loadingFailSafeTimer = setTimeout(() => {
         hideLoading();
         if (mode === 'init' || mode === 'read') {
-          showToast('ระบบเปิดใช้งานได้แล้ว แต่การโหลดข้อมูลใช้เวลานาน กรุณากดโหลดข้อมูลใหม่อีกครั้ง', 'error', 6500);
+          const st = document.getElementById('loadingStatus'); if (st) st.textContent = 'กำลังโหลดข้อมูลต่อ กรุณารอสักครู่...';
         }
       }, maxMs);
     }
@@ -5594,6 +5594,160 @@
         const stale = !cache.loadedAt || (Date.now() - cache.loadedAt) > 45000;
         if (stale && (isActivePanel_('summary') || isActivePanel_('admin'))) loadSummary(true, true);
       });
+    })();
+
+
+    /* ======================================================================
+     * DB Loading Patch 2569-07-08 v2
+     * แก้อาการแจ้งเตือนโหลดช้าเกินจริง โดยไม่ตัดการทำงานกลางคัน
+     * - ยกเลิก toast fail-safe ที่ขึ้นว่าให้กดโหลดใหม่
+     * - เพิ่ม read timeout สำหรับฐานข้อมูลขนาดใหญ่
+     * - ใช้ข้อมูลที่โหลดสำเร็จล่าสุดเป็นกันชน ไม่ล้างหน้าจอเป็นค่าว่างเมื่อ network ชั่วคราวสะดุด
+     * - ป้องกันการโหลดซ้ำถี่ตอนสลับ Summary/Admin
+     * ====================================================================== */
+    (function(){
+      if (window.__TK_LOADING_PATCH_25690708_V2__) return;
+      window.__TK_LOADING_PATCH_25690708_V2__ = true;
+
+      try {
+        if (typeof GAS_READ_TIMEOUT_MS !== 'undefined') GAS_READ_TIMEOUT_MS = 45000;
+        if (typeof GAS_WRITE_TIMEOUT_MS !== 'undefined') GAS_WRITE_TIMEOUT_MS = 52000;
+        if (typeof GAS_CLIENT_CACHE_MS !== 'undefined') GAS_CLIENT_CACHE_MS = 5000;
+      } catch (_) {}
+
+      let __tkLastGoodBills = Array.isArray(window.allBills) ? window.allBills : [];
+      let __tkLastGoodLoadedAt = 0;
+      let __tkManualRefreshRunning = false;
+
+      const __tkBaseShowLoadingV2 = showLoading;
+      showLoading = function(mode = 'init') {
+        const overlay = document.getElementById('loadingOverlay');
+        if (!overlay) return;
+        const title = document.getElementById('loadingTitle');
+        const status = document.getElementById('loadingStatus');
+        const loadingTitles = {
+          init: 'กำลังเปิดระบบบิลเงินสด',
+          save: 'กำลังบันทึกและพิมพ์บิล A4',
+          read: 'กำลังโหลดข้อมูลสรุป',
+          admin: 'กำลังเข้าสู่ระบบผู้ดูแล',
+          delete: 'กำลังลบบิลเงินสด',
+          update: 'กำลังแก้ไขและพิมพ์บิล A4'
+        };
+        const texts = (typeof loadingTexts !== 'undefined' && loadingTexts[mode]) ? loadingTexts[mode] : ['กำลังเตรียมข้อมูล...'];
+        let i = 0;
+        if (title) title.textContent = loadingTitles[mode] || loadingTitles.init;
+        if (status) status.textContent = texts[0] || 'กำลังเตรียมข้อมูล...';
+        overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+        clearInterval(loadingTimer);
+        clearTimeout(loadingFailSafeTimer);
+        loadingTimer = setInterval(() => {
+          i += 1;
+          if (status) {
+            if (i < texts.length) status.textContent = texts[i];
+            else status.textContent = mode === 'read' || mode === 'init'
+              ? 'ข้อมูลมีจำนวนมาก ระบบกำลังโหลดต่อโดยไม่ตัดการเชื่อมต่อ...'
+              : (texts[texts.length - 1] || 'กำลังดำเนินการ...');
+          }
+          if (i < 8) playPremiumSound('tick');
+        }, 1450);
+
+        // Fail-safe ใหม่: ไม่โชว์ toast กดโหลดใหม่อีกครั้ง และไม่ล้างข้อมูลกลางทาง
+        // สำหรับการบันทึก/แก้ไขยังซ่อน overlay เมื่อเกินเวลานานมาก เพื่อไม่ให้หน้าจอค้างถาวร
+        const maxMs = mode === 'save' || mode === 'update' || mode === 'delete' ? 65000 : 90000;
+        loadingFailSafeTimer = setTimeout(() => {
+          if (status) status.textContent = 'ระบบยังทำงานอยู่ หากข้อมูลมีจำนวนมากอาจใช้เวลามากกว่าปกติ...';
+          if (mode === 'save' || mode === 'update' || mode === 'delete') hideLoading();
+        }, maxMs);
+      };
+
+      const __tkBaseGasReadAllV2 = gasReadAll;
+      gasReadAll = async function(options = {}) {
+        const force = Boolean(options.force);
+        const cache = (typeof __gasClientCache !== 'undefined' && __gasClientCache.bills) ? __gasClientCache.bills : null;
+        if (!force && cache && Array.isArray(cache.records) && cache.records.length && (Date.now() - cache.loadedAt) < 5000) {
+          return { ok: true, records: cache.records, cachedClient: true };
+        }
+        const res = await __tkBaseGasReadAllV2({ ...options, force });
+        const records = Array.isArray(res.records) ? res.records : [];
+        __tkLastGoodBills = records;
+        __tkLastGoodLoadedAt = Date.now();
+        try { window.__tkLastGoodBills = records; window.__tkLastGoodLoadedAt = __tkLastGoodLoadedAt; } catch (_) {}
+        return { ...res, records };
+      };
+
+      const __tkBaseLoadSummaryV2 = loadSummary;
+      loadSummary = async function(silent = false, force = false, options = {}) {
+        if (__tkManualRefreshRunning && !force) return;
+        __tkManualRefreshRunning = true;
+        try {
+          if (!silent) {
+            playPremiumSound('start');
+            showLoading('read');
+          }
+          const res = await gasReadAll({ force });
+          allBills = Array.isArray(res.records) ? res.records : [];
+          __tkLastGoodBills = allBills;
+          __tkLastGoodLoadedAt = Date.now();
+          if (options.loadDeliveries === true && typeof loadDeliverySummary === 'function') {
+            await loadDeliverySummary(true, force).catch(() => []);
+          }
+          renderSummary();
+          if (adminState.loggedIn && typeof renderAdminPanel === 'function') {
+            try { renderAdminPanel(); } catch (_) {}
+          }
+        } catch (err) {
+          // ไม่ล้าง allBills เป็น [] เมื่อโหลดล้มเหลวชั่วคราว เพราะจะทำให้ผู้ใช้เห็นข้อมูลหาย
+          if (Array.isArray(__tkLastGoodBills) && __tkLastGoodBills.length) {
+            allBills = __tkLastGoodBills;
+            try { renderSummary(); } catch (_) {}
+            if (!silent) showToast('ยังใช้ข้อมูลล่าสุดที่โหลดสำเร็จไว้ก่อน ระบบจะลองเชื่อมต่อใหม่เมื่อกดโหลดข้อมูล', 'success', 5200);
+          } else {
+            allBills = Array.isArray(allBills) ? allBills : [];
+            try { renderSummary(); } catch (_) {}
+            if (!silent) showToast(connectionErrorText(err), 'error', 8500);
+          }
+          if (silent) console.warn('Silent summary load failed:', err);
+        } finally {
+          __tkManualRefreshRunning = false;
+          if (!silent) hideLoading();
+        }
+      };
+
+      const __tkBaseSwitchPanelV2 = switchPanel;
+      switchPanel = function(panel) {
+        if (panel === 'admin' && !adminState.loggedIn) {
+          openAdminModal();
+          return;
+        }
+        ['bill', 'delivery', 'summary', 'admin'].forEach(name => {
+          const panelEl = document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1));
+          const btnEl = document.getElementById('btn' + name.charAt(0).toUpperCase() + name.slice(1));
+          if (panelEl) panelEl.classList.toggle('active', panel === name);
+          if (btnEl) btnEl.classList.toggle('active', panel === name);
+        });
+        if (panel === 'summary') {
+          const cache = (typeof __gasClientCache !== 'undefined' && __gasClientCache.bills) ? __gasClientCache.bills : null;
+          const freshEnough = cache && cache.records && (Date.now() - cache.loadedAt) < 5000;
+          if (freshEnough) { renderSummary(); return; }
+          loadSummary(false, false);
+        }
+        if (panel === 'delivery') {
+          try { initDeliveryForm(); } catch (_) {}
+          if (typeof loadDeliverySummary === 'function') loadDeliverySummary(true, false).then(() => { try { renderDeliveryHistory(); } catch (_) {} });
+        }
+        if (panel === 'admin') {
+          const cache = (typeof __gasClientCache !== 'undefined' && __gasClientCache.bills) ? __gasClientCache.bills : null;
+          const freshEnough = cache && cache.records && (Date.now() - cache.loadedAt) < 5000;
+          if (freshEnough) { try { renderAdminPanel(); } catch (_) {} return; }
+          loadSummary(true, false).then(() => { try { renderAdminPanel(); } catch (_) {} });
+        }
+      };
+
+      window.refreshDataNow = function() {
+        try { if (typeof clearClientDataCache_ === 'function') clearClientDataCache_('bill'); } catch (_) {}
+        return loadSummary(false, true);
+      };
     })();
 
 </script>
