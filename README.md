@@ -1,31 +1,22 @@
-# TK Longan Cash Bill - Supabase Direct Ready
+# TK Longan Cashbill - GitHub Pages + Supabase
 
-ไฟล์ชุดนี้ตั้งค่าให้ใช้ Supabase 100% แล้ว ไม่ใช้ Google Apps Script
+ระบบบิลเงินสดลำไยแบบ Static HTML เชื่อม Supabase โดยตรงผ่าน Edge Function `longan-api`
 
-## Supabase Project
-- Project: beamtuy-lab's Project
-- SUPABASE_URL: https://hpdedxdjjwhmejydaolo.supabase.co
-- SUPABASE_DIRECT_ENDPOINT: https://hpdedxdjjwhmejydaolo.supabase.co/functions/v1/longan-api
-- Edge Function: longan-api
-- Database RPC: longan_*
+## วิธี Deploy
 
-## วิธีใช้งาน
-1. ใช้ไฟล์ `index_SUPABASE_DIRECT_READY.html` เป็นไฟล์หลักของระบบ
-2. อัปโหลดไฟล์นี้ไปที่ Hosting ของมหาวิทยาลัย / Netlify / Vercel / Cloudflare Pages / Static Hosting อื่น ๆ
-3. ไม่ต้องใช้ `Code.gs` หรือ Google Apps Script อีกต่อไป
-4. เปิดเว็บแล้วกด F12 > Console ควรเห็นข้อความเชื่อมต่อ Supabase
-5. เมื่อกดบันทึกบิล ข้อมูลจะถูกส่งไปยัง `longan-api` แล้วบันทึกลงตาราง `longan_cash_bills`
+1. อัปโหลดไฟล์ทั้งหมดในโฟลเดอร์นี้ขึ้น GitHub repository
+2. ไปที่ Settings > Pages
+3. เลือก Source: GitHub Actions
+4. ไปที่ Actions แล้วรัน workflow ชื่อ Deploy GitHub Pages หรือ push ขึ้น branch main/master
 
-## การตรวจสอบ Network
-เมื่อกดบันทึก ให้เห็น request ไปที่:
+## ต้องมีไฟล์สำคัญ
 
-```text
-https://hpdedxdjjwhmejydaolo.supabase.co/functions/v1/longan-api
-```
+- `index.html` อยู่ที่ root ของ repository
+- `.nojekyll`
+- `.github/workflows/deploy-pages.yml`
 
-## ตารางหลัก
-- `longan_cash_bills` สำหรับบิลเงินสด
-- `longan_delivery_bills` สำหรับใบส่งของ
+## Supabase Endpoint
 
-## Admin
-รหัสเริ่มต้นที่ตั้งไว้ในฐานข้อมูลคือ `3304` ควรเปลี่ยนหลังเริ่มใช้งานครั้งแรก
+ระบบตั้งค่าไว้แล้วที่:
+
+`https://hpdedxdjjwhmejydaolo.supabase.co/functions/v1/longan-api`
