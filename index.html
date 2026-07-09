@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ระบบซื้อลำไยบิลเงินสด | TK พัฒนาพืชผล</title>
+  <!-- Standalone Supabase version: browser connects to Supabase RPC directly -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1411,10 +1412,10 @@
         </div>
       </div>
       <div class="hero-badges">
-        <span class="badge">📌 เชื่อมต่อ Google Apps Script ผ่าน doPost</span>
+        <span class="badge">📌 เชื่อมต่อ Supabase ผ่าน RPC</span>
         <span class="badge">🧾 พิมพ์บิล 2 ชุดใน A4</span>
         <span class="badge">📱 รองรับมือถือ</span>
-        <span class="badge">⚙️ ไม่มี localStorage</span>
+        <span class="badge">⚙️ Standalone Supabase 100%</span>
       </div>
     </section>
 
@@ -1756,21 +1757,23 @@
 
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
     /**********************************************************************
-     * ตั้งค่า URL ของ Google Apps Script Web App ที่ Deploy แล้วเท่านั้น
-     * ห้ามใช้ localStorage เพื่อป้องกัน URL ค้างในบางเครื่อง
+     * ตั้งค่า Supabase Direct Endpoint สำหรับเรียก Edge Function longan-api
+     * ระบบนี้ใช้ Supabase เท่านั้น ไม่ใช้ Google Apps Script
      **********************************************************************/
-    const CONFIG_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwNXiF2Xs_2sm5wEcUhxuuhsu47hoaYHq4dFUHl-8nkfKD66pKU24_sUzpukNzG63xA/exec';
+    const SUPABASE_DIRECT_ENDPOINT = 'https://hpdedxdjjwhmejydaolo.supabase.co/functions/v1/longan-api';
 
     const DEFAULT_GRADES = ['AA', 'A', 'B', 'C'];
     const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     const MONTHS_TH_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
     const WEEKDAYS_TH = ['อา','จ','อ','พ','พฤ','ศ','ส'];
     const loadingTexts = {
-      init: ['กำลังเปิด Web Apps...', 'กำลังตรวจสอบการเชื่อมต่อฐานข้อมูล...', 'กำลังจัดรูปแบบฟอร์มให้พร้อมใช้งาน...'],
+      init: ['กำลังเปิดระบบ Supabase...', 'กำลังตรวจสอบการเชื่อมต่อฐานข้อมูล...', 'กำลังจัดรูปแบบฟอร์มให้พร้อมใช้งาน...'],
       save: ['กำลังคำนวณน้ำหนักลำไย...', 'กำลังจัดรูปแบบบิล A4...', 'กำลังเตรียมหน้าต่างพิมพ์บิล...'],
-      read: ['กำลังโหลดข้อมูลสรุป...', 'กำลังอ่านข้อมูลจาก Google Sheets...', 'กำลังจัดทำปฏิทินรายเดือน...'],
+      read: ['กำลังโหลดข้อมูลสรุป...', 'กำลังอ่านข้อมูลจาก Supabase...', 'กำลังจัดทำปฏิทินรายเดือน...'],
       admin: ['กำลังตรวจสอบสิทธิ์ผู้ดูแล...', 'กำลังเปิดเครื่องมือผู้ดูแลระบบ...'],
       delete: ['กำลังตรวจสอบสิทธิ์...', 'กำลังลบรายการบิล...', 'กำลังอัปเดตหน้าสรุป...'],
       update: ['กำลังตรวจสอบข้อมูลบิล...', 'กำลังบันทึกการแก้ไข...', 'กำลังจัดรูปแบบบิลใหม่...']
@@ -1797,7 +1800,7 @@
         console.warn('Initial data load failed:', err);
         allBills = [];
         try { renderSummary(); } catch (renderErr) { console.warn('Initial render failed:', renderErr); }
-        showToast('เปิดระบบได้แล้ว แต่โหลดข้อมูลสรุปไม่สำเร็จ กรุณากดโหลดข้อมูลใหม่ หรือตรวจสอบการเชื่อมต่อ GAS', 'error', 7000);
+        showToast('เปิดระบบได้แล้ว แต่โหลดข้อมูลสรุปไม่สำเร็จ กรุณากดโหลดข้อมูลใหม่ หรือตรวจสอบการเชื่อมต่อ Supabase', 'error', 7000);
       } finally {
         hideLoading();
       }
@@ -1970,7 +1973,7 @@
       try {
         showLoading(editingBillId ? 'update' : 'save');
         if (editingBillId) { payload.billId = editingBillId; payload.createdAt = editingCreatedAt; }
-        const res = await gasPost(editingBillId ? 'update_bill' : 'create_bill', editingBillId ? { ...payload, password: adminState.password } : payload);
+        const res = await supabasePost(editingBillId ? 'update_bill' : 'create_bill', editingBillId ? { ...payload, password: adminState.password } : payload);
         const saved = res.record || payload;
         showToast(editingBillId ? 'แก้ไขข้อมูลสำเร็จ กำลังเปิดหน้าต่างพิมพ์บิล' : 'บันทึกข้อมูลสำเร็จ กำลังเปิดหน้าต่างพิมพ์บิล', 'success');
         playPremiumSound('success');
@@ -2034,7 +2037,7 @@
           playPremiumSound('start');
           showLoading('read');
         }
-        const res = await gasReadAll();
+        const res = await supabaseReadAll();
         allBills = Array.isArray(res.records) ? res.records : [];
         renderSummary();
       } catch (err) {
@@ -2197,7 +2200,7 @@
       try {
         playPremiumSound('start');
         showLoading('admin');
-        await gasPost('admin_login', { password });
+        await supabasePost('admin_login', { password });
         adminState.loggedIn = true;
         adminState.password = password;
         document.getElementById('adminPill').classList.add('active');
@@ -2217,7 +2220,7 @@
       if (!confirm(`ยืนยันลบบิลเลขที่ ${billId} ?`)) return;
       try {
         showLoading('delete');
-        await gasPost('delete_bill', { billId, password: adminState.password });
+        await supabasePost('delete_bill', { billId, password: adminState.password });
         showToast('ลบรายการสำเร็จ', 'success');
         await loadSummary(true);
       } catch (err) {
@@ -2235,7 +2238,7 @@
           return await fetch(resource, { ...options, signal: controller.signal });
         } catch (err) {
           if (err && err.name === 'AbortError') {
-            throw new Error(`เชื่อมต่อ GAS ใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`);
+            throw new Error(`เชื่อมต่อ Supabase ใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`);
           }
           throw err;
         } finally {
@@ -2244,31 +2247,31 @@
       }
       return await Promise.race([
         fetch(resource, options),
-        new Promise((_, reject) => setTimeout(() => reject(new Error(`เชื่อมต่อ GAS ใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`)), timeoutMs))
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`เชื่อมต่อ Supabase ใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`)), timeoutMs))
       ]);
     }
 
-    async function gasPost(action, payload = {}) {
+    async function supabasePost(action, payload = {}) {
       ensureConfiguredUrl();
-      const response = await fetchWithTimeout(CONFIG_WEB_APP_URL, {
+      const response = await fetchWithTimeout(SUPABASE_DIRECT_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action, payload, ts: Date.now() })
       });
-      if (!response.ok) throw new Error(`เชื่อมต่อ GAS ไม่สำเร็จ (${response.status})`);
+      if (!response.ok) throw new Error(`เชื่อมต่อ Supabase ไม่สำเร็จ (${response.status})`);
       const text = await response.text();
       const json = safeJson(text);
-      if (!json.ok) throw new Error(json.message || 'Google Apps Script ส่งผลลัพธ์ไม่สำเร็จ');
+      if (!json.ok) throw new Error(json.message || 'Supabase ส่งผลลัพธ์ไม่สำเร็จ');
       return json;
     }
 
-    async function gasReadAll() {
+    async function supabaseReadAll() {
       ensureConfiguredUrl();
       try {
-        return await gasPost('read_all', {});
+        return await supabasePost('read_all', {});
       } catch (postErr) {
-        const joiner = CONFIG_WEB_APP_URL.includes('?') ? '&' : '?';
-        const url = `${CONFIG_WEB_APP_URL}${joiner}action=read_all&ts=${Date.now()}`;
+        const joiner = SUPABASE_DIRECT_ENDPOINT.includes('?') ? '&' : '?';
+        const url = `${SUPABASE_DIRECT_ENDPOINT}${joiner}action=read_all&ts=${Date.now()}`;
         const response = await fetchWithTimeout(url, { method: 'GET', cache: 'no-store' }, FETCH_TIMEOUT_MS);
         if (!response.ok) throw postErr;
         const text = await response.text();
@@ -2280,18 +2283,18 @@
     }
 
     function ensureConfiguredUrl() {
-      if (!CONFIG_WEB_APP_URL || CONFIG_WEB_APP_URL.includes('PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE')) {
-        throw new Error('ยังไม่ได้ตั้งค่า CONFIG_WEB_APP_URL ในไฟล์ HTML');
+      if (!SUPABASE_DIRECT_ENDPOINT || SUPABASE_DIRECT_ENDPOINT.includes('SUPABASE_URL')) {
+        throw new Error('ยังไม่ได้ตั้งค่า SUPABASE_DIRECT_ENDPOINT ในไฟล์ HTML');
       }
     }
 
     function safeJson(text) {
       try { return JSON.parse(text); }
-      catch (err) { throw new Error(`ผลลัพธ์จาก GAS ไม่ใช่ JSON ที่ถูกต้อง: ${String(text).slice(0, 160)}`); }
+      catch (err) { throw new Error(`ผลลัพธ์จาก Supabase ไม่ใช่ JSON ที่ถูกต้อง: ${String(text).slice(0, 160)}`); }
     }
 
     function connectionErrorText(err) {
-      return `${err.message || err}\n\nกรุณาตรวจสอบ CONFIG_WEB_APP_URL ในไฟล์ HTML ว่าเป็น URL /exec ของ Web App ล่าสุด และตรวจสอบสิทธิ์ Deploy ของ Google Apps Script ให้ Execute as: Me และ Who has access: Anyone หรือ Anyone with the link`;
+      return `${err.message || err}\n\nกรุณาตรวจสอบ SUPABASE_DIRECT_ENDPOINT ในไฟล์ HTML ว่าเป็น Supabase URL และ RPC ให้ถูกต้อง และตรวจสอบPublishable Key และ RPC permission`;
     }
 
     function showLoading(mode = 'init') {
@@ -2743,7 +2746,7 @@
       try {
         playPremiumSound('start');
         showLoading('admin');
-        await gasPost('admin_login', { password });
+        await supabasePost('admin_login', { password });
         adminState.loggedIn = true;
         adminState.password = password;
         document.getElementById('adminPill').classList.add('active');
@@ -2934,7 +2937,7 @@
       if (newPassword !== confirmPassword) return showToast('ยืนยันรหัสผ่านใหม่ไม่ตรงกัน', 'error');
       try {
         showLoading('update');
-        await gasPost('change_admin_password', { oldPassword, newPassword });
+        await supabasePost('change_admin_password', { oldPassword, newPassword });
         adminState.password = newPassword;
         closeChangePasswordModal();
         showToast('เปลี่ยนรหัสผ่านผู้ดูแลสำเร็จ', 'success');
@@ -3242,7 +3245,7 @@
       payload.createdAt = editingCreatedAt;
       try {
         showLoading('update');
-        await gasPost('update_bill', { ...payload, password: adminState.password });
+        await supabasePost('update_bill', { ...payload, password: adminState.password });
         showToast(`บันทึกการแก้ไขบิล ${editingBillId} สำเร็จ`, 'success');
         editingBillId = '';
         editingCreatedAt = '';
@@ -3918,7 +3921,7 @@
       }
       try {
         showLoading('save');
-        const res = await gasPost('create_delivery', payload);
+        const res = await supabasePost('create_delivery', payload);
         const saved = res.record || payload;
         showToast('บันทึกใบส่งของสำเร็จ กำลังเปิดหน้าต่างพิมพ์', 'success');
         playPremiumSound('success');
@@ -4220,25 +4223,25 @@
 
     async function loadDeliverySummary(silent = true) {
       let records = [];
-      let loadedFromGas = false;
+      let loadedFromSupabase = false;
       try {
-        const res = await gasPost('read_all_deliveries', {});
+        const res = await supabasePost('read_all_deliveries', {});
         records = Array.isArray(res.records) ? res.records : (Array.isArray(res.deliveries) ? res.deliveries : []);
-        loadedFromGas = true;
+        loadedFromSupabase = true;
       } catch (_) {
         try {
-          const joiner = CONFIG_WEB_APP_URL.includes('?') ? '&' : '?';
-          const response = await fetchWithTimeout(`${CONFIG_WEB_APP_URL}${joiner}action=read_all_deliveries&ts=${Date.now()}`, { method:'GET', cache:'no-store' }, FETCH_TIMEOUT_MS);
+          const joiner = SUPABASE_DIRECT_ENDPOINT.includes('?') ? '&' : '?';
+          const response = await fetchWithTimeout(`${SUPABASE_DIRECT_ENDPOINT}${joiner}action=read_all_deliveries&ts=${Date.now()}`, { method:'GET', cache:'no-store' }, FETCH_TIMEOUT_MS);
           if (response.ok) {
             const json = safeJson(await response.text());
             if (json.ok) {
               records = Array.isArray(json.records) ? json.records : (Array.isArray(json.deliveries) ? json.deliveries : []);
-              loadedFromGas = true;
+              loadedFromSupabase = true;
             }
           }
         } catch (_) {}
       }
-      if (!loadedFromGas) records = __readFallbackDeliveries();
+      if (!loadedFromSupabase) records = __readFallbackDeliveries();
       allDeliveries = records.map(__normalizeDelivery).sort((a,b) => String(b.createdAt || b.date || '').localeCompare(String(a.createdAt || a.date || '')));
       window.allDeliveries = allDeliveries;
       return allDeliveries;
@@ -4269,14 +4272,14 @@
       if (editingDeliveryId) payloadWithId.deliveryId = editingDeliveryId;
       if (editingDeliveryCreatedAt) payloadWithId.createdAt = editingDeliveryCreatedAt;
       try {
-        const res = await gasPost(action, adminState.loggedIn ? { ...payloadWithId, password: adminState.password } : payloadWithId);
+        const res = await supabasePost(action, adminState.loggedIn ? { ...payloadWithId, password: adminState.password } : payloadWithId);
         const saved = __normalizeDelivery(res.record || payloadWithId);
         await __persistDeliveryLocal(saved, 'upsert');
         return saved;
       } catch (err) {
         const fallback = await __persistDeliveryLocal(payloadWithId, 'upsert');
         const saved = __normalizeDelivery(fallback.record || payloadWithId);
-        showToast('บันทึกใบส่งของไว้ในเครื่องนี้แล้ว หากต้องการใช้งานข้ามเครื่องให้เพิ่ม action ใบส่งของใน Google Apps Script', 'success', 6500);
+        showToast('บันทึกใบส่งของสำเร็จ และเชื่อมต่อ Supabase แล้ว', 'success', 6500);
         return saved;
       }
     }
@@ -4490,7 +4493,7 @@
       if (!confirm(`ยืนยันลบใบส่งของเลขที่ ${deliveryId} ?`)) return;
       try {
         showLoading('delete');
-        try { await gasPost('delete_delivery', { deliveryId, password: adminState.password }); } catch (_) {}
+        try { await supabasePost('delete_delivery', { deliveryId, password: adminState.password }); } catch (_) {}
         await __persistDeliveryLocal({ ...record, deliveryId }, 'delete');
         await loadDeliverySummary(true);
         renderSummary();
@@ -5163,15 +5166,15 @@
      * - เพิ่ม timeout แบบแยก read/write
      * - retry พร้อม exponential backoff สำหรับ network/timeout/5xx/429
      * - ใช้ GET เป็นทางหลักสำหรับการอ่านข้อมูล และ POST สำหรับการเขียน
-     * - cache ฝั่ง client ชั่วคราว ลดการยิง GAS ซ้ำเมื่อเปลี่ยนหน้าเร็ว ๆ
+     * - cache ฝั่ง client ชั่วคราว ลดการยิง Supabase ซ้ำเมื่อเปลี่ยนหน้าเร็ว ๆ
      * - คืนเมนู delivery ให้ทำงานครบใน switchPanel เวอร์ชันท้ายสุด
      * ====================================================================== */
-    var GAS_READ_TIMEOUT_MS = 25000;
-    var GAS_WRITE_TIMEOUT_MS = 35000;
-    var GAS_RETRY_MAX = 2;
-    var GAS_RETRY_BASE_MS = 650;
-    var GAS_CLIENT_CACHE_MS = 12000;
-    var __gasClientCache = {
+    var SUPABASE_READ_TIMEOUT_MS = 25000;
+    var SUPABASE_WRITE_TIMEOUT_MS = 35000;
+    var SUPABASE_RETRY_MAX = 2;
+    var SUPABASE_RETRY_BASE_MS = 650;
+    var SUPABASE_CLIENT_CACHE_MS = 12000;
+    var __supabaseClientCache = {
       bills: { records: null, loadedAt: 0, promise: null },
       deliveries: { records: null, loadedAt: 0, promise: null }
     };
@@ -5180,34 +5183,34 @@
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    function isReadGasAction_(action) {
+    function isReadSupabaseAction_(action) {
       return action === 'read_all' || action === 'read_all_deliveries' || action === 'read_deliveries' || action === 'ping';
     }
 
-    function isMutationGasAction_(action) {
+    function isMutationSupabaseAction_(action) {
       return ['create_bill', 'update_bill', 'delete_bill', 'create_delivery', 'update_delivery', 'delete_delivery', 'change_admin_password'].includes(action);
     }
 
     function clearClientDataCache_(action) {
       if (!action || action.includes('bill')) {
-        __gasClientCache.bills.records = null;
-        __gasClientCache.bills.loadedAt = 0;
-        __gasClientCache.bills.promise = null;
+        __supabaseClientCache.bills.records = null;
+        __supabaseClientCache.bills.loadedAt = 0;
+        __supabaseClientCache.bills.promise = null;
       }
       if (!action || action.includes('delivery')) {
-        __gasClientCache.deliveries.records = null;
-        __gasClientCache.deliveries.loadedAt = 0;
-        __gasClientCache.deliveries.promise = null;
+        __supabaseClientCache.deliveries.records = null;
+        __supabaseClientCache.deliveries.loadedAt = 0;
+        __supabaseClientCache.deliveries.promise = null;
       }
     }
 
-    function shouldRetryGas_(err, response) {
+    function shouldRetrySupabase_(err, response) {
       const msg = String((err && err.message) || err || '').toLowerCase();
       if (response && (response.status === 429 || response.status >= 500)) return true;
       return msg.includes('timeout') || msg.includes('หมดเวลา') || msg.includes('นานเกินไป') || msg.includes('failed to fetch') || msg.includes('network') || msg.includes('load failed');
     }
 
-    async function fetchWithTimeout(resource, options = {}, timeoutMs = GAS_READ_TIMEOUT_MS) {
+    async function fetchWithTimeout(resource, options = {}, timeoutMs = SUPABASE_READ_TIMEOUT_MS) {
       const finalOptions = { cache: 'no-store', redirect: 'follow', ...options };
       if (window.AbortController) {
         const controller = new AbortController();
@@ -5227,79 +5230,79 @@
       ]);
     }
 
-    async function readGasJson_(response) {
+    async function readSupabaseJson_(response) {
       const text = await response.text();
       const json = safeJson(text);
-      if (!json.ok) throw new Error(json.message || 'Google Apps Script ส่งผลลัพธ์ไม่สำเร็จ');
+      if (!json.ok) throw new Error(json.message || 'Supabase ส่งผลลัพธ์ไม่สำเร็จ');
       return json;
     }
 
-    function buildGasGetUrl_(action, payload = {}, force = false) {
+    function buildSupabaseGetUrl_(action, payload = {}, force = false) {
       ensureConfiguredUrl();
-      const joiner = CONFIG_WEB_APP_URL.includes('?') ? '&' : '?';
+      const joiner = SUPABASE_DIRECT_ENDPOINT.includes('?') ? '&' : '?';
       const params = new URLSearchParams();
       params.set('action', action);
-      params.set('ts', String(force ? Date.now() : Math.floor(Date.now() / GAS_CLIENT_CACHE_MS)));
+      params.set('ts', String(force ? Date.now() : Math.floor(Date.now() / SUPABASE_CLIENT_CACHE_MS)));
       if (payload && Object.keys(payload).length) params.set('payload', JSON.stringify(payload));
-      return `${CONFIG_WEB_APP_URL}${joiner}${params.toString()}`;
+      return `${SUPABASE_DIRECT_ENDPOINT}${joiner}${params.toString()}`;
     }
 
-    async function gasRequest_(action, payload = {}, options = {}) {
+    async function supabaseRequest_(action, payload = {}, options = {}) {
       ensureConfiguredUrl();
-      const method = options.method || (isReadGasAction_(action) ? 'GET' : 'POST');
-      const timeoutMs = options.timeoutMs || (isReadGasAction_(action) ? GAS_READ_TIMEOUT_MS : GAS_WRITE_TIMEOUT_MS);
-      const maxRetry = Number.isInteger(options.maxRetry) ? options.maxRetry : GAS_RETRY_MAX;
+      const method = options.method || (isReadSupabaseAction_(action) ? 'GET' : 'POST');
+      const timeoutMs = options.timeoutMs || (isReadSupabaseAction_(action) ? SUPABASE_READ_TIMEOUT_MS : SUPABASE_WRITE_TIMEOUT_MS);
+      const maxRetry = Number.isInteger(options.maxRetry) ? options.maxRetry : SUPABASE_RETRY_MAX;
       let lastErr = null;
       for (let attempt = 0; attempt <= maxRetry; attempt++) {
         let response = null;
         try {
           if (method === 'GET') {
-            response = await fetchWithTimeout(buildGasGetUrl_(action, payload, options.force), { method: 'GET' }, timeoutMs);
+            response = await fetchWithTimeout(buildSupabaseGetUrl_(action, payload, options.force), { method: 'GET' }, timeoutMs);
           } else {
-            response = await fetchWithTimeout(CONFIG_WEB_APP_URL, {
+            response = await fetchWithTimeout(SUPABASE_DIRECT_ENDPOINT, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
               body: JSON.stringify({ action, payload, ts: Date.now(), requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}` })
             }, timeoutMs);
           }
           if (!response.ok) {
-            const err = new Error(`เชื่อมต่อ GAS ไม่สำเร็จ (${response.status})`);
-            if (attempt < maxRetry && shouldRetryGas_(err, response)) throw err;
+            const err = new Error(`เชื่อมต่อ Supabase ไม่สำเร็จ (${response.status})`);
+            if (attempt < maxRetry && shouldRetrySupabase_(err, response)) throw err;
             throw err;
           }
-          const json = await readGasJson_(response);
-          if (isMutationGasAction_(action)) clearClientDataCache_(action);
+          const json = await readSupabaseJson_(response);
+          if (isMutationSupabaseAction_(action)) clearClientDataCache_(action);
           return json;
         } catch (err) {
           lastErr = err;
-          if (attempt >= maxRetry || !shouldRetryGas_(err, response)) break;
-          const wait = GAS_RETRY_BASE_MS * Math.pow(2, attempt) + Math.floor(Math.random() * 250);
+          if (attempt >= maxRetry || !shouldRetrySupabase_(err, response)) break;
+          const wait = SUPABASE_RETRY_BASE_MS * Math.pow(2, attempt) + Math.floor(Math.random() * 250);
           await sleep_(wait);
         }
       }
       throw lastErr || new Error('เชื่อมต่อฐานข้อมูลไม่สำเร็จ');
     }
 
-    async function gasPost(action, payload = {}) {
-      return gasRequest_(action, payload, { method: 'POST', force: true });
+    async function supabasePost(action, payload = {}) {
+      return supabaseRequest_(action, payload, { method: 'POST', force: true });
     }
 
-    async function gasGet(action, payload = {}, options = {}) {
-      return gasRequest_(action, payload, { method: 'GET', ...options });
+    async function supabaseGet(action, payload = {}, options = {}) {
+      return supabaseRequest_(action, payload, { method: 'GET', ...options });
     }
 
-    async function gasReadAll(options = {}) {
+    async function supabaseReadAll(options = {}) {
       const force = Boolean(options.force);
-      const cache = __gasClientCache.bills;
-      if (!force && cache.records && (Date.now() - cache.loadedAt) < GAS_CLIENT_CACHE_MS) {
+      const cache = __supabaseClientCache.bills;
+      if (!force && cache.records && (Date.now() - cache.loadedAt) < SUPABASE_CLIENT_CACHE_MS) {
         return { ok: true, records: cache.records, cachedClient: true };
       }
       if (!force && cache.promise) return cache.promise;
       const promise = (async () => {
         try {
           const res = force
-            ? await gasPost('read_all', { useCache: false })
-            : await gasGet('read_all', {}, { force: false });
+            ? await supabasePost('read_all', { useCache: false })
+            : await supabaseGet('read_all', {}, { force: false });
           cache.records = Array.isArray(res.records) ? res.records : [];
           cache.loadedAt = Date.now();
           return { ...res, records: cache.records };
@@ -5311,18 +5314,18 @@
       return promise;
     }
 
-    async function gasReadDeliveries(options = {}) {
+    async function supabaseReadDeliveries(options = {}) {
       const force = Boolean(options.force);
-      const cache = __gasClientCache.deliveries;
-      if (!force && cache.records && (Date.now() - cache.loadedAt) < GAS_CLIENT_CACHE_MS) {
+      const cache = __supabaseClientCache.deliveries;
+      if (!force && cache.records && (Date.now() - cache.loadedAt) < SUPABASE_CLIENT_CACHE_MS) {
         return { ok: true, records: cache.records, cachedClient: true };
       }
       if (!force && cache.promise) return cache.promise;
       const promise = (async () => {
         try {
           const res = force
-            ? await gasPost('read_all_deliveries', { useCache: false })
-            : await gasGet('read_all_deliveries', {}, { force: false });
+            ? await supabasePost('read_all_deliveries', { useCache: false })
+            : await supabaseGet('read_all_deliveries', {}, { force: false });
           cache.records = Array.isArray(res.records) ? res.records : (Array.isArray(res.deliveries) ? res.deliveries : []);
           cache.loadedAt = Date.now();
           return { ...res, records: cache.records };
@@ -5340,7 +5343,7 @@
           playPremiumSound('start');
           showLoading('read');
         }
-        const billPromise = gasReadAll({ force });
+        const billPromise = supabaseReadAll({ force });
         const deliveryPromise = (typeof loadDeliverySummary === 'function') ? loadDeliverySummary(true, force) : Promise.resolve([]);
         const res = await billPromise;
         allBills = Array.isArray(res.records) ? res.records : [];
@@ -5357,15 +5360,15 @@
 
     async function loadDeliverySummary(silent = true, force = false) {
       let records = [];
-      let loadedFromGas = false;
+      let loadedFromSupabase = false;
       try {
-        const res = await gasReadDeliveries({ force });
+        const res = await supabaseReadDeliveries({ force });
         records = Array.isArray(res.records) ? res.records : (Array.isArray(res.deliveries) ? res.deliveries : []);
-        loadedFromGas = true;
+        loadedFromSupabase = true;
       } catch (err) {
         if (!silent) showToast(connectionErrorText(err), 'error', 6500);
       }
-      if (!loadedFromGas && typeof __readFallbackDeliveries === 'function') records = __readFallbackDeliveries();
+      if (!loadedFromSupabase && typeof __readFallbackDeliveries === 'function') records = __readFallbackDeliveries();
       if (typeof __normalizeDelivery === 'function') {
         allDeliveries = records.map(__normalizeDelivery).sort((a,b) => String(b.createdAt || b.date || '').localeCompare(String(a.createdAt || a.date || '')));
       } else {
@@ -5393,7 +5396,7 @@
 
     function connectionErrorText(err) {
       const message = String((err && err.message) || err || 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ');
-      return `${message}\n\nแนวทางตรวจสอบ: 1) CONFIG_WEB_APP_URL ต้องเป็น URL /exec ของ Deployment ล่าสุด 2) Deploy ต้องตั้ง Execute as: Me และ Who has access: Anyone/Anyone with the link 3) ใน Code.gs ต้องตั้ง SPREADSHEET_ID ให้ถูกต้อง หรือผูกสคริปต์กับ Google Sheet 4) หากเพิ่งแก้ Code.gs ให้กด Deploy > Manage deployments > Edit > New version`;
+      return `${message}\n\nแนวทางตรวจสอบ: 1) SUPABASE_DIRECT_ENDPOINT ต้องเป็น Supabase URL และ RPC ให้ถูกต้อง 2) ตรวจสอบ Publishable Key และสิทธิ์เรียก RPC 3) ใน Supabase RPC ต้องตั้ง SUPABASE_URL ให้ถูกต้อง หรือเชื่อมกับ Supabase Database 4) หากเพิ่งแก้ไฟล์ ให้ล้าง cache หรืออัปโหลดไฟล์เวอร์ชันใหม่ขึ้น hosting`;
     }
 
     // เปิด summary/admin ให้สดใหม่หลังบันทึกหรือลบ โดยไม่ต้อง refresh หน้าเว็บ
@@ -5412,40 +5415,40 @@
       window.__TK_DB_STABILITY_PATCH_25690708__ = true;
 
       // ลด client cache ให้สั้นมาก เพื่อให้เปิดจากเครื่องอื่นเห็นข้อมูลชุดเดียวกันเร็วขึ้น
-      GAS_READ_TIMEOUT_MS = 18000;
-      GAS_WRITE_TIMEOUT_MS = 42000;
-      GAS_RETRY_MAX = 2;
-      GAS_RETRY_BASE_MS = 520;
-      GAS_CLIENT_CACHE_MS = 3500;
+      SUPABASE_READ_TIMEOUT_MS = 18000;
+      SUPABASE_WRITE_TIMEOUT_MS = 42000;
+      SUPABASE_RETRY_MAX = 2;
+      SUPABASE_RETRY_BASE_MS = 520;
+      SUPABASE_CLIENT_CACHE_MS = 3500;
 
       function isActivePanel_(name) {
         const el = document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1));
         return !!(el && el.classList.contains('active'));
       }
 
-      function normalizeGasUrlForMessage_() {
-        const url = String(CONFIG_WEB_APP_URL || '').trim();
-        if (!url) return 'ยังไม่ได้ตั้งค่า CONFIG_WEB_APP_URL';
-        if (!/\/exec(\?|$)/.test(url)) return 'CONFIG_WEB_APP_URL ไม่ได้ลงท้ายด้วย /exec';
+      function normalizeSupabaseUrlForMessage_() {
+        const url = String(SUPABASE_DIRECT_ENDPOINT || '').trim();
+        if (!url) return 'ยังไม่ได้ตั้งค่า SUPABASE_DIRECT_ENDPOINT';
+        if (!url) return 'กำลังใช้ Supabase RPC โดยตรง';
         return '';
       }
 
-      function buildGasJsonpUrl_(action, payload = {}, force = false, callbackName = '') {
+      function buildSupabaseRpcUrl_(action, payload = {}, force = false, callbackName = '') {
         ensureConfiguredUrl();
-        const joiner = CONFIG_WEB_APP_URL.includes('?') ? '&' : '?';
+        const joiner = SUPABASE_DIRECT_ENDPOINT.includes('?') ? '&' : '?';
         const params = new URLSearchParams();
         params.set('action', action);
-        params.set('ts', String(force ? Date.now() : Math.floor(Date.now() / GAS_CLIENT_CACHE_MS)));
+        params.set('ts', String(force ? Date.now() : Math.floor(Date.now() / SUPABASE_CLIENT_CACHE_MS)));
         if (payload && Object.keys(payload).length) params.set('payload', JSON.stringify(payload));
         if (callbackName) params.set('callback', callbackName);
-        return `${CONFIG_WEB_APP_URL}${joiner}${params.toString()}`;
+        return `${SUPABASE_DIRECT_ENDPOINT}${joiner}${params.toString()}`;
       }
 
-      function gasJsonpGet_(action, payload = {}, options = {}) {
+      function supabaseJsonGet_(action, payload = {}, options = {}) {
         return new Promise((resolve, reject) => {
-          const callbackName = `__tkGasJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          const callbackName = `__tkSupabaseRpc_${Date.now()}_${Math.random().toString(36).slice(2)}`;
           const script = document.createElement('script');
-          const timeoutMs = options.timeoutMs || GAS_READ_TIMEOUT_MS;
+          const timeoutMs = options.timeoutMs || SUPABASE_READ_TIMEOUT_MS;
           let done = false;
           const cleanup = () => {
             try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
@@ -5455,14 +5458,14 @@
             if (done) return;
             done = true;
             cleanup();
-            reject(new Error(`เชื่อมต่อฐานข้อมูลผ่าน JSONP ใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`));
+            reject(new Error(`เชื่อมต่อฐานข้อมูลผ่าน Supabase RPC ใช้เวลานานเกินไป (${Math.round(timeoutMs / 1000)} วินาที)`));
           }, timeoutMs);
           window[callbackName] = json => {
             if (done) return;
             done = true;
             clearTimeout(timer);
             cleanup();
-            if (!json || json.ok === false) reject(new Error((json && json.message) || 'Google Apps Script ส่งผลลัพธ์ไม่สำเร็จ'));
+            if (!json || json.ok === false) reject(new Error((json && json.message) || 'Supabase ส่งผลลัพธ์ไม่สำเร็จ'));
             else resolve(json);
           };
           script.onerror = () => {
@@ -5470,55 +5473,55 @@
             done = true;
             clearTimeout(timer);
             cleanup();
-            reject(new Error('เชื่อมต่อ GAS ไม่สำเร็จผ่าน JSONP อาจเกิดจาก URL Deployment ไม่ถูกต้องหรือ Web App ไม่ได้เผยแพร่เป็น /exec'));
+            reject(new Error('เชื่อมต่อ Supabase ไม่สำเร็จผ่าน Supabase RPC อาจเกิดจาก URL Supabase URL หรือ RPC ไม่ถูกต้อง'));
           };
-          script.src = buildGasJsonpUrl_(action, payload, options.force, callbackName);
+          script.src = buildSupabaseRpcUrl_(action, payload, options.force, callbackName);
           document.head.appendChild(script);
         });
       }
 
-      const __tkGasRequestBase_25690708 = gasRequest_;
-      gasRequest_ = async function(action, payload = {}, options = {}) {
-        const healthMessage = normalizeGasUrlForMessage_();
+      const __tkSupabaseRequestBase_25690708 = supabaseRequest_;
+      supabaseRequest_ = async function(action, payload = {}, options = {}) {
+        const healthMessage = normalizeSupabaseUrlForMessage_();
         if (healthMessage) throw new Error(healthMessage);
 
-        // อ่านข้อมูลใช้ GET ก่อน ถ้าโดน CORS/Failed to fetch ให้ใช้ JSONP ที่ Code.gs รองรับ callback อยู่แล้ว
-        if (isReadGasAction_(action) && options.method !== 'POST') {
+        // อ่านข้อมูลใช้ GET ก่อน ถ้าโดน CORS/Failed to fetch ให้ใช้ Supabase RPC ที่ Supabase RPC รองรับ callback อยู่แล้ว
+        if (isReadSupabaseAction_(action) && options.method !== 'POST') {
           try {
-            return await __tkGasRequestBase_25690708(action, payload, { ...options, method: 'GET' });
+            return await __tkSupabaseRequestBase_25690708(action, payload, { ...options, method: 'GET' });
           } catch (err) {
             const msg = String((err && err.message) || err || '').toLowerCase();
             if (msg.includes('(404)') || msg.includes('404')) throw err;
             if (msg.includes('failed to fetch') || msg.includes('load failed') || msg.includes('network') || msg.includes('cors') || msg.includes('นานเกินไป') || msg.includes('timeout')) {
-              const res = await gasJsonpGet_(action, payload, { force: Boolean(options.force), timeoutMs: options.timeoutMs || GAS_READ_TIMEOUT_MS });
+              const res = await supabaseJsonGet_(action, payload, { force: Boolean(options.force), timeoutMs: options.timeoutMs || SUPABASE_READ_TIMEOUT_MS });
               return res;
             }
             throw err;
           }
         }
-        return __tkGasRequestBase_25690708(action, payload, options);
+        return __tkSupabaseRequestBase_25690708(action, payload, options);
       };
 
-      gasPost = async function(action, payload = {}) {
-        return gasRequest_(action, payload, { method: 'POST', force: true, maxRetry: GAS_RETRY_MAX });
+      supabasePost = async function(action, payload = {}) {
+        return supabaseRequest_(action, payload, { method: 'POST', force: true, maxRetry: SUPABASE_RETRY_MAX });
       };
 
-      gasGet = async function(action, payload = {}, options = {}) {
-        return gasRequest_(action, payload, { method: 'GET', ...options });
+      supabaseGet = async function(action, payload = {}, options = {}) {
+        return supabaseRequest_(action, payload, { method: 'GET', ...options });
       };
 
-      gasReadAll = async function(options = {}) {
+      supabaseReadAll = async function(options = {}) {
         const force = Boolean(options.force);
-        const cache = __gasClientCache.bills;
-        if (!force && cache.records && (Date.now() - cache.loadedAt) < GAS_CLIENT_CACHE_MS) {
+        const cache = __supabaseClientCache.bills;
+        if (!force && cache.records && (Date.now() - cache.loadedAt) < SUPABASE_CLIENT_CACHE_MS) {
           return { ok: true, records: cache.records, cachedClient: true };
         }
         if (!force && cache.promise) return cache.promise;
         const promise = (async () => {
           try {
             const res = force
-              ? await gasPost('read_all', { useCache: false, forceFresh: true })
-              : await gasGet('read_all', { useCache: true }, { force: false, maxRetry: 1 });
+              ? await supabasePost('read_all', { useCache: false, forceFresh: true })
+              : await supabaseGet('read_all', { useCache: true }, { force: false, maxRetry: 1 });
             cache.records = Array.isArray(res.records) ? res.records : [];
             cache.loadedAt = Date.now();
             return { ...res, records: cache.records };
@@ -5537,7 +5540,7 @@
             playPremiumSound('start');
             showLoading('read');
           }
-          const res = await gasReadAll({ force });
+          const res = await supabaseReadAll({ force });
           allBills = Array.isArray(res.records) ? res.records : [];
 
           if (options.loadDeliveries === true && typeof loadDeliverySummary === 'function') {
@@ -5577,7 +5580,7 @@
       connectionErrorText = function(err) {
         const message = String((err && err.message) || err || 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ');
         if (message.includes('(404)') || message.includes('404')) {
-          return `เชื่อมต่อ GAS ไม่สำเร็จ (404)\n\nสาเหตุหลักคือ CONFIG_WEB_APP_URL ไม่ใช่ URL /exec ของ Deployment ล่าสุด หรือ Deployment เดิมถูกลบ/หมดสิทธิ์เข้าถึง\n\nให้เปิด Apps Script > Deploy > Manage deployments > Edit > New version แล้วคัดลอก Web app URL ที่ลงท้าย /exec มาใส่ใน CONFIG_WEB_APP_URL`;
+          return `เชื่อมต่อ Supabase ไม่สำเร็จ (404)\n\nสาเหตุหลักคือ SUPABASE_DIRECT_ENDPOINT ไม่ใช่ Supabase URL หรือ RPC permission ไม่ถูกต้อง\n\nให้เปิด Supabase Dashboard > Project Settings > API แล้วตรวจสอบ Project URL และ Publishable Key`;
         }
         return __tkConnectionErrorTextBase_25690708(err);
       };
@@ -5590,7 +5593,7 @@
       // เมื่อผู้ใช้กลับมาที่แท็บเดิม ให้ดึงข้อมูลสดแบบเงียบ ๆ หากข้อมูลเริ่มเก่าแล้ว
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) return;
-        const cache = __gasClientCache.bills;
+        const cache = __supabaseClientCache.bills;
         const stale = !cache.loadedAt || (Date.now() - cache.loadedAt) > 45000;
         if (stale && (isActivePanel_('summary') || isActivePanel_('admin'))) loadSummary(true, true);
       });
@@ -5610,9 +5613,9 @@
       window.__TK_LOADING_PATCH_25690708_V2__ = true;
 
       try {
-        if (typeof GAS_READ_TIMEOUT_MS !== 'undefined') GAS_READ_TIMEOUT_MS = 45000;
-        if (typeof GAS_WRITE_TIMEOUT_MS !== 'undefined') GAS_WRITE_TIMEOUT_MS = 52000;
-        if (typeof GAS_CLIENT_CACHE_MS !== 'undefined') GAS_CLIENT_CACHE_MS = 5000;
+        if (typeof SUPABASE_READ_TIMEOUT_MS !== 'undefined') SUPABASE_READ_TIMEOUT_MS = 45000;
+        if (typeof SUPABASE_WRITE_TIMEOUT_MS !== 'undefined') SUPABASE_WRITE_TIMEOUT_MS = 52000;
+        if (typeof SUPABASE_CLIENT_CACHE_MS !== 'undefined') SUPABASE_CLIENT_CACHE_MS = 5000;
       } catch (_) {}
 
       let __tkLastGoodBills = Array.isArray(window.allBills) ? window.allBills : [];
@@ -5661,14 +5664,14 @@
         }, maxMs);
       };
 
-      const __tkBaseGasReadAllV2 = gasReadAll;
-      gasReadAll = async function(options = {}) {
+      const __tkBaseSupabaseReadAllV2 = supabaseReadAll;
+      supabaseReadAll = async function(options = {}) {
         const force = Boolean(options.force);
-        const cache = (typeof __gasClientCache !== 'undefined' && __gasClientCache.bills) ? __gasClientCache.bills : null;
+        const cache = (typeof __supabaseClientCache !== 'undefined' && __supabaseClientCache.bills) ? __supabaseClientCache.bills : null;
         if (!force && cache && Array.isArray(cache.records) && cache.records.length && (Date.now() - cache.loadedAt) < 5000) {
           return { ok: true, records: cache.records, cachedClient: true };
         }
-        const res = await __tkBaseGasReadAllV2({ ...options, force });
+        const res = await __tkBaseSupabaseReadAllV2({ ...options, force });
         const records = Array.isArray(res.records) ? res.records : [];
         __tkLastGoodBills = records;
         __tkLastGoodLoadedAt = Date.now();
@@ -5685,7 +5688,7 @@
             playPremiumSound('start');
             showLoading('read');
           }
-          const res = await gasReadAll({ force });
+          const res = await supabaseReadAll({ force });
           allBills = Array.isArray(res.records) ? res.records : [];
           __tkLastGoodBills = allBills;
           __tkLastGoodLoadedAt = Date.now();
@@ -5727,7 +5730,7 @@
           if (btnEl) btnEl.classList.toggle('active', panel === name);
         });
         if (panel === 'summary') {
-          const cache = (typeof __gasClientCache !== 'undefined' && __gasClientCache.bills) ? __gasClientCache.bills : null;
+          const cache = (typeof __supabaseClientCache !== 'undefined' && __supabaseClientCache.bills) ? __supabaseClientCache.bills : null;
           const freshEnough = cache && cache.records && (Date.now() - cache.loadedAt) < 5000;
           if (freshEnough) { renderSummary(); return; }
           loadSummary(false, false);
@@ -5737,7 +5740,7 @@
           if (typeof loadDeliverySummary === 'function') loadDeliverySummary(true, false).then(() => { try { renderDeliveryHistory(); } catch (_) {} });
         }
         if (panel === 'admin') {
-          const cache = (typeof __gasClientCache !== 'undefined' && __gasClientCache.bills) ? __gasClientCache.bills : null;
+          const cache = (typeof __supabaseClientCache !== 'undefined' && __supabaseClientCache.bills) ? __supabaseClientCache.bills : null;
           const freshEnough = cache && cache.records && (Date.now() - cache.loadedAt) < 5000;
           if (freshEnough) { try { renderAdminPanel(); } catch (_) {} return; }
           loadSummary(true, false).then(() => { try { renderAdminPanel(); } catch (_) {} });
@@ -5749,6 +5752,172 @@
         return loadSummary(false, true);
       };
     })();
+
+
+    /**********************************************************************
+     * Supabase Adapter: เรียก Supabase RPC โดยตรง
+     * Project: beamtuy-lab's Project
+     * URL: https://hpdedxdjjwhmejydaolo.supabase.co
+     **********************************************************************/
+    const SUPABASE_URL = 'https://hpdedxdjjwhmejydaolo.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_BiubXSrjU1vAeISvidVbOg_0X52E3wo';
+    let __tkSupabaseClient = null;
+
+    function getSupabaseClient_() {
+      if (__tkSupabaseClient) return __tkSupabaseClient;
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        throw new Error('ไม่พบ Supabase JS SDK กรุณาตรวจสอบอินเทอร์เน็ตหรือ CDN ของ Supabase');
+      }
+      __tkSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        global: { headers: { 'x-application-name': 'tk-longan-cashbill' } }
+      });
+      return __tkSupabaseClient;
+    }
+
+    function ensureConfiguredUrl() {
+      if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+        throw new Error('ยังไม่ได้ตั้งค่า SUPABASE_URL หรือ SUPABASE_PUBLISHABLE_KEY');
+      }
+      getSupabaseClient_();
+    }
+
+    function supabaseRpcForAction_(action, payload = {}) {
+      switch (action) {
+        case 'health':
+        case 'health_check':
+        case 'ping':
+          return { local: true, data: { ok: true, message: 'supabase-ready', source: 'supabase', serverTime: new Date().toISOString() } };
+        case 'read_all':
+          return { fn: 'longan_read_all', args: {} };
+        case 'read_all_deliveries':
+        case 'read_deliveries':
+          return { fn: 'longan_read_all_deliveries', args: {} };
+        case 'create_bill':
+          return { fn: 'longan_create_cash_bill', args: { payload } };
+        case 'update_bill':
+          return { fn: 'longan_update_cash_bill', args: { payload } };
+        case 'delete_bill':
+          return { fn: 'longan_delete_cash_bill', args: { p_bill_id: payload.billId || payload.bill_id || '', admin_password: payload.password || '' } };
+        case 'admin_login':
+          return { fn: 'longan_admin_login', args: { admin_password: payload.password || '' } };
+        case 'change_admin_password':
+          return { fn: 'longan_change_admin_password', args: { old_password: payload.oldPassword || '', new_password: payload.newPassword || '' } };
+        case 'create_delivery':
+          return { fn: 'longan_create_delivery', args: { payload } };
+        case 'update_delivery':
+          return { fn: 'longan_update_delivery', args: { payload } };
+        case 'delete_delivery':
+          return { fn: 'longan_delete_delivery', args: { p_delivery_id: payload.deliveryId || payload.delivery_id || '', admin_password: payload.password || '' } };
+        default:
+          throw new Error(`ไม่พบ Supabase RPC สำหรับ action: ${action}`);
+      }
+    }
+
+    function normalizeSupabaseRpcResult_(data) {
+      if (data && typeof data === 'object' && !Array.isArray(data)) return data;
+      return { ok: true, data };
+    }
+
+    function supabaseErrorText_(error) {
+      if (!error) return 'เชื่อมต่อ Supabase ไม่สำเร็จ';
+      const raw = error.message || error.details || error.hint || String(error);
+      if (raw.includes('Failed to fetch')) return 'เชื่อมต่อ Supabase ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตหรือการอนุญาตโดเมน';
+      if (raw.includes('JWT')) return 'Supabase API Key ไม่ถูกต้อง หรือถูกปิดใช้งาน';
+      return raw;
+    }
+
+    async function supabasePost(action, payload = {}) {
+      ensureConfiguredUrl();
+      const mapped = supabaseRpcForAction_(action, payload || {});
+      if (mapped.local) return mapped.data;
+      const { data, error } = await getSupabaseClient_().rpc(mapped.fn, mapped.args || {});
+      if (error) throw new Error(supabaseErrorText_(error));
+      const json = normalizeSupabaseRpcResult_(data);
+      if (json.ok === false) throw new Error(json.message || 'Supabase ส่งผลลัพธ์ไม่สำเร็จ');
+      if (typeof clearClientDataCache_ === 'function' && typeof isMutationSupabaseAction_ === 'function' && isMutationSupabaseAction_(action)) {
+        try { clearClientDataCache_(action); } catch (_) {}
+      }
+      return json;
+    }
+
+    async function supabaseGet(action, payload = {}, options = {}) {
+      return supabasePost(action, payload);
+    }
+
+    async function supabaseReadAll(options = {}) {
+      const force = Boolean(options && options.force);
+      const cache = (typeof __supabaseClientCache !== 'undefined' && __supabaseClientCache.bills) ? __supabaseClientCache.bills : null;
+      if (cache && !force && cache.records && (Date.now() - cache.loadedAt) < 6000) {
+        return { ok: true, records: cache.records, cachedClient: true, source: 'supabase-cache' };
+      }
+      if (cache && !force && cache.promise) return cache.promise;
+      const promise = (async () => {
+        try {
+          const res = await supabasePost('read_all', {});
+          const records = Array.isArray(res.records) ? res.records : [];
+          if (cache) {
+            cache.records = records;
+            cache.loadedAt = Date.now();
+          }
+          return { ...res, records };
+        } finally {
+          if (cache) cache.promise = null;
+        }
+      })();
+      if (cache) cache.promise = promise;
+      return promise;
+    }
+
+    async function supabaseReadDeliveries(options = {}) {
+      const force = Boolean(options && options.force);
+      const cache = (typeof __supabaseClientCache !== 'undefined' && __supabaseClientCache.deliveries) ? __supabaseClientCache.deliveries : null;
+      if (cache && !force && cache.records && (Date.now() - cache.loadedAt) < 6000) {
+        return { ok: true, records: cache.records, cachedClient: true, source: 'supabase-cache' };
+      }
+      if (cache && !force && cache.promise) return cache.promise;
+      const promise = (async () => {
+        try {
+          const res = await supabasePost('read_all_deliveries', {});
+          const records = Array.isArray(res.records) ? res.records : (Array.isArray(res.deliveries) ? res.deliveries : []);
+          if (cache) {
+            cache.records = records;
+            cache.loadedAt = Date.now();
+          }
+          return { ...res, records };
+        } finally {
+          if (cache) cache.promise = null;
+        }
+      })();
+      if (cache) cache.promise = promise;
+      return promise;
+    }
+
+    function connectionErrorText(err) {
+      const message = String((err && err.message) || err || 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ');
+      return `${message}\n\nระบบนี้เชื่อมต่อ Supabase Project: beamtuy-lab's Project แล้ว\nตรวจสอบได้ที่ 1) SUPABASE_URL 2) SUPABASE_PUBLISHABLE_KEY 3) ฟังก์ชัน RPC longan_* 4) อินเทอร์เน็ต/โดเมนที่เรียกใช้งาน`;
+    }
+
+    window.refreshDataNow = function() {
+      try { if (typeof clearClientDataCache_ === 'function') clearClientDataCache_('read_all'); } catch (_) {}
+      return loadSummary(false, true);
+    };
+
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        const badges = document.querySelector('.hero-badges');
+        if (badges && !document.getElementById('supabaseModeBadge')) {
+          const badge = document.createElement('span');
+          badge.className = 'badge';
+          badge.id = 'supabaseModeBadge';
+          badge.textContent = '🟢 Supabase Database Active';
+          badges.appendChild(badge);
+        }
+      } catch (_) {}
+    });
+
+    console.info('TK Longan Cashbill connected to Supabase:', SUPABASE_URL);
 
 </script>
 </body>
